@@ -59,6 +59,7 @@ class _PeriodStartSheetState extends ConsumerState<_PeriodStartSheet> {
       final result = await ref.read(vivApiProvider).logPeriodStart(date: Dates.ymd(_date));
       ref.invalidate(meProvider);
       ref.invalidate(currentWeekProvider);
+      ref.invalidate(homeTodayProvider);
       setState(() => _result = result);
     } catch (e) {
       if (mounted) showErrorSnack(context, e);

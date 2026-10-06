@@ -457,6 +457,7 @@ class _DoneViewState extends ConsumerState<_DoneView> {
       await ref.read(vivApiProvider).completeSession(widget.day.date, feedback: _feedback);
       ref.invalidate(dayDetailProvider(widget.day.date));
       ref.invalidate(recoveryCardProvider);
+      ref.invalidate(homeTodayProvider);
       if (mounted) context.go(Routes.today);
     } catch (e) {
       if (mounted) showErrorSnack(context, e);

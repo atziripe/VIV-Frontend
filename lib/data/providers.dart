@@ -9,6 +9,7 @@ import '../core/utils/dates.dart';
 import '../features/auth/auth_repository.dart';
 import 'api/viv_api.dart';
 import 'models/checkin.dart';
+import 'models/home.dart';
 import 'models/me.dart';
 import 'models/nutrition.dart';
 import 'models/recovery.dart';
@@ -30,6 +31,11 @@ final meProvider = FutureProvider<Me?>((ref) async {
 /// The week covering today (null if nothing has been generated yet).
 final currentWeekProvider = FutureProvider<WeeklyPlan?>((ref) {
   return ref.watch(vivApiProvider).currentWeek(Dates.todayYmd());
+});
+
+/// Home: today's timeline, now card and week dots (null if no week yet).
+final homeTodayProvider = FutureProvider<HomeToday?>((ref) {
+  return ref.watch(vivApiProvider).homeToday(Dates.todayYmd());
 });
 
 final dayDetailProvider = FutureProvider.family<DayDetail?, String>((ref, date) {
@@ -89,6 +95,7 @@ class TodayCheckinNotifier extends Notifier<DailyCheckinResult?> {
     state = result;
     // A check-in can generate the week or adapt today.
     ref.invalidate(currentWeekProvider);
+    ref.invalidate(homeTodayProvider);
     ref.invalidate(dayDetailProvider(request.date));
     return result;
   }

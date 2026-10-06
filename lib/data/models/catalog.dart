@@ -102,13 +102,21 @@ enum CyclePhase {
     return null;
   }
 
-  /// Plain-language framing used on Today ("a low-energy stretch").
-  String get energyCopy => switch (this) {
-    menstrual => 'a low-energy stretch',
-    follicular => 'a rising-energy stretch',
-    ovulatory => 'a high-energy stretch',
-    earlyLuteal => 'a steady stretch',
-    lateLuteal => 'a winding-down stretch',
+  /// Home status line, first half: "Energy climbing".
+  String get energyTrend => switch (this) {
+    menstrual => 'Energy low',
+    follicular => 'Energy climbing',
+    ovulatory => 'Energy peaking',
+    earlyLuteal => 'Energy steady',
+    lateLuteal => 'Energy winding down',
+  };
+
+  /// Home status line, second half on a training day: "good week for load".
+  String get trainingHint => switch (this) {
+    menstrual => 'keep it gentle',
+    follicular || ovulatory => 'good week for load',
+    earlyLuteal => 'hold steady',
+    lateLuteal => 'lighter is smarter',
   };
 }
 

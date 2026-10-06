@@ -55,6 +55,7 @@ class _EditDaySheetState extends ConsumerState<_EditDaySheet> {
             ),
           );
       ref.invalidate(currentWeekProvider);
+      ref.invalidate(homeTodayProvider);
       ref.invalidate(weeklyNoteProvider);
       ref.invalidate(dayDetailProvider(widget.day.date));
       if (mounted) Navigator.of(context).pop();

@@ -4,6 +4,7 @@ import '../../core/network/api_client.dart';
 import '../../core/network/job_poller.dart';
 import '../models/checkin.dart';
 import '../models/cycle.dart';
+import '../models/home.dart';
 import '../models/me.dart';
 import '../models/nutrition.dart';
 import '../models/onboarding.dart';
@@ -28,6 +29,20 @@ class VivApi {
 
   Future<Me> updateMe(ProfileUpdate update) async =>
       Me.fromJson((await _http.patch('/me', body: update.toJson()))!);
+
+  /// Deletes the account and all its data (App Store 5.1.1v). If the server
+  /// fails, nothing is deleted and the user stays signed in, so retrying is safe.
+  Future<void> deleteAccount() async {
+    await _http.delete('/me');
+  }
+
+  // ── Home ─────────────────────────────────────────────────────────────────
+
+  /// Today's timeline, now card and week dots. Null when no week covers [date].
+  Future<HomeToday?> homeToday(String date) async {
+    final j = await _http.get('/home/today', query: {'date': date});
+    return j == null ? null : HomeToday.fromJson(j);
+  }
 
   // ── Onboarding ───────────────────────────────────────────────────────────
 

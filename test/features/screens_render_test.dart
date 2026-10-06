@@ -11,6 +11,7 @@ import 'package:viv/features/nutrition/full_targets_screen.dart';
 import 'package:viv/features/nutrition/meal_detail_screen.dart';
 import 'package:viv/features/nutrition/nutrition_setup_screen.dart';
 import 'package:viv/features/onboarding/onboarding_screens.dart';
+import 'package:viv/features/profile/privacy_screen.dart';
 import 'package:viv/features/profile/profile_screen.dart';
 import 'package:viv/features/profile/your_info_screen.dart';
 import 'package:viv/features/recovery/recover_screen.dart';
@@ -45,6 +46,7 @@ void main() {
     'Recover': () => const RecoverScreen(),
     'Profile': () => const ProfileScreen(),
     'Your info': () => const YourInfoScreen(),
+    'Privacy': () => const PrivacyScreen(),
   };
 
   const sizes = {'phone': Size(360, 740), 'tablet': Size(1024, 1366)};
@@ -60,12 +62,44 @@ void main() {
     }
   }
 
-  testWidgets('Today shows the check-in prompt and late-period card', (tester) async {
+  for (final MapEntry(key: moment, value: home) in homeMoments.entries) {
+    for (final MapEntry(key: sizeName, value: size) in sizes.entries) {
+      testWidgets('Today renders "$moment" ($sizeName)', (tester) async {
+        await pumpScreen(tester, const TodayScreen(), size: size, home: home);
+        expect(tester.takeException(), isNull);
+        expect(find.text(home.nowCard!.title), findsOneWidget);
+      });
+    }
+  }
+
+  testWidgets('Today: before check-in shows the now card in the timeline', (tester) async {
     await pumpScreen(tester, const TodayScreen());
     expect(find.text('Hey Atziri'), findsOneWidget);
+    expect(find.textContaining('WEEK 6'), findsOneWidget);
+    expect(find.text('Energy climbing · good week for load'), findsOneWidget);
+    expect(find.text('NOW · 07:40'), findsOneWidget);
     expect(find.text('Check in'), findsOneWidget);
-    expect(find.text('It started'), findsOneWidget);
-    expect(find.text('137 g protein'), findsOneWidget);
+    // The now card replaces its own timeline row instead of duplicating it.
+    expect(find.text('Breakfast'), findsOneWidget);
+    expect(find.text('1 of 3 sessions'), findsOneWidget);
+    expect(find.text('It started'), findsOneWidget); // late-period card
+  });
+
+  testWidgets('Today: Skip turns the check-in card back into a row', (tester) async {
+    await pumpScreen(tester, const TodayScreen());
+    await tester.tap(find.text('Skip'));
+    await tester.pumpAndSettle();
+    expect(find.text('NOW · 07:40'), findsNothing);
+    expect(find.text('Check in'), findsOneWidget); // the plain timeline row
+  });
+
+  testWidgets('Today: rest day shows recovery actions and cost', (tester) async {
+    await pumpScreen(tester, const TodayScreen(), home: homeMoments['rest day']);
+    expect(find.textContaining('REST DAY'), findsOneWidget);
+    expect(find.text('Energy climbing · recovery day'), findsOneWidget);
+    expect(find.text('MEDIUM COST'), findsOneWidget);
+    expect(find.text('Done'), findsOneWidget);
+    expect(find.text('Not today'), findsOneWidget);
   });
 
   testWidgets('Check-in reveals the submit button only after four answers', (tester) async {

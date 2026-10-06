@@ -46,6 +46,7 @@ class VivColors extends ThemeExtension<VivColors> {
     required this.inverse,
     required this.onInverse,
     required this.scrim,
+    required this.signal,
   });
 
   /// Screen background.
@@ -79,6 +80,9 @@ class VivColors extends ThemeExtension<VivColors> {
   /// Dimmed backdrop behind bottom sheets.
   final Color scrim;
 
+  /// Olive status dot next to the energy line on Home.
+  final Color signal;
+
   static const light = VivColors(
     background: VivPalette.vistaWhite,
     surface: VivPalette.white,
@@ -95,6 +99,7 @@ class VivColors extends ThemeExtension<VivColors> {
     inverse: VivPalette.zeus,
     onInverse: VivPalette.vistaWhite,
     scrim: Color(0x8C140E0C), // color/orange/6 55%
+    signal: Color(0xFF9A8A4F),
   );
 
   static const dark = VivColors(
@@ -113,6 +118,7 @@ class VivColors extends ThemeExtension<VivColors> {
     inverse: VivPalette.dawnPink,
     onInverse: VivPalette.zeus,
     scrim: Color(0xD1140E0C), // color/orange/6 82%
+    signal: Color(0xFFB5A468),
   );
 
   @override
@@ -132,6 +138,7 @@ class VivColors extends ThemeExtension<VivColors> {
     Color? inverse,
     Color? onInverse,
     Color? scrim,
+    Color? signal,
   }) {
     return VivColors(
       background: background ?? this.background,
@@ -149,6 +156,7 @@ class VivColors extends ThemeExtension<VivColors> {
       inverse: inverse ?? this.inverse,
       onInverse: onInverse ?? this.onInverse,
       scrim: scrim ?? this.scrim,
+      signal: signal ?? this.signal,
     );
   }
 
@@ -172,6 +180,7 @@ class VivColors extends ThemeExtension<VivColors> {
       inverse: l(inverse, other.inverse),
       onInverse: l(onInverse, other.onInverse),
       scrim: l(scrim, other.scrim),
+      signal: l(signal, other.signal),
     );
   }
 }

@@ -663,6 +663,7 @@ class _BuildingWeekScreenState extends ConsumerState<BuildingWeekScreen> {
     }
     ref.invalidate(meProvider);
     ref.invalidate(currentWeekProvider);
+    ref.invalidate(homeTodayProvider);
   }
 
   @override

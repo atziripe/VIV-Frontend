@@ -121,6 +121,8 @@ class ApiClient {
   Future<Map<String, dynamic>?> patch(String path, {Object? body}) =>
       _send(() => _dio.patch<dynamic>(path, data: body));
 
+  Future<Map<String, dynamic>?> delete(String path) => _send(() => _dio.delete<dynamic>(path));
+
   Future<Map<String, dynamic>?> _send(Future<Response<dynamic>> Function() call) async {
     try {
       final res = await call();

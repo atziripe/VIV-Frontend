@@ -14,6 +14,7 @@ import '../features/nutrition/full_targets_screen.dart';
 import '../features/nutrition/meal_detail_screen.dart';
 import '../features/nutrition/nutrition_setup_screen.dart';
 import '../features/onboarding/onboarding_screens.dart';
+import '../features/profile/privacy_screen.dart';
 import '../features/profile/profile_screen.dart';
 import '../features/profile/your_info_screen.dart';
 import '../features/recovery/recover_screen.dart';
@@ -53,6 +54,7 @@ abstract final class Routes {
   static const nutritionSetup = '/eat/setup';
   static const profile = '/profile';
   static const yourInfo = '/profile/info';
+  static const privacy = '/profile/privacy';
 
   static const _authRoutes = {welcome, signUp, logIn};
 }
@@ -165,7 +167,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: _rootKey,
         path: Routes.profile,
         builder: (_, _) => const ProfileScreen(),
-        routes: [GoRoute(path: 'info', builder: (_, _) => const YourInfoScreen())],
+        routes: [
+          GoRoute(path: 'info', builder: (_, _) => const YourInfoScreen()),
+          GoRoute(path: 'privacy', builder: (_, _) => const PrivacyScreen()),
+        ],
       ),
     ],
   );

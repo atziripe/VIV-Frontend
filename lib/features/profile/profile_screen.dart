@@ -78,9 +78,13 @@ class ProfileScreen extends ConsumerWidget {
         ),
         const SizedBox(height: VivSpace.lg),
         const Eyebrow('VIV'),
-        // TODO(design+api): Notifications, Privacy & data, Help screens.
+        // TODO(design+api): Notifications and Help screens.
         const _MenuRow(title: 'Notifications', subtitle: 'Coming soon'),
-        const _MenuRow(title: 'Privacy & data'),
+        _MenuRow(
+          title: 'Privacy & data',
+          subtitle: 'Delete your account and data',
+          onTap: () => context.push(Routes.privacy),
+        ),
         const _MenuRow(title: 'Help'),
         const SizedBox(height: VivSpace.md),
         Align(

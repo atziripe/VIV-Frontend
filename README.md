@@ -4,7 +4,7 @@ iOS + Android client for the VIV backend: a training, nutrition and recovery
 plan that adapts to your week and your menstrual cycle.
 
 - **Design:** [VIVFEM in Figma](https://www.figma.com/design/1nCBTZEMrBmax4WnOjmv6j/VIVFEM)
-- **API:** `viv-backend` OpenAPI 3.0.3 (37 routes). This app uses the **current pipeline** only. The legacy routes (`/checkins`, `/training/generate`, `/plans/*`) and `/rpc` are intentionally not wrapped.
+- **API:** `viv-backend` OpenAPI 3.0.3 (39 routes). This app uses the **current pipeline** only. The legacy routes (`/checkins`, `/training/generate`, `/plans/*`) and `/rpc` are intentionally not wrapped.
 
 ## Stack
 
@@ -66,12 +66,12 @@ lib/
   features/
     auth/                       Welcome · Sign up · Log in
     onboarding/                 Fit check → About you → Training → Week → Cycle → Consent → building
-    home/                       Tab shell, splash, Today, period-start sheet
+    home/                       Tab shell, splash, Today timeline + now card, period-start sheet
     checkin/                    Progressive 4-question check-in + completion moment
     training/                   This week, edit a day, session detail, live set logging + rest timer
     nutrition/                  Eat today, swap meal, meal detail, full targets, nutrition setup
     recovery/                   Recovery card + actions
-    profile/                    Menu, Your info (edits via PATCH /me)
+    profile/                    Menu, Your info (PATCH /me), Privacy & data (DELETE /me)
   router/                       Routes + session gate (signedOut / needsOnboarding / ready)
 ```
 
@@ -85,7 +85,8 @@ Colors come from the Figma variables, e.g. `Cannon Pink #8A4A57` is the light-mo
 
 | Area | Endpoints | Where |
 | --- | --- | --- |
-| Profile | `GET/PATCH /me` | session gate, Today, Profile |
+| Home | `GET /home/today` | Today (timeline, now card, week dots) |
+| Profile | `GET/PATCH/DELETE /me` | session gate, Profile, Privacy & data (delete account) |
 | Onboarding | `POST /onboarding` + job poll | Consent → Building |
 | Check-in | `POST /checkin` | Check-in |
 | Cycle | `POST /cycle/period-start` | Today late-period card, Your info |
@@ -103,7 +104,9 @@ Colors come from the Figma variables, e.g. `Cannon Pink #8A4A57` is the light-mo
 4. **Meal selections aren't echoed** in `GET /nutrition/plan`, so the choice is mirrored on the device.
 5. **Status of `GET /nutrition/plan` before nutrition onboarding** is undocumented. The app treats 404/5xx as "not set up yet" (`TODO(api)` in `providers.dart`).
 6. **No endpoint** for the "not a fit yet" email waitlist, or for completing a non-Strength (non-loggable) day.
-7. Not built yet: Notifications, Privacy & data, Help screens, push notifications (FCM), the hero photo on Welcome (placeholder gradient), and Terms/Privacy links.
+7. **Lights-out "Remind me"** has an empty `cta_action` (nothing schedules it yet), so it only shows a "coming soon" note. **"Skip"** on the check-in card is local to the device, because the API has no skip.
+8. **Privacy & data:** the "What VIV uses" toggles and "Download everything" from Figma have no endpoints, so only account deletion is built.
+9. Not built yet: Notifications and Help screens, push notifications (FCM), the hero photo on Welcome (placeholder gradient), and Terms/Privacy links.
 
 ## Development
 

@@ -9,27 +9,30 @@ import '../../core/widgets/widgets.dart';
 import '../../data/api/viv_api.dart';
 import '../../data/models/catalog.dart';
 import '../../data/models/checkin.dart';
+import '../../data/models/home.dart';
 import '../../data/models/me.dart';
 import '../../data/models/weekly_plan.dart';
 import '../../data/providers.dart';
 import '../../router/app_router.dart';
+import 'home_timeline.dart';
 import 'period_start_sheet.dart';
 
-/// 03 · Home — before and after the daily check-in.
+/// 10a · Home, as a day — training, food and recovery in one timeline, with
+/// the moment that matters now (`GET /home/today` → `now_card`) highlighted.
 class TodayScreen extends ConsumerWidget {
   const TodayScreen({super.key});
 
   Future<void> _refresh(WidgetRef ref) async {
     ref.invalidate(meProvider);
-    ref.invalidate(currentWeekProvider);
-    ref.invalidate(nutritionPlanProvider);
-    await ref.read(currentWeekProvider.future);
+    ref.invalidate(homeTodayProvider);
+    ref.invalidate(recoveryCardProvider(Dates.todayYmd()));
+    await ref.read(homeTodayProvider.future);
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final me = ref.watch(meProvider).value;
-    final week = ref.watch(currentWeekProvider);
+    final home = ref.watch(homeTodayProvider);
     final checkin = ref.watch(todayCheckinProvider);
     final c = context.viv;
 
@@ -47,55 +50,25 @@ class TodayScreen extends ConsumerWidget {
                 VivSpace.xl,
               ),
               children: [
-                _Greeting(me: me, checkedIn: checkin != null),
+                _Greeting(me: me, home: home.value),
                 const SizedBox(height: VivSpace.lg),
                 if (me != null && me.daysLate > 0 && !me.cycleEstimationDisabled) ...[
                   _LatePeriodCard(me: me),
                   const SizedBox(height: VivSpace.sm),
                 ],
-                if (checkin == null) ...[
-                  const _BeforeYouStartCard(),
+                if (checkin?.suggestion case final suggestion?) ...[
+                  _SuggestionCard(date: checkin!.date, suggestion: suggestion),
                   const SizedBox(height: VivSpace.sm),
                 ],
-                AsyncView<WeeklyPlan?>(
-                  value: week,
-                  onRetry: () => ref.invalidate(currentWeekProvider),
+                AsyncView<HomeToday?>(
+                  value: home,
+                  onRetry: () => ref.invalidate(homeTodayProvider),
                   loading: const Padding(
                     padding: EdgeInsets.all(VivSpace.xxl),
                     child: LoadingView(),
                   ),
-                  data: (plan) =>
-                      plan == null ? const _NoWeekCard() : _TodayPlan(plan: plan, checkin: checkin),
+                  data: (today) => today == null ? const _NoWeekCard() : _Timeline(home: today),
                 ),
-                if (checkin != null) ...[
-                  const SizedBox(height: VivSpace.sm),
-                  VivCard(
-                    tone: VivCardTone.muted,
-                    onTap: () => context.push(Routes.checkin),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: VivSpace.md,
-                      vertical: VivSpace.sm,
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            'Something changed today?',
-                            style: VivType.caption.copyWith(color: c.textSecondary, fontSize: 13),
-                          ),
-                        ),
-                        Text(
-                          'Check in again',
-                          style: VivType.caption.copyWith(
-                            color: c.primary,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
@@ -106,21 +79,29 @@ class TodayScreen extends ConsumerWidget {
 }
 
 class _Greeting extends StatelessWidget {
-  const _Greeting({required this.me, required this.checkedIn});
+  const _Greeting({required this.me, required this.home});
 
   final Me? me;
-  final bool checkedIn;
+  final HomeToday? home;
 
   @override
   Widget build(BuildContext context) {
     final c = context.viv;
     final name = me?.firstName ?? '';
-    final phase = me?.cyclePhase;
-    final status = checkedIn
-        ? 'Checked in · adjusted for today'
-        : (me?.cycleDay != null && phase != null)
-        ? 'Day ${me!.cycleDay} of ${phase.energyCopy}'
-        : null;
+    final date = Dates.tryParseYmd(home?.date) ?? Dates.today();
+    final isRest = home?.isRestDay ?? false;
+
+    // "THURSDAY · 10 SEP · WEEK 6" / "FRIDAY · 11 SEP · REST DAY"
+    final eyebrow = [
+      Dates.eyebrow(date),
+      if (isRest) 'REST DAY' else if (home?.weekNumber != null) 'WEEK ${home!.weekNumber}',
+    ].join(' · ');
+
+    // "Energy climbing · good week for load"
+    final phase = home?.currentPhase ?? me?.cyclePhase;
+    final status = phase == null
+        ? null
+        : '${phase.energyTrend} · ${isRest ? 'recovery day' : phase.trainingHint}';
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -129,13 +110,13 @@ class _Greeting extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Eyebrow(Dates.eyebrow(Dates.today())),
+              Eyebrow(eyebrow),
               const SizedBox(height: VivSpace.xs),
               Semantics(
                 header: true,
                 child: Text(
                   name.isEmpty ? 'Hey there' : 'Hey $name',
-                  style: VivType.headline.copyWith(color: c.textPrimary),
+                  style: VivType.title.copyWith(color: c.textPrimary),
                 ),
               ),
               if (status != null) ...[
@@ -143,13 +124,16 @@ class _Greeting extends StatelessWidget {
                 Row(
                   children: [
                     Container(
-                      width: 6,
-                      height: 6,
-                      decoration: BoxDecoration(color: c.primary, shape: BoxShape.circle),
+                      width: 7,
+                      height: 7,
+                      decoration: BoxDecoration(color: c.signal, shape: BoxShape.circle),
                     ),
                     const SizedBox(width: 6),
                     Flexible(
-                      child: Text(status, style: VivType.caption.copyWith(color: c.textSecondary)),
+                      child: Text(
+                        status,
+                        style: VivType.caption.copyWith(color: c.textSecondary, fontSize: 13.5),
+                      ),
                     ),
                   ],
                 ),
@@ -161,6 +145,49 @@ class _Greeting extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Timeline rows with the now card in its chronological slot, then the week.
+class _Timeline extends ConsumerWidget {
+  const _Timeline({required this.home});
+
+  final HomeToday home;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final dismissed = ref.watch(dismissedMomentsProvider);
+    var card = home.nowCard;
+    if (card != null && dismissed.contains(DismissedMoments.keyFor(home.date, card.kind))) {
+      card = null; // Skipped: falls back to a plain row.
+    }
+    final entries = composeHomeEntries(home.timeline, card);
+    // A skipped card that had no timeline row of its own still shows as a row.
+    final skipped = home.nowCard != null && card == null;
+    final skippedHasRow = skipped && home.timeline.any((i) => i.kind == home.nowCard!.kind);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (skipped && !skippedHasRow) TimelineRow(item: home.nowCard!),
+        for (final e in entries)
+          switch (e) {
+            HomeNowEntry(:final card) => NowMomentCard(card: card, date: home.date),
+            HomeItemEntry(:final item) => TimelineRow(item: item, onTap: _onTap(context, item)),
+          },
+        if (home.weekProgress case final progress? when progress.days.isNotEmpty) ...[
+          const SizedBox(height: VivSpace.md),
+          WeekProgressCard(progress: progress, onTap: () => context.go(Routes.train)),
+        ],
+      ],
+    );
+  }
+
+  VoidCallback? _onTap(BuildContext context, TimelineItem item) => switch (item.kind) {
+    TimelineKind.meal => () => context.go(Routes.eat),
+    TimelineKind.session => () => context.push(Routes.sessionDetail(home.date)),
+    TimelineKind.checkin when !item.isDone => () => context.push(Routes.checkin),
+    _ => null,
+  };
 }
 
 class _Avatar extends StatelessWidget {
@@ -182,31 +209,6 @@ class _Avatar extends StatelessWidget {
           backgroundColor: c.primarySoft,
           child: Text(initial ?? '', style: VivType.label.copyWith(color: c.primary, fontSize: 14)),
         ),
-      ),
-    );
-  }
-}
-
-class _BeforeYouStartCard extends StatelessWidget {
-  const _BeforeYouStartCard();
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.viv;
-    return VivCard(
-      tone: VivCardTone.highlight,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Eyebrow('Before you start', accent: true),
-          const SizedBox(height: VivSpace.xs),
-          Text(
-            'Four taps and today\'s session fits your day.',
-            style: VivType.cardTitle.copyWith(color: c.textPrimary),
-          ),
-          const SizedBox(height: VivSpace.md),
-          VivButton(label: 'Check in', height: 44, onPressed: () => context.push(Routes.checkin)),
-        ],
       ),
     );
   }
@@ -279,6 +281,7 @@ class _NoWeekCardState extends ConsumerState<_NoWeekCard> {
       final jobId = await api.startWeeklyPlanGeneration();
       await api.waitForWeeklyPlan(jobId);
       ref.invalidate(currentWeekProvider);
+      ref.invalidate(homeTodayProvider);
     } catch (e) {
       if (mounted) showErrorSnack(context, e);
     } finally {
@@ -317,164 +320,6 @@ class _NoWeekCardState extends ConsumerState<_NoWeekCard> {
   }
 }
 
-class _TodayPlan extends ConsumerWidget {
-  const _TodayPlan({required this.plan, required this.checkin});
-
-  final WeeklyPlan plan;
-  final DailyCheckinResult? checkin;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.viv;
-    final today = plan.today;
-    final next = plan.nextSession;
-    final nutrition = ref.watch(nutritionPlanProvider).value;
-    final nutritionToday = nutrition?.dayFor(Dates.longWeekday(Dates.today()).toLowerCase());
-    final protein = nutritionToday?.macros?.proteinG;
-
-    // After a check-in, the response is the source of truth for today.
-    final isRest = checkin?.isRestDay ?? today?.isRestDay ?? true;
-    final assignment = checkin?.assignment;
-    final title = sessionTitle(
-      activityType: assignment?.activityType ?? today?.activityType,
-      muscleGroup: today?.muscleGroup,
-      intensity: assignment?.intensity ?? today?.intensity,
-      isRestDay: isRest,
-    );
-    final duration = today?.durationMinutes;
-    final reason =
-        checkin?.reason ??
-        (checkin == null ? 'Built last Sunday. Check in and VIV fits it to today.' : null);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        VivCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  const Expanded(child: Eyebrow('Today')),
-                  Text(
-                    checkin == null ? 'As planned' : 'Adjusted',
-                    style: VivType.caption.copyWith(
-                      color: checkin == null ? c.textTertiary : c.primary,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: VivSpace.xs),
-              Text(
-                duration == null || isRest ? title : '$title · $duration min',
-                style: VivType.cardTitle.copyWith(color: c.textPrimary),
-              ),
-              if (reason != null) ...[
-                const SizedBox(height: VivSpace.xxs),
-                Text(reason, style: VivType.caption.copyWith(color: c.textSecondary)),
-              ],
-              if (!isRest && today != null) ...[
-                const SizedBox(height: VivSpace.md),
-                if (checkin == null)
-                  VivButton.secondary(
-                    label: 'Start as planned',
-                    height: 44,
-                    onPressed: () => context.push(Routes.sessionDetail(today.date)),
-                  )
-                else
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: VivButton(
-                          label: 'Start',
-                          height: 44,
-                          onPressed: () => context.push(Routes.sessionDetail(today.date)),
-                        ),
-                      ),
-                      const SizedBox(width: VivSpace.xs),
-                      Expanded(
-                        flex: 2,
-                        child: VivButton.secondary(
-                          label: 'Not today',
-                          height: 44,
-                          onPressed: () => context.go(Routes.recover),
-                        ),
-                      ),
-                    ],
-                  ),
-              ],
-            ],
-          ),
-        ),
-        if (checkin?.suggestion case final suggestion?) ...[
-          const SizedBox(height: VivSpace.sm),
-          _SuggestionCard(date: checkin!.date, suggestion: suggestion),
-        ],
-        const SizedBox(height: VivSpace.sm),
-        IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: _MiniCard(
-                  eyebrow: 'Eat',
-                  title: protein == null ? 'Set up meals' : '${protein.round()} g protein',
-                  subtitle: protein == null ? 'Two minutes, optional' : 'the one to protect today',
-                  onTap: () => context.go(Routes.eat),
-                ),
-              ),
-              const SizedBox(width: VivSpace.sm),
-              Expanded(
-                child: _MiniCard(
-                  eyebrow: 'Next',
-                  title: next == null ? 'Rest' : Dates.shortWeekday(next.dateTime),
-                  subtitle: next == null
-                      ? 'Nothing else this week'
-                      : [
-                          next.title,
-                          if (next.durationMinutes != null) '${next.durationMinutes} min',
-                        ].join(' · '),
-                  onTap: () => context.go(Routes.train),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _MiniCard extends StatelessWidget {
-  const _MiniCard({required this.eyebrow, required this.title, required this.subtitle, this.onTap});
-
-  final String eyebrow;
-  final String title;
-  final String subtitle;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.viv;
-    return VivCard(
-      onTap: onTap,
-      padding: const EdgeInsets.all(VivSpace.sm),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Eyebrow(eyebrow),
-          const SizedBox(height: VivSpace.xxs),
-          Text(title, style: VivType.cardTitle.copyWith(color: c.textPrimary, fontSize: 16)),
-          const SizedBox(height: 2),
-          Text(subtitle, style: VivType.caption.copyWith(color: c.textTertiary, fontSize: 12)),
-        ],
-      ),
-    );
-  }
-}
-
 /// Daily adaptation proposes — the user decides. Accepting applies it via
 /// `PATCH /training/weekly-plan/day`.
 class _SuggestionCard extends ConsumerStatefulWidget {
@@ -505,6 +350,7 @@ class _SuggestionCardState extends ConsumerState<_SuggestionCard> {
             ),
           );
       ref.invalidate(currentWeekProvider);
+      ref.invalidate(homeTodayProvider);
       ref.invalidate(dayDetailProvider(widget.date));
       await ref.read(todayCheckinProvider.notifier).applySuggestion();
     } catch (e) {

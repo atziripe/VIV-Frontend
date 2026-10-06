@@ -143,6 +143,7 @@ class _ActionsState extends ConsumerState<_Actions> {
     try {
       await ref.read(vivApiProvider).saveRecoveryAction(widget.card.date, kind);
       ref.invalidate(recoveryCardProvider(widget.card.date));
+      ref.invalidate(homeTodayProvider);
     } catch (e) {
       if (mounted) showErrorSnack(context, e);
     } finally {

@@ -8,6 +8,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:viv/core/theme/viv_theme.dart';
 import 'package:viv/core/utils/dates.dart';
+import 'package:viv/data/models/home.dart';
 import 'package:viv/data/models/me.dart';
 import 'package:viv/data/models/nutrition.dart';
 import 'package:viv/data/models/recovery.dart';
@@ -159,8 +160,157 @@ final fakeRecovery = RecoveryCard.fromJson({
   ],
 });
 
+Map<String, dynamic> _week(List<String> statuses) => {
+  'completed_sessions': statuses.where((s) => s == 'done').length,
+  'total_sessions': statuses.where((s) => s != 'rest').length,
+  'days': [
+    for (final (i, w) in const [
+      'monday',
+      'tuesday',
+      'wednesday',
+      'thursday',
+      'friday',
+      'saturday',
+      'sunday',
+    ].indexed)
+      {'weekday': w, 'status': statuses[i], 'is_today': i == 3},
+  ],
+};
+
+/// The four "Home, as a day" moments from Figma (10a).
+final homeMoments = <String, HomeToday>{
+  'before check-in': HomeToday.fromJson({
+    'date': Dates.todayYmd(),
+    'weekday': 'thursday',
+    'week_number': 6,
+    'current_phase': 'follicular',
+    'now_card': {
+      'kind': 'checkin',
+      'status': 'pending',
+      'time': '07:40',
+      'label': 'NOW',
+      'title': 'Four taps and today fits your day',
+      'detail': 'Everything below adjusts to how you actually are.',
+      'cta_label': 'Check in',
+      'cta_action': 'POST /checkin',
+    },
+    'timeline': [
+      {'kind': 'checkin', 'status': 'pending', 'time': '07:40', 'title': 'Check in'},
+      {
+        'kind': 'meal',
+        'status': 'upcoming',
+        'time': '08:00',
+        'title': 'Breakfast',
+        'detail': 'Yogurt, apple & peanut butter · 35 g protein',
+        'is_estimated': true,
+      },
+      {
+        'kind': 'meal',
+        'status': 'upcoming',
+        'time': '16:00',
+        'title': 'Eat properly before training',
+        'detail': 'two hours out is the window',
+      },
+      {
+        'kind': 'session',
+        'status': 'upcoming',
+        'time': '18:00',
+        'title': 'Lower strength · 60 min',
+        'detail': 'heaviest session this week',
+      },
+      {'kind': 'meal', 'status': 'upcoming', 'time': '20:00', 'title': 'Protein within two hours'},
+      {'kind': 'lights_out', 'status': 'upcoming', 'time': '23:00', 'title': 'Lights out'},
+    ],
+    'week_progress': _week(['done', 'rest', 'rest', 'pending', 'rest', 'pending', 'rest']),
+  }),
+  'before the session': HomeToday.fromJson({
+    'date': Dates.todayYmd(),
+    'weekday': 'thursday',
+    'week_number': 6,
+    'current_phase': 'follicular',
+    'now_card': {
+      'kind': 'session',
+      'status': 'pending',
+      'time': '18:00',
+      'label': 'IN 15 MIN',
+      'title': 'Lower strength · 60 min',
+      'detail': 'You checked in strong and asked to be pushed.',
+      'cta_label': 'Start session',
+      'cta_action': 'POST /training/weekly-plan/day/start',
+    },
+    'timeline': [
+      {
+        'kind': 'checkin',
+        'status': 'done',
+        'time': '07:40',
+        'title': 'Checked in',
+        'detail': 'Normal · Strong & responsive · Normal · Push me',
+      },
+      {
+        'kind': 'meal',
+        'status': 'done',
+        'time': '08:00',
+        'title': 'Breakfast',
+        'detail': '35 g protein',
+      },
+      {'kind': 'session', 'status': 'pending', 'time': '18:00', 'title': 'Lower strength · 60 min'},
+      {'kind': 'meal', 'status': 'upcoming', 'time': '20:00', 'title': 'Protein within two hours'},
+    ],
+    'week_progress': _week(['done', 'rest', 'rest', 'pending', 'rest', 'pending', 'rest']),
+  }),
+  'day done': HomeToday.fromJson({
+    'date': Dates.todayYmd(),
+    'weekday': 'thursday',
+    'week_number': 6,
+    'current_phase': 'follicular',
+    'now_card': {
+      'kind': 'lights_out',
+      'status': 'pending',
+      'time': '23:00',
+      'label': 'TONIGHT',
+      'title': 'Lights out by 23:00',
+      'detail': 'Tonight is when the session turns into strength.',
+      'cta_label': 'Remind me at 22:30',
+      'cta_action': '',
+    },
+    'timeline': [
+      {'kind': 'checkin', 'status': 'done', 'time': '07:40', 'title': 'Checked in'},
+      {
+        'kind': 'session',
+        'status': 'done',
+        'time': '18:00',
+        'title': 'Lower strength · 58 min',
+        'detail': '15 of 15 sets · felt right',
+      },
+      {'kind': 'lights_out', 'status': 'upcoming', 'time': '23:00', 'title': 'Lights out'},
+    ],
+    'week_progress': _week(['done', 'rest', 'rest', 'done', 'rest', 'pending', 'rest']),
+  }),
+  'rest day': HomeToday.fromJson({
+    'date': Dates.todayYmd(),
+    'weekday': 'friday',
+    'week_number': 6,
+    'current_phase': 'follicular',
+    'now_card': {
+      'kind': 'recovery_action',
+      'status': 'pending',
+      'label': 'TODAY',
+      'title': 'Walk 20 minutes',
+      'detail': 'After last night\'s lower strength.',
+      'cta_label': 'Done',
+      'cta_action': 'POST /recovery/card/action',
+    },
+    'timeline': [
+      {'kind': 'checkin', 'status': 'done', 'time': '08:10', 'title': 'Checked in'},
+      {'kind': 'meal', 'status': 'upcoming', 'time': '12:30', 'title': 'Lunch'},
+      {'kind': 'lights_out', 'status': 'upcoming', 'time': '23:00', 'title': 'Lights out'},
+    ],
+    'week_progress': _week(['done', 'rest', 'rest', 'rest', 'rest', 'pending', 'rest']),
+  }),
+};
+
 /// Signed-in, fully onboarded user with a built week and nutrition plan.
-Future<List<Override>> appOverrides() async {
+Future<List<Override>> appOverrides({HomeToday? home}) async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
   final auth = MockAuthRepository();
@@ -175,6 +325,7 @@ Future<List<Override>> appOverrides() async {
     dayDetailProvider.overrideWith((_, _) async => fakeDay),
     nutritionPlanProvider.overrideWith((_) async => fakeNutrition),
     recoveryCardProvider.overrideWith((_, _) async => fakeRecovery),
+    homeTodayProvider.overrideWith((_) async => home ?? homeMoments['before check-in']),
   ];
 }
 
@@ -184,6 +335,7 @@ Future<void> pumpScreen(
   Widget screen, {
   Size size = const Size(390, 844),
   Brightness brightness = Brightness.light,
+  HomeToday? home,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -194,7 +346,7 @@ Future<void> pumpScreen(
   );
   await tester.pumpWidget(
     ProviderScope(
-      overrides: await appOverrides(),
+      overrides: await appOverrides(home: home),
       child: MaterialApp.router(
         theme: VivTheme.light(),
         darkTheme: VivTheme.dark(),
