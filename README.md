@@ -41,13 +41,14 @@ flutter run --dart-define=API_BASE_URL=https://your-api-host
   Add your debug SHA-1 in the Firebase Android app settings.
 - **Google on iOS:** add the `REVERSED_CLIENT_ID` from `GoogleService-Info.plist` as a URL scheme in `ios/Runner/Info.plist`.
 - **Apple (iOS only for now):** enable the *Sign in with Apple* capability in Xcode. The button is hidden on Android, which would need a web Service ID.
-- **App Check:** debug builds use the debug providers. Register the debug token printed in the device log in Firebase → App Check. Release builds use Play Integrity / App Attest.
+- **App Check:** debug builds use the debug providers. Generate a debug token in Firebase → App Check → *your app* → ⋮ → Manage debug tokens, put it in `dart_defines.local.json` (copy `dart_defines.example.json`; the file is gitignored) and run `flutter run --dart-define-from-file=dart_defines.local.json`. Release builds use Play Integrity / App Attest.
 
 | `--dart-define` | Default | Purpose |
 | --- | --- | --- |
 | `API_BASE_URL` | `http://localhost:8080` | Backend root (routes mounted at `/`) |
 | `GOOGLE_SERVER_CLIENT_ID` | — | Google Sign-In ID token on Android |
 | `APP_CHECK_DEBUG` | `true` outside release | Use App Check debug providers |
+| `APP_CHECK_DEBUG_TOKEN` | — | Fixed debug token registered in Firebase (keep it out of git) |
 
 ## Project layout
 

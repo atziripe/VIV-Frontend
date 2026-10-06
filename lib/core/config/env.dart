@@ -1,7 +1,8 @@
-/// Build-time configuration, supplied with `--dart-define`.
+/// Build-time configuration, supplied with `--dart-define`, or from a local
+/// file (see `dart_defines.example.json`):
 ///
 /// ```sh
-/// flutter run --dart-define=API_BASE_URL=https://api.your-host.com
+/// flutter run --dart-define-from-file=dart_defines.local.json
 /// ```
 abstract final class Env {
   /// Backend base URL — routes are mounted at root (e.g. `$apiBaseUrl/me`).
@@ -17,6 +18,11 @@ abstract final class Env {
     'APP_CHECK_DEBUG',
     defaultValue: !bool.fromEnvironment('dart.vm.product'),
   );
+
+  /// Fixed App Check debug token registered in Firebase Console (App Check →
+  /// app → Manage debug tokens). Optional: without it the SDK generates a new
+  /// token per simulator and prints it to the device log. Keep it out of git.
+  static const appCheckDebugToken = String.fromEnvironment('APP_CHECK_DEBUG_TOKEN');
 
   /// Web client ID of the Firebase project (Google Sign-In `serverClientId`,
   /// required on Android to receive an ID token).
