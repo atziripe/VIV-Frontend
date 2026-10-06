@@ -13,10 +13,11 @@ class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
+        return android;
       case TargetPlatform.iOS:
         return ios;
       default:
-        return android;
+        throw UnsupportedError('VIV only targets iOS and Android.');
     }
   }
 
