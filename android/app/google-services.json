@@ -1,0 +1,90 @@
+{
+  "project_info": {
+    "project_number": "344437491452",
+    "project_id": "viv-vivere",
+    "storage_bucket": "viv-vivere.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:344437491452:android:c05f1cec4b1759eac37979",
+        "android_client_info": {
+          "package_name": "app.viv.viv"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "344437491452-us0qr98ae5g1rmjb02niq6msqfjd44dv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCliNLJ6JtFnjGlf9mYdPVYTnCyNYkBy8Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "344437491452-us0qr98ae5g1rmjb02niq6msqfjd44dv.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "344437491452-vs5323l5vlrviqd1fi31fhe928r0g58a.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.mycompany.vivvivere"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:344437491452:android:66f252e77bc93423c37979",
+        "android_client_info": {
+          "package_name": "com.mycompany.vivvivere"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "344437491452-7obburna9qgtsicagdlvrddtcbhfh9j8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mycompany.vivvivere",
+            "certificate_hash": "9bbb3186b2189ef16d8f272bdab59362c395cbb4"
+          }
+        },
+        {
+          "client_id": "344437491452-us0qr98ae5g1rmjb02niq6msqfjd44dv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCliNLJ6JtFnjGlf9mYdPVYTnCyNYkBy8Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "344437491452-us0qr98ae5g1rmjb02niq6msqfjd44dv.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "344437491452-vs5323l5vlrviqd1fi31fhe928r0g58a.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.mycompany.vivvivere"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -14,12 +14,28 @@ class DefaultFirebaseOptions {
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
       case TargetPlatform.iOS:
-        throw UnsupportedError(
-          'Firebase is not configured yet. Run `flutterfire configure` '
-          '(see README → Firebase setup).',
-        );
+        return ios;
       default:
-        throw UnsupportedError('VIV only targets iOS and Android.');
+        return android;
     }
   }
+
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyDY-gWZjJSZPbgMfjID-p0KLk3Nwlcnf1g',
+    appId: '1:344437491452:ios:cd2f2f8558a77120c37979',
+    messagingSenderId: '344437491452',
+    projectId: 'viv-vivere',
+    storageBucket: 'viv-vivere.firebasestorage.app',
+    androidClientId: '344437491452-7obburna9qgtsicagdlvrddtcbhfh9j8.apps.googleusercontent.com',
+    iosClientId: '344437491452-ck55o79u61n88hti8meb58u6fqe43erj.apps.googleusercontent.com',
+    iosBundleId: 'app.viv.viv',
+  );
+
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyCliNLJ6JtFnjGlf9mYdPVYTnCyNYkBy8Q',
+    appId: '1:344437491452:android:c05f1cec4b1759eac37979',
+    messagingSenderId: '344437491452',
+    projectId: 'viv-vivere',
+    storageBucket: 'viv-vivere.firebasestorage.app',
+  );
 }
