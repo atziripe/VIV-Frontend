@@ -76,7 +76,7 @@ void main() {
     await pumpScreen(tester, const TodayScreen());
     expect(find.text('Hey Atziri'), findsOneWidget);
     expect(find.textContaining('WEEK 6'), findsOneWidget);
-    expect(find.text('Energy climbing · good week for load'), findsOneWidget);
+    expect(find.text('Follicular phase · Ovulatory in 3 days'), findsOneWidget);
     expect(find.text('NOW · 07:40'), findsOneWidget);
     expect(find.text('Check in'), findsOneWidget);
     // The now card replaces its own timeline row instead of duplicating it.
@@ -96,7 +96,7 @@ void main() {
   testWidgets('Today: rest day shows recovery actions and cost', (tester) async {
     await pumpScreen(tester, const TodayScreen(), home: homeMoments['rest day']);
     expect(find.textContaining('REST DAY'), findsOneWidget);
-    expect(find.text('Energy climbing · recovery day'), findsOneWidget);
+    expect(find.text('Follicular phase · Ovulatory in 3 days'), findsOneWidget);
     expect(find.text('MEDIUM COST'), findsOneWidget);
     expect(find.text('Done'), findsOneWidget);
     expect(find.text('Not today'), findsOneWidget);

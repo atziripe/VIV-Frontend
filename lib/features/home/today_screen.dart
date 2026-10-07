@@ -97,11 +97,8 @@ class _Greeting extends StatelessWidget {
       if (isRest) 'REST DAY' else if (home?.weekNumber != null) 'WEEK ${home!.weekNumber}',
     ].join(' · ');
 
-    // "Energy climbing · good week for load"
-    final phase = home?.currentPhase ?? me?.cyclePhase;
-    final status = phase == null
-        ? null
-        : '${phase.energyTrend} · ${isRest ? 'recovery day' : phase.trainingHint}';
+    // "Follicular phase · Ovulatory in 3 days" (falls back to /me's phase)
+    final status = home?.phaseCountdown ?? phaseCountdownText(me?.cyclePhase, null, null);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,

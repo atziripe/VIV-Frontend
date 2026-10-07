@@ -184,6 +184,8 @@ final homeMoments = <String, HomeToday>{
     'weekday': 'thursday',
     'week_number': 6,
     'current_phase': 'follicular',
+    'next_phase': 'ovulatory',
+    'days_until_next_phase': 3,
     'now_card': {
       'kind': 'checkin',
       'status': 'pending',
@@ -228,6 +230,8 @@ final homeMoments = <String, HomeToday>{
     'weekday': 'thursday',
     'week_number': 6,
     'current_phase': 'follicular',
+    'next_phase': 'ovulatory',
+    'days_until_next_phase': 3,
     'now_card': {
       'kind': 'session',
       'status': 'pending',
@@ -263,6 +267,8 @@ final homeMoments = <String, HomeToday>{
     'weekday': 'thursday',
     'week_number': 6,
     'current_phase': 'follicular',
+    'next_phase': 'ovulatory',
+    'days_until_next_phase': 3,
     'now_card': {
       'kind': 'lights_out',
       'status': 'pending',
@@ -291,6 +297,8 @@ final homeMoments = <String, HomeToday>{
     'weekday': 'friday',
     'week_number': 6,
     'current_phase': 'follicular',
+    'next_phase': 'ovulatory',
+    'days_until_next_phase': 3,
     'now_card': {
       'kind': 'recovery_action',
       'status': 'pending',

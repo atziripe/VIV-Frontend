@@ -62,6 +62,16 @@ void main() {
     expect(card.showsTime, isFalse);
   });
 
+  test('phaseCountdownText', () {
+    const f = CyclePhase.follicular, o = CyclePhase.ovulatory;
+    expect(phaseCountdownText(f, o, 3), 'Follicular phase · Ovulatory in 3 days');
+    expect(phaseCountdownText(f, o, 1), 'Follicular phase · Ovulatory tomorrow');
+    expect(phaseCountdownText(f, o, 0), 'Follicular phase · Ovulatory starts today');
+    expect(phaseCountdownText(f, null, 5), 'Follicular phase · Next phase in 5 days');
+    expect(phaseCountdownText(f, o, null), 'Follicular phase');
+    expect(phaseCountdownText(null, null, null), isNull);
+  });
+
   group('composeHomeEntries', () {
     const checkin = TimelineItem(
       kind: TimelineKind.checkin,

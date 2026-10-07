@@ -101,23 +101,6 @@ enum CyclePhase {
     }
     return null;
   }
-
-  /// Home status line, first half: "Energy climbing".
-  String get energyTrend => switch (this) {
-    menstrual => 'Energy low',
-    follicular => 'Energy climbing',
-    ovulatory => 'Energy peaking',
-    earlyLuteal => 'Energy steady',
-    lateLuteal => 'Energy winding down',
-  };
-
-  /// Home status line, second half on a training day: "good week for load".
-  String get trainingHint => switch (this) {
-    menstrual => 'keep it gentle',
-    follicular || ovulatory => 'good week for load',
-    earlyLuteal => 'hold steady',
-    lateLuteal => 'lighter is smarter',
-  };
 }
 
 /// Human title for a training day: "Lower strength", "Easy yoga", "Rest".
