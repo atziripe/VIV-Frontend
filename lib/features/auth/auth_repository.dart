@@ -83,6 +83,26 @@ class AuthRepository {
     }
   }
 
+  /// True when the account is linked to Sign in with Apple.
+  bool get isAppleUser =>
+      _auth.currentUser?.providerData.any((p) => p.providerId == 'apple.com') ?? false;
+
+  /// Revokes VIV's Apple tokens — App Store rule 5.1.1(v) for account
+  /// deletion. Apple needs a fresh authorization code (valid ~5 min), so this
+  /// shows the Apple sheet again; call it right before deleting, while the
+  /// Firebase user still exists. Needs the Apple provider in Firebase Console
+  /// configured with a Services ID, Team ID, Key ID and private key.
+  Future<void> revokeAppleAccess() async {
+    final AuthorizationCredentialAppleID apple;
+    try {
+      apple = await SignInWithApple.getAppleIDCredential(scopes: const []);
+    } on SignInWithAppleAuthorizationException catch (e) {
+      if (e.code == AuthorizationErrorCode.canceled) throw const SignInCancelled();
+      rethrow;
+    }
+    await _auth.revokeTokenWithAuthorizationCode(apple.authorizationCode);
+  }
+
   Future<void> signOut() async {
     if (_googleInitialized) {
       await GoogleSignIn.instance.signOut();

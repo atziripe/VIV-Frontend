@@ -7,7 +7,8 @@ import '../../data/api/viv_api.dart';
 import '../../data/providers.dart';
 import '../auth/auth_repository.dart';
 
-/// 04 · Privacy & data — account deletion (`DELETE /me`).
+/// 04 · Privacy & data — account deletion (`DELETE /me`, plus revoking
+/// Sign in with Apple for Apple accounts).
 // TODO(api): the "What VIV uses" toggles (cycle dates, Apple Health, session
 // history) and "Download everything" in Figma have no endpoints yet.
 class PrivacyScreen extends ConsumerStatefulWidget {
@@ -30,13 +31,26 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
     if (confirmed != true || !mounted) return;
 
     setState(() => _deleting = true);
+    final auth = ref.read(authRepositoryProvider);
+    if (auth.isAppleUser) {
+      try {
+        await auth.revokeAppleAccess();
+      } on SignInCancelled {
+        // Backing out of the Apple sheet means "not now": keep the account.
+        if (mounted) setState(() => _deleting = false);
+        return;
+      } catch (e) {
+        // A failed revoke must not block deleting the user's data.
+        debugPrint('Apple token revoke failed: $e');
+      }
+    }
     try {
       // Server deletes data, then the Firebase Auth account. On failure
       // nothing is deleted and the user stays signed in, so retry is safe.
       await ref.read(vivApiProvider).deleteAccount();
       await ref.read(sharedPreferencesProvider).clear();
       // The router sends the user to Welcome once auth state is null.
-      await ref.read(authRepositoryProvider).signOut();
+      await auth.signOut();
     } catch (e) {
       if (mounted) {
         showErrorSnack(context, e);

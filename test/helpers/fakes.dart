@@ -318,11 +318,14 @@ final homeMoments = <String, HomeToday>{
 };
 
 /// Signed-in, fully onboarded user with a built week and nutrition plan.
-Future<List<Override>> appOverrides({HomeToday? home}) async {
+Future<List<Override>> appOverrides({HomeToday? home, AuthRepository? auth}) async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
-  final auth = MockAuthRepository();
-  when(() => auth.authStateChanges()).thenAnswer((_) => Stream.value(null));
+  if (auth == null) {
+    final mock = MockAuthRepository();
+    when(() => mock.authStateChanges()).thenAnswer((_) => Stream.value(null));
+    auth = mock;
+  }
   return [
     sharedPreferencesProvider.overrideWithValue(prefs),
     authRepositoryProvider.overrideWithValue(auth),
@@ -344,6 +347,8 @@ Future<void> pumpScreen(
   Size size = const Size(390, 844),
   Brightness brightness = Brightness.light,
   HomeToday? home,
+  AuthRepository? auth,
+  List<Override> extra = const [],
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -354,7 +359,10 @@ Future<void> pumpScreen(
   );
   await tester.pumpWidget(
     ProviderScope(
-      overrides: await appOverrides(home: home),
+      overrides: [
+        ...await appOverrides(home: home, auth: auth),
+        ...extra,
+      ],
       child: MaterialApp.router(
         theme: VivTheme.light(),
         darkTheme: VivTheme.dark(),
