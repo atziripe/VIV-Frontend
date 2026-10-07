@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io' show Platform;
 import 'dart:math';
 
 import 'package:crypto/crypto.dart';
@@ -8,6 +9,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../core/config/env.dart';
+import '../../firebase_options.dart';
 
 /// Thrown when the user backs out of a native sign-in sheet — not an error
 /// worth showing.
@@ -41,7 +43,9 @@ class AuthRepository {
     final google = GoogleSignIn.instance;
     if (!_googleInitialized) {
       await google.initialize(
-        serverClientId: Env.googleServerClientId.isEmpty ? null : Env.googleServerClientId,
+        // iOS client from GoogleService-Info.plist (also GIDClientID in Info.plist).
+        clientId: Platform.isIOS ? DefaultFirebaseOptions.ios.iosClientId : null,
+        serverClientId: Env.googleServerClientId,
       );
       _googleInitialized = true;
     }

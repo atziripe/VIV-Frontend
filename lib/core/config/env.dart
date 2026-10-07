@@ -25,6 +25,12 @@ abstract final class Env {
   static const appCheckDebugToken = String.fromEnvironment('APP_CHECK_DEBUG_TOKEN');
 
   /// Web client ID of the Firebase project (Google Sign-In `serverClientId`,
-  /// required on Android to receive an ID token).
-  static const googleServerClientId = String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID');
+  /// required on Android to receive an ID token). It's the `client_type: 3`
+  /// entry in `google-services.json` — a public identifier, not a secret.
+  /// An empty value (e.g. from an old `dart_defines.local.json`) falls back
+  /// to the default too.
+  static const googleServerClientId = _googleServerClientId == ''
+      ? '344437491452-us0qr98ae5g1rmjb02niq6msqfjd44dv.apps.googleusercontent.com'
+      : _googleServerClientId;
+  static const _googleServerClientId = String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID');
 }
