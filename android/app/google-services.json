@@ -31,10 +31,10 @@
               "client_type": 3
             },
             {
-              "client_id": "344437491452-vs5323l5vlrviqd1fi31fhe928r0g58a.apps.googleusercontent.com",
+              "client_id": "344437491452-ck55o79u61n88hti8meb58u6fqe43erj.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.mycompany.vivvivere"
+                "bundle_id": "app.viv.viv"
               }
             }
           ]
@@ -75,10 +75,10 @@
               "client_type": 3
             },
             {
-              "client_id": "344437491452-vs5323l5vlrviqd1fi31fhe928r0g58a.apps.googleusercontent.com",
+              "client_id": "344437491452-ck55o79u61n88hti8meb58u6fqe43erj.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.mycompany.vivvivere"
+                "bundle_id": "app.viv.viv"
               }
             }
           ]
