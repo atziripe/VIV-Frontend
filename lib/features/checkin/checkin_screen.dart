@@ -279,7 +279,7 @@ class _CompletionMoment extends StatelessWidget {
         const SizedBox(height: VivSpace.xs),
         Text(
           result.suggestion != null
-              ? 'VIV has a lighter option if you want it — it\'s on Today.'
+              ? 'VIV has a lighter option if you want it. It\'s on Today.'
               : 'Same purpose, sized to the day you actually have.',
           style: VivType.bodySmall.copyWith(color: c.textSecondary),
         ),

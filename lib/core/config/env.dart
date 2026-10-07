@@ -5,7 +5,7 @@
 /// flutter run --dart-define-from-file=dart_defines.local.json
 /// ```
 abstract final class Env {
-  /// Backend base URL — routes are mounted at root (e.g. `$apiBaseUrl/me`).
+  /// Backend base URL routes are mounted at root (e.g. `$apiBaseUrl/me`).
   /// Android emulators reach the host machine at 10.0.2.2.
   static const apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',

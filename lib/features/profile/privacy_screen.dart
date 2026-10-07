@@ -67,7 +67,7 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
       children: [
         const PageHeader(
           title: 'Privacy & data',
-          subtitle: 'Your cycle and health data stay yours — never sold, never shared.',
+          subtitle: 'Your cycle and health data stay yours.',
         ),
         const Eyebrow('Your data'),
         const SizedBox(height: VivSpace.xs),
@@ -106,7 +106,7 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
               const SizedBox(height: VivSpace.xxs),
               Text(
                 'Stops all processing and deletes your account, your history and your '
-                'plan. This can\'t be undone — you\'d start over from onboarding.',
+                'plan. This can\'t be undone, you\'d start over from onboarding.',
                 style: VivType.caption.copyWith(color: c.textSecondary, fontSize: 13),
               ),
               const SizedBox(height: VivSpace.md),

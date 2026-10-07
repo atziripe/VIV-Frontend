@@ -44,7 +44,7 @@ class _SetupPrompt extends StatelessWidget {
           title: 'Eat today',
           subtitle:
               'A few questions about how you eat, and VIV sizes meals to your '
-              'training and your cycle. Optional — training works without it.',
+              'training and your cycle. Optional, training works without it.',
         ),
         VivButton(label: 'Set up meals', onPressed: () => context.push(Routes.nutritionSetup)),
       ],

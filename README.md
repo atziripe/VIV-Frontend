@@ -1,4 +1,4 @@
-# VIV — Flutter app
+# VIV Flutter app
 
 iOS + Android client for the VIV backend: a training, nutrition and recovery
 plan that adapts to your week and your menstrual cycle.

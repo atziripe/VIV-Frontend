@@ -23,18 +23,18 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyDY-gWZjJSZPbgMfjID-p0KLk3Nwlcnf1g',
-    appId: '1:344437491452:ios:cd2f2f8558a77120c37979',
+    appId: '1:344437491452:ios:3bf9e164a4c169a5c37979',
     messagingSenderId: '344437491452',
     projectId: 'viv-vivere',
     storageBucket: 'viv-vivere.firebasestorage.app',
     androidClientId: '344437491452-7obburna9qgtsicagdlvrddtcbhfh9j8.apps.googleusercontent.com',
-    iosClientId: '344437491452-ck55o79u61n88hti8meb58u6fqe43erj.apps.googleusercontent.com',
-    iosBundleId: 'app.viv.viv',
+    iosClientId: '344437491452-vs5323l5vlrviqd1fi31fhe928r0g58a.apps.googleusercontent.com',
+    iosBundleId: 'com.mycompany.vivvivere',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyCliNLJ6JtFnjGlf9mYdPVYTnCyNYkBy8Q',
-    appId: '1:344437491452:android:c05f1cec4b1759eac37979',
+    appId: '1:344437491452:android:66f252e77bc93423c37979',
     messagingSenderId: '344437491452',
     projectId: 'viv-vivere',
     storageBucket: 'viv-vivere.firebasestorage.app',

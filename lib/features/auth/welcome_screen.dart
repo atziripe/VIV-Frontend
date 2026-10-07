@@ -44,7 +44,7 @@ class WelcomeScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: VivSpace.sm),
                           Text(
-                            'VIV builds a week around the energy you actually have — '
+                            'VIV builds a week around the energy you actually have '
                             'and rebuilds it the moment the week changes.',
                             style: VivType.bodySmall.copyWith(
                               color: VivPalette.vistaWhite.withValues(alpha: 0.76),

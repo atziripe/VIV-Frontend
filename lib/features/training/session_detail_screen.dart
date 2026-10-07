@@ -120,7 +120,7 @@ class _Detail extends StatelessWidget {
         if (!day.loggable && !day.isRestDay) ...[
           const SizedBox(height: VivSpace.lg),
           Text(
-            'Doing your own thing today? Keep it close to this — the intent is what matters, not the list.',
+            'Doing your own thing today? Keep it close to this. The intent is what matters, not the list.',
             style: VivType.caption.copyWith(color: c.textTertiary),
           ),
         ],

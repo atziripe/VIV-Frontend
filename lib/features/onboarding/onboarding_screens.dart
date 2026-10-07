@@ -154,7 +154,7 @@ class _NotAFitScreenState extends ConsumerState<NotAFitScreen> {
           title: 'VIV isn\'t built for you yet',
           subtitle:
               'Our guidance is tuned to a natural cycle. On hormonal contraception '
-              'that timing doesn\'t apply — and a plan built on physiology that isn\'t '
+              'that timing doesn\'t apply, and a plan built on physiology that isn\'t '
               'yours is worse than no plan.\n\n'
               'Contraception support is the version we\'re building next.',
         ),
@@ -179,7 +179,7 @@ class _NotAFitScreenState extends ConsumerState<NotAFitScreen> {
                 // TODO(api): no waitlist endpoint yet.
                 onPressed: () {
                   ScaffoldMessenger.of(context)
-                      .showSnackBar(const SnackBar(content: Text('Thanks — we\'ll let you know.')));
+                      .showSnackBar(const SnackBar(content: Text('Thanks, we\'ll let you know.')));
                   ref.read(authRepositoryProvider).signOut();
                 },
               ),
@@ -476,7 +476,7 @@ class CycleScreen extends ConsumerWidget {
       title: 'Last piece: your cycle',
       subtitle:
           'This is what lets VIV time your week instead of guessing at it. '
-          'Rough answers are fine — check-ins sharpen them.',
+          'Rough answers are fine, check-ins sharpen them.',
       onContinue: draft.cycleComplete ? () => context.push(Routes.consent) : null,
       children: [
         const FieldLabel('Your last period started'),
@@ -588,8 +588,7 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
           title: 'One thing before we build it',
           subtitle:
               'To personalise your week, VIV needs to process your cycle and health '
-              'data. It stays yours — never sold, never shared — and you can withdraw '
-              'consent in Settings at any time.',
+              'data. It stays yours and you can withdraw consent in Settings at any time.',
         ),
         VivCard(
           tone: draft.consent ? VivCardTone.highlight : VivCardTone.surface,

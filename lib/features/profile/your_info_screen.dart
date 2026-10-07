@@ -73,8 +73,8 @@ class YourInfoScreen extends ConsumerWidget {
           onTap: () => edit(
             _ChoiceSheet(
               title: 'Days per week',
-              subtitle: 'How many sessions you can realistically protect — not the ideal number.',
-              note: 'This week\'s plan is rebuilt from tomorrow — today\'s is untouched.',
+              subtitle: 'How many sessions you can realistically protect.',
+              note: 'This week\'s plan is rebuilt from tomorrow. Today\'s is untouched.',
               options: {for (final d in DaysPerWeek.values) d.apiValue: d.label},
               selected: me.trainingOften,
               build: (v) => ProfileUpdate(trainingOften: v),
@@ -144,7 +144,7 @@ class YourInfoScreen extends ConsumerWidget {
         const SizedBox(height: VivSpace.lg),
         const VivNote(
           text:
-              'Nothing here is required. Anything you leave out, VIV estimates — and gets '
+              'Nothing here is required. Anything you leave out, VIV estimates and gets '
               'better at estimating as you go.',
           highlight: true,
         ),

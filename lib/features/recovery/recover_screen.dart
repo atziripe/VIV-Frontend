@@ -33,7 +33,7 @@ class RecoverScreen extends ConsumerWidget {
         const SizedBox(height: VivSpace.xxl),
         Text(
           'If something feels off beyond a normal heavy week, that\'s a conversation for '
-          'your doctor — not for VIV.',
+          'your doctor, not for VIV.',
           style: VivType.caption.copyWith(color: c.textTertiary),
         ),
       ],

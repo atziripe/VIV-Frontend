@@ -67,7 +67,7 @@ class _FullTargetsScreenState extends ConsumerState<FullTargetsScreen> {
           highlight: true,
           text:
               'Your weight, your session load this week, and where you are in your cycle. '
-              'They move on their own — you don\'t need to recalculate anything.',
+              'They move on their own, you don\'t need to recalculate anything.',
         ),
         const SizedBox(height: VivSpace.sm),
         Text(

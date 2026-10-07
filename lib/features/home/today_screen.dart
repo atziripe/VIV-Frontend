@@ -249,7 +249,7 @@ class _LatePeriodCard extends StatelessWidget {
                   height: 44,
                   // TODO(design): "Not yet" follow-up (cycle length nudge).
                   onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Okay — we\'ll keep the week gentle.')),
+                    const SnackBar(content: Text('Okay, we\'ll keep the week gentle.')),
                   ),
                 ),
               ),
