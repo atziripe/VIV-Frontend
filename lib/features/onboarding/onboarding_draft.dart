@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/utils/dates.dart';
+import '../../data/models/account.dart';
 import '../../data/models/catalog.dart';
 import '../../data/models/onboarding.dart';
 import '../auth/auth_repository.dart';
@@ -17,8 +18,36 @@ enum CycleSituation {
   final String label;
   final String? hint;
 
-  /// VIV's guidance is calibrated to a natural cycle; others see "not a fit yet".
-  bool get isFit => this == natural || this == notSure;
+  /// VIV's guidance is calibrated to a natural cycle; every other answer,
+  /// "I'm not sure" included, sees "not a fit yet".
+  bool get isFit => this == natural;
+
+  /// `POST /onboarding/ineligibility` reason; null for [natural].
+  IneligibilityReason? get ineligibilityReason => switch (this) {
+    natural => null,
+    hormonal => IneligibilityReason.hormonalContraception,
+    pregnant => IneligibilityReason.pregnantOrPostpartum,
+    menopause => IneligibilityReason.perimenopauseOrMenopause,
+    notSure => IneligibilityReason.notSure,
+  };
+
+  /// Why VIV doesn't fit yet, for the "not a fit" screen.
+  String get notAFitReason => switch (this) {
+    hormonal =>
+      'Our guidance is tuned to a natural cycle. On hormonal contraception that timing '
+          'doesn\'t apply, and a plan built on physiology that isn\'t yours is worse than '
+          'no plan.\n\nContraception support is the version we\'re building next.',
+    pregnant =>
+      'Pregnancy and postpartum change your body in ways VIV\'s plan doesn\'t account for '
+          'yet, and a plan built on physiology that isn\'t yours is worse than no plan.',
+    menopause =>
+      'In perimenopause and menopause cycle timing shifts in ways VIV\'s guidance isn\'t '
+          'built for yet, and a plan built on physiology that isn\'t yours is worse than '
+          'no plan.',
+    natural || notSure =>
+      'Our guidance is tuned to a natural menstrual cycle. If you\'re not sure yours is '
+          'one, a plan built on timing that may not apply is worse than no plan.',
+  };
 
   /// `cycle_type` value. Anything but the three documented phrases is
   /// stored as `not_sure`.

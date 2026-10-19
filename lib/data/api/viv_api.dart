@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/network/api_client.dart';
 import '../../core/network/job_poller.dart';
+import '../models/account.dart';
 import '../models/checkin.dart';
 import '../models/cycle.dart';
 import '../models/home.dart';
@@ -30,11 +31,35 @@ class VivApi {
   Future<Me> updateMe(ProfileUpdate update) async =>
       Me.fromJson((await _http.patch('/me', body: update.toJson()))!);
 
-  /// Deletes the account and all its data (App Store 5.1.1v). If the server
-  /// fails, nothing is deleted and the user stays signed in, so retrying is safe.
-  Future<void> deleteAccount() async {
-    await _http.delete('/me');
+  // ── Account deletion, consent, export ───────────────────────────────────
+
+  /// Schedules deletion 30 days out. The account keeps working until then and
+  /// can be restored with [cancelAccountDeletion]. Calling it again restarts
+  /// the clock.
+  Future<DeletionSchedule> scheduleAccountDeletion() async =>
+      DeletionSchedule.fromJson((await _http.delete('/me')) ?? const {});
+
+  /// Idempotent: a no-op when nothing is pending.
+  Future<void> cancelAccountDeletion() async {
+    await _http.post('/me/cancel-deletion');
   }
+
+  /// Current state per purpose; purposes never granted or revoked are absent.
+  Future<List<ConsentItem>> consents() async => [
+    for (final e in await _http.getList('/me/consents'))
+      if (e is Map<String, dynamic>) ?ConsentItem.fromJson(e),
+  ];
+
+  /// Returns true when the account was deleted — revoking
+  /// [ConsentPurpose.healthDataProcessing] deletes it immediately, with no
+  /// grace period.
+  Future<bool> setConsent(ConsentPurpose purpose, {required bool granted}) async {
+    final j = await _http.post('/me/consents', body: {'purpose': purpose.id, 'granted': granted});
+    return j?['account_deleted'] == true;
+  }
+
+  /// GDPR data export: a raw JSON dump of the user's current data.
+  Future<Map<String, dynamic>> exportData() async => (await _http.get('/me/export')) ?? const {};
 
   // ── Home ─────────────────────────────────────────────────────────────────
 
@@ -48,6 +73,12 @@ class VivApi {
 
   Future<OnboardingResponse> completeOnboarding(OnboardingRequest req) async =>
       OnboardingResponse.fromJson((await _http.post('/onboarding', body: req.toJson()))!);
+
+  /// For a "not a fit yet" answer: records the anonymous reason and deletes
+  /// the account immediately.
+  Future<void> reportIneligibility(IneligibilityReason reason) async {
+    await _http.post('/onboarding/ineligibility', body: {'reason': reason.id});
+  }
 
   // ── Weekly plan ──────────────────────────────────────────────────────────
 

@@ -6,10 +6,12 @@ import '../../core/theme/viv_theme.dart';
 import '../../core/utils/dates.dart';
 import '../../core/widgets/widgets.dart';
 import '../../data/api/viv_api.dart';
+import '../../data/models/account.dart';
 import '../../data/models/catalog.dart';
 import '../../data/providers.dart';
 import '../../router/app_router.dart';
 import '../auth/auth_repository.dart';
+import '../profile/account_actions.dart';
 import 'onboarding_draft.dart';
 
 /// Total numbered steps after the fit check.
@@ -136,62 +138,55 @@ class NotAFitScreen extends ConsumerStatefulWidget {
 }
 
 class _NotAFitScreenState extends ConsumerState<NotAFitScreen> {
-  late final _email = TextEditingController(text: ref.read(authStateProvider).value?.email ?? '');
+  bool _closing = false;
 
-  @override
-  void dispose() {
-    _email.dispose();
-    super.dispose();
+  /// `POST /onboarding/ineligibility` records the reason anonymously and
+  /// deletes the account right away, so nothing about this person is kept.
+  // Sign in with Apple isn't revoked here: the user didn't ask to delete an
+  // account, so a second Apple sheet would only confuse.
+  Future<void> _close(IneligibilityReason reason) async {
+    setState(() => _closing = true);
+    try {
+      await ref.read(vivApiProvider).reportIneligibility(reason);
+      await endSessionLocally(ref);
+    } catch (e) {
+      if (mounted) {
+        showErrorSnack(context, e);
+        setState(() => _closing = false);
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final c = context.viv;
+    final situation = ref.watch(onboardingDraftProvider).situation ?? CycleSituation.notSure;
+    final reason = situation.ineligibilityReason ?? IneligibilityReason.notSure;
     return VivPage(
       showBack: true,
+      bottom: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          VivButton(
+            label: 'Close my account',
+            loading: _closing,
+            onPressed: _closing ? null : () => _close(reason),
+          ),
+          const SizedBox(height: VivSpace.xs),
+          VivButton.text(
+            label: 'Change my answer',
+            onPressed: _closing ? null : () => context.pop(),
+          ),
+        ],
+      ),
       children: [
-        const PageHeader(
-          title: 'VIV isn\'t built for you yet',
-          subtitle:
-              'Our guidance is tuned to a natural cycle. On hormonal contraception '
-              'that timing doesn\'t apply, and a plan built on physiology that isn\'t '
-              'yours is worse than no plan.\n\n'
-              'Contraception support is the version we\'re building next.',
-        ),
-        const SizedBox(height: VivSpace.xxl),
-        VivCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Want a nudge when it\'s ready?',
-                style: VivType.label.copyWith(color: c.textPrimary, fontSize: 14),
-              ),
-              const SizedBox(height: VivSpace.sm),
-              TextField(
-                controller: _email,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(hintText: 'you@example.com'),
-              ),
-              const SizedBox(height: VivSpace.sm),
-              VivButton(
-                label: 'Email me when it launches',
-                // TODO(api): no waitlist endpoint yet.
-                onPressed: () {
-                  ScaffoldMessenger.of(context)
-                      .showSnackBar(const SnackBar(content: Text('Thanks, we\'ll let you know.')));
-                  ref.read(authRepositoryProvider).signOut();
-                },
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: VivSpace.sm),
-        Center(
-          child: VivButton.text(
-            label: 'No thanks',
-            onPressed: () => ref.read(authRepositoryProvider).signOut(),
-          ),
+        PageHeader(title: 'VIV isn\'t built for you yet', subtitle: situation.notAFitReason),
+        const SizedBox(height: VivSpace.lg),
+        const VivNote(
+          text:
+              'We don\'t keep anything. Closing deletes your account straight away. We '
+              'only count, anonymously, that this answer came up, so we know what to build '
+              'next.',
         ),
       ],
     );
@@ -562,7 +557,10 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
     setState(() => _submitting = true);
     try {
       final draft = ref.read(onboardingDraftProvider);
-      final res = await ref.read(vivApiProvider).completeOnboarding(draft.toRequest());
+      final api = ref.read(vivApiProvider);
+      // Record the consent server-side before any health data is processed.
+      await api.setConsent(ConsentPurpose.healthDataProcessing, granted: true);
+      final res = await api.completeOnboarding(draft.toRequest());
       if (!mounted) return;
       context.go(Routes.building, extra: res.weeklyPlanJobId);
     } catch (e) {

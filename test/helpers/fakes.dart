@@ -318,7 +318,7 @@ final homeMoments = <String, HomeToday>{
 };
 
 /// Signed-in, fully onboarded user with a built week and nutrition plan.
-Future<List<Override>> appOverrides({HomeToday? home, AuthRepository? auth}) async {
+Future<List<Override>> appOverrides({HomeToday? home, AuthRepository? auth, Me? me}) async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
   if (auth == null) {
@@ -330,7 +330,8 @@ Future<List<Override>> appOverrides({HomeToday? home, AuthRepository? auth}) asy
     sharedPreferencesProvider.overrideWithValue(prefs),
     authRepositoryProvider.overrideWithValue(auth),
     authStateProvider.overrideWith((_) => Stream<User?>.value(MockUser())),
-    meProvider.overrideWith((_) async => fakeMe),
+    meProvider.overrideWith((_) async => me ?? fakeMe),
+    consentsProvider.overrideWith((_) async => {}),
     currentWeekProvider.overrideWith((_) async => fakeWeek()),
     weeklyNoteProvider.overrideWith((_) async => null),
     dayDetailProvider.overrideWith((_, _) async => fakeDay),
@@ -348,6 +349,7 @@ Future<void> pumpScreen(
   Brightness brightness = Brightness.light,
   HomeToday? home,
   AuthRepository? auth,
+  Me? me,
   List<Override> extra = const [],
 }) async {
   tester.view.physicalSize = size;
@@ -360,7 +362,7 @@ Future<void> pumpScreen(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        ...await appOverrides(home: home, auth: auth),
+        ...await appOverrides(home: home, auth: auth, me: me),
         ...extra,
       ],
       child: MaterialApp.router(

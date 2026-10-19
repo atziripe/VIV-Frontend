@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:viv/core/utils/dates.dart';
+import 'package:viv/data/models/account.dart';
 import 'package:viv/data/models/catalog.dart';
 import 'package:viv/features/onboarding/onboarding_draft.dart';
 
@@ -45,14 +46,6 @@ void main() {
     expect(d.toRequest().lastCycleStart, '2026-09-02');
   });
 
-  test('only natural / not sure pass the fit check', () {
-    expect(CycleSituation.values.where((s) => s.isFit), [
-      CycleSituation.natural,
-      CycleSituation.notSure,
-    ]);
-    expect(CycleSituation.notSure.apiValue, 'not_sure');
-  });
-
   test('step completeness gates Continue', () {
     const empty = OnboardingDraft();
     expect(empty.aboutYouComplete, isFalse);
@@ -77,5 +70,16 @@ void main() {
     };
     final ids = {for (final c in ActivityChoice.values) ...c.activities.map((a) => a.id)};
     expect(ids, accepted);
+  });
+
+  test('only a natural cycle is a fit; every other answer has an ineligibility reason', () {
+    for (final s in CycleSituation.values) {
+      expect(s.isFit, s == CycleSituation.natural, reason: s.name);
+      expect(s.ineligibilityReason == null, s.isFit, reason: s.name);
+    }
+    expect(CycleSituation.notSure.ineligibilityReason, IneligibilityReason.notSure);
+    expect(CycleSituation.hormonal.ineligibilityReason?.id, 'hormonal_contraception');
+    expect(CycleSituation.pregnant.ineligibilityReason?.id, 'pregnant_or_postpartum');
+    expect(CycleSituation.menopause.ineligibilityReason?.id, 'perimenopause_or_menopause');
   });
 }

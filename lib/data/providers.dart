@@ -8,6 +8,7 @@ import '../core/network/api_exception.dart';
 import '../core/utils/dates.dart';
 import '../features/auth/auth_repository.dart';
 import 'api/viv_api.dart';
+import 'models/account.dart';
 import 'models/checkin.dart';
 import 'models/home.dart';
 import 'models/me.dart';
@@ -29,6 +30,12 @@ final meProvider = FutureProvider<Me?>((ref) async {
 });
 
 /// The week covering today (null if nothing has been generated yet).
+/// `GET /me/consents`, keyed by purpose.
+final consentsProvider = FutureProvider<Map<ConsentPurpose, ConsentItem>>((ref) async {
+  final items = await ref.watch(vivApiProvider).consents();
+  return {for (final i in items) i.purpose: i};
+});
+
 final currentWeekProvider = FutureProvider<WeeklyPlan?>((ref) {
   return ref.watch(vivApiProvider).currentWeek(Dates.todayYmd());
 });

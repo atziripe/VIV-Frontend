@@ -91,6 +91,14 @@ class NowCard extends TimelineItem {
 
 enum DayDotStatus { done, pending, rest }
 
+/// The backend has sent both `done` and `completed`; anything unrecognised is
+/// a planned day not done yet, never silently a rest day.
+DayDotStatus _dayDotStatus(String? v) => switch (v) {
+  'done' || 'completed' => DayDotStatus.done,
+  'rest' => DayDotStatus.rest,
+  _ => DayDotStatus.pending,
+};
+
 class DayDot {
   const DayDot({required this.weekday, required this.status, this.isToday = false});
 
@@ -103,7 +111,7 @@ class DayDot {
 
   factory DayDot.fromJson(Json j) => DayDot(
     weekday: j.strOr('weekday'),
-    status: DayDotStatus.values.asNameMap()[j.str('status')] ?? DayDotStatus.rest,
+    status: _dayDotStatus(j.str('status')),
     isToday: j.flag('is_today'),
   );
 }

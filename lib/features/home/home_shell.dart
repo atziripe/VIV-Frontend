@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/layout/responsive.dart';
 import '../../core/theme/viv_theme.dart';
+import '../profile/pending_deletion_banner.dart';
 
 /// Tabs: Today · Train · Eat · Recover. A text-only bottom bar with a dot
 /// over the active tab on phones; a navigation rail on wide screens.
@@ -44,13 +45,13 @@ class HomeShell extends StatelessWidget {
               ],
             ),
             VerticalDivider(width: 1, color: c.border),
-            Expanded(child: shell),
+            Expanded(child: PendingDeletionBanner(child: shell)),
           ],
         ),
       );
     }
     return Scaffold(
-      body: shell,
+      body: PendingDeletionBanner(child: shell),
       bottomNavigationBar: DecoratedBox(
         decoration: BoxDecoration(
           color: c.background,

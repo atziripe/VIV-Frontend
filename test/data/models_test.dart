@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:viv/data/models/account.dart';
 import 'package:viv/data/models/catalog.dart';
 import 'package:viv/data/models/checkin.dart';
 import 'package:viv/data/models/cycle.dart';
@@ -247,5 +248,29 @@ void main() {
     final done = JobStatus.fromJson({'status': 'done', 'draft_id': 'd1'});
     expect(done.state, JobState.done);
     expect(done.draftId, 'd1');
+  });
+
+  test('account deletion, consents and pending_deletion_at', () {
+    final schedule = DeletionSchedule.fromJson({
+      'pending_deletion_at': '2026-11-18T10:00:00Z',
+      'grace_period_days': 30,
+    });
+    expect(schedule.pendingDeletionAt.toUtc(), DateTime.utc(2026, 11, 18, 10));
+    expect(schedule.gracePeriodDays, 30);
+
+    expect(Me.fromJson({'id': 'u1'}).pendingDeletionAt, isNull);
+    expect(
+      Me.fromJson({'id': 'u1', 'pending_deletion_at': '2026-11-18T10:00:00Z'}).pendingDeletionAt,
+      isNotNull,
+    );
+
+    final item = ConsentItem.fromJson({
+      'purpose': 'ai_processing',
+      'granted': true,
+      'policy_version': '1.0',
+    });
+    expect(item?.purpose, ConsentPurpose.aiProcessing);
+    expect(item?.granted, isTrue);
+    expect(ConsentItem.fromJson({'purpose': 'something_new', 'granted': true}), isNull);
   });
 }

@@ -115,6 +115,23 @@ class ApiClient {
   Future<Map<String, dynamic>?> get(String path, {Map<String, dynamic>? query}) =>
       _send(() => _dio.get<dynamic>(path, queryParameters: query));
 
+  /// For endpoints whose body is a top-level JSON array.
+  Future<List<dynamic>> getList(String path, {Map<String, dynamic>? query}) async {
+    try {
+      final res = await _dio.get<dynamic>(path, queryParameters: query);
+      final data = res.data;
+      if (data is List) return data;
+      if (res.statusCode == 204 || data == null || (data is String && data.isEmpty)) return [];
+      throw ApiException(
+        statusCode: res.statusCode,
+        message: 'Unexpected response from server.',
+        body: data,
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   Future<Map<String, dynamic>?> post(String path, {Object? body, Map<String, dynamic>? query}) =>
       _send(() => _dio.post<dynamic>(path, data: body, queryParameters: query));
 

@@ -57,6 +57,16 @@ void main() {
     expect(h.timeline.single.status, TimelineStatus.upcoming);
   });
 
+  test('day dots accept done or completed, and never guess rest', () {
+    DayDotStatus status(String? s) => DayDot.fromJson({'weekday': 'monday', 'status': s}).status;
+    expect(status('done'), DayDotStatus.done);
+    expect(status('completed'), DayDotStatus.done);
+    expect(status('rest'), DayDotStatus.rest);
+    expect(status('pending'), DayDotStatus.pending);
+    expect(status('skipped'), DayDotStatus.pending);
+    expect(status(null), DayDotStatus.pending);
+  });
+
   test('TODAY / TONIGHT labels carry no clock time', () {
     final card = NowCard.fromJson({'kind': 'lights_out', 'label': 'TONIGHT', 'time': '23:00'});
     expect(card.showsTime, isFalse);
