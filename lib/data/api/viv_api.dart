@@ -58,6 +58,14 @@ class VivApi {
     return j?['account_deleted'] == true;
   }
 
+  /// Hands the backend the one-time Sign in with Apple authorization code. The
+  /// backend exchanges it with Apple for a refresh token (that needs VIV's
+  /// private key, so it can't happen on the device) and uses it to revoke
+  /// Apple access when the account is finally deleted.
+  Future<void> saveAppleAuthorizationCode(String code) async {
+    await _http.post('/me/apple-credentials', body: {'authorization_code': code});
+  }
+
   /// GDPR data export: a raw JSON dump of the user's current data.
   Future<Map<String, dynamic>> exportData() async => (await _http.get('/me/export')) ?? const {};
 

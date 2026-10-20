@@ -1,14 +1,17 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io' show Platform;
 import 'dart:math';
 
 import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../core/config/env.dart';
+import '../../data/api/viv_api.dart';
 import '../../firebase_options.dart';
 
 /// Thrown when the user backs out of a native sign-in sheet — not an error
@@ -20,9 +23,13 @@ class SignInCancelled implements Exception {
 /// Firebase Auth is the identity provider: the backend only verifies the
 /// Firebase ID token and auto-provisions the profile on the first call.
 class AuthRepository {
-  AuthRepository(this._auth);
+  AuthRepository(this._auth, {this.onAppleAuthorized});
 
   final FirebaseAuth _auth;
+
+  /// Receives Apple's authorization code once the Firebase session exists, so
+  /// the backend can store it for revoking Apple access on account deletion.
+  final Future<void> Function(String authorizationCode)? onAppleAuthorized;
   bool _googleInitialized = false;
 
   Stream<User?> authStateChanges() => _auth.authStateChanges();
@@ -74,12 +81,18 @@ class AuthRepository {
       if (e.code == AuthorizationErrorCode.canceled) throw const SignInCancelled();
       rethrow;
     }
-    final credential = OAuthProvider('apple.com').credential(
-      idToken: apple.identityToken,
-      rawNonce: rawNonce,
-      accessToken: apple.authorizationCode,
-    );
+    // The authorization code is single-use and goes to our backend, so it is
+    // deliberately not passed to Firebase here.
+    final credential = OAuthProvider('apple.com')
+        .credential(idToken: apple.identityToken, rawNonce: rawNonce);
     final result = await _auth.signInWithCredential(credential);
+    // Sent on every Apple sign-in: each one carries a fresh code, so accounts
+    // created before this existed get covered too. Never blocks signing in.
+    unawaited(
+      onAppleAuthorized?.call(apple.authorizationCode).catchError((Object e) {
+        debugPrint('Saving Apple credentials failed: $e');
+      }),
+    );
     // Apple only shares the name on the very first sign-in.
     final name = [apple.givenName, apple.familyName].whereType<String>().join(' ').trim();
     if (name.isNotEmpty && (result.user?.displayName ?? '').isEmpty) {
@@ -102,7 +115,10 @@ class AuthRepository {
 }
 
 final authRepositoryProvider = Provider<AuthRepository>(
-  (_) => AuthRepository(FirebaseAuth.instance),
+  (ref) => AuthRepository(
+    FirebaseAuth.instance,
+    onAppleAuthorized: (code) => ref.read(vivApiProvider).saveAppleAuthorizationCode(code),
+  ),
 );
 
 final authStateProvider = StreamProvider<User?>(

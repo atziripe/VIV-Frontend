@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:viv/core/network/api_client.dart';
 import 'package:viv/core/network/api_exception.dart';
+import 'package:viv/data/api/viv_api.dart';
 
 class _FakeTokens implements TokenSource {
   int refreshes = 0;
@@ -120,5 +121,14 @@ void main() {
       throwsA(isA<ApiException>().having((e) => e.isUnauthorized, 'unauthorized', isTrue)),
     );
     expect(adapter.seen, hasLength(2));
+  });
+
+  test('Apple authorization code goes to POST /me/apple-credentials (204)', () async {
+    final (http, adapter) = build((_) => ResponseBody.fromString('', 204));
+    await VivApi(http).saveAppleAuthorizationCode('c0de');
+    final req = adapter.seen.single;
+    expect(req.method, 'POST');
+    expect(req.path, '/me/apple-credentials');
+    expect(req.data, {'authorization_code': 'c0de'});
   });
 }
