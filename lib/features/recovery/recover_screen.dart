@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/analytics/analytics.dart';
 import '../../core/theme/viv_theme.dart';
 import '../../core/utils/dates.dart';
 import '../../core/widgets/widgets.dart';
@@ -142,6 +143,7 @@ class _ActionsState extends ConsumerState<_Actions> {
     setState(() => _saving = kind);
     try {
       await ref.read(vivApiProvider).saveRecoveryAction(widget.card.date, kind);
+      ref.read(analyticsProvider).recoveryActionLogged(kind.value);
       ref.invalidate(recoveryCardProvider(widget.card.date));
       ref.invalidate(homeTodayProvider);
     } catch (e) {

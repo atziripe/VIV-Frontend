@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/analytics/analytics.dart';
 import '../../core/theme/viv_theme.dart';
 import '../../core/utils/dates.dart';
 import '../../core/widgets/widgets.dart';
@@ -110,6 +111,7 @@ class _SessionState extends ConsumerState<_Session> {
   Future<void> _start() async {
     try {
       final log = await ref.read(vivApiProvider).startSession(widget.day.date);
+      ref.read(analyticsProvider).sessionStarted();
       // Refresh the cached day so going back shows "Resume", not "Start".
       ref.invalidate(dayDetailProvider(widget.day.date));
       if (mounted) setState(() => _log = log);
@@ -454,7 +456,20 @@ class _DoneViewState extends ConsumerState<_DoneView> {
   Future<void> _finish() async {
     setState(() => _saving = true);
     try {
-      await ref.read(vivApiProvider).completeSession(widget.day.date, feedback: _feedback);
+      final log = await ref
+          .read(vivApiProvider)
+          .completeSession(widget.day.date, feedback: _feedback);
+      final started = widget.startedAt;
+      ref
+          .read(analyticsProvider)
+          .sessionCompleted(
+            durationMin:
+                log.elapsedMinutes ??
+                (started == null
+                    ? 0
+                    : DateTime.now().toUtc().difference(started.toUtc()).inMinutes),
+            setsLogged: log.setsCompleted ?? widget.setsDone,
+          );
       ref.invalidate(dayDetailProvider(widget.day.date));
       ref.invalidate(recoveryCardProvider);
       ref.invalidate(homeTodayProvider);

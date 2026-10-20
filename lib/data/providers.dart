@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/analytics/analytics.dart';
 import '../core/network/api_exception.dart';
 import '../core/utils/dates.dart';
 import '../features/auth/auth_repository.dart';
@@ -29,13 +30,15 @@ final meProvider = FutureProvider<Me?>((ref) async {
   return ref.watch(vivApiProvider).getMe();
 });
 
-/// The week covering today (null if nothing has been generated yet).
-/// `GET /me/consents`, keyed by purpose.
+/// `GET /me/consents`, keyed by purpose. Empty while signed out.
 final consentsProvider = FutureProvider<Map<ConsentPurpose, ConsentItem>>((ref) async {
+  final user = await ref.watch(authStateProvider.future);
+  if (user == null) return {};
   final items = await ref.watch(vivApiProvider).consents();
   return {for (final i in items) i.purpose: i};
 });
 
+/// The week covering today (null if nothing has been generated yet).
 final currentWeekProvider = FutureProvider<WeeklyPlan?>((ref) {
   return ref.watch(vivApiProvider).currentWeek(Dates.todayYmd());
 });
@@ -100,6 +103,9 @@ class TodayCheckinNotifier extends Notifier<DailyCheckinResult?> {
     final result = await ref.read(vivApiProvider).submitCheckin(request);
     await ref.read(sharedPreferencesProvider).setString(_key, jsonEncode(result.toJson()));
     state = result;
+    ref
+        .read(analyticsProvider)
+        .checkinCompleted(need: request.need.value, suggestionShown: result.suggestion != null);
     // A check-in can generate the week or adapt today.
     ref.invalidate(currentWeekProvider);
     ref.invalidate(homeTodayProvider);
@@ -125,6 +131,7 @@ class TodayCheckinNotifier extends Notifier<DailyCheckinResult?> {
     );
     await ref.read(sharedPreferencesProvider).setString(_key, jsonEncode(updated.toJson()));
     state = updated;
+    ref.read(analyticsProvider).checkinSuggestionAccepted();
   }
 
   Future<void> clear() async {

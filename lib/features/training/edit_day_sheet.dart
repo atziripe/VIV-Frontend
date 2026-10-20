@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/analytics/analytics.dart';
 import '../../core/theme/viv_theme.dart';
 import '../../core/utils/dates.dart';
 import '../../core/widgets/widgets.dart';
@@ -54,6 +55,7 @@ class _EditDaySheetState extends ConsumerState<_EditDaySheet> {
               muscleGroup: _activity == Activity.strength ? _group.id : null,
             ),
           );
+      ref.read(analyticsProvider).weekDayEdited(toRest: _activity == null);
       ref.invalidate(currentWeekProvider);
       ref.invalidate(homeTodayProvider);
       ref.invalidate(weeklyNoteProvider);

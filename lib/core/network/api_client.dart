@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../analytics/analytics.dart';
 import '../config/env.dart';
 import 'api_exception.dart';
 
@@ -108,9 +109,17 @@ class _AuthInterceptor extends Interceptor {
 /// Thin typed wrapper over [Dio] that converts failures to [ApiException]
 /// and treats `204 No Content` as `null`.
 class ApiClient {
-  ApiClient(this._dio);
+  ApiClient(this._dio, {this.onError});
 
   final Dio _dio;
+
+  /// Told about every failed request: route and status only.
+  final void Function(String path, int? status)? onError;
+
+  ApiException _fail(DioException e) {
+    onError?.call(e.requestOptions.path, e.response?.statusCode);
+    return ApiException.fromDio(e);
+  }
 
   Future<Map<String, dynamic>?> get(String path, {Map<String, dynamic>? query}) =>
       _send(() => _dio.get<dynamic>(path, queryParameters: query));
@@ -128,7 +137,7 @@ class ApiClient {
         body: data,
       );
     } on DioException catch (e) {
-      throw ApiException.fromDio(e);
+      throw _fail(e);
     }
   }
 
@@ -153,9 +162,14 @@ class ApiClient {
         body: data,
       );
     } on DioException catch (e) {
-      throw ApiException.fromDio(e);
+      throw _fail(e);
     }
   }
 }
 
-final apiClientProvider = Provider<ApiClient>((ref) => ApiClient(ref.watch(dioProvider)));
+final apiClientProvider = Provider<ApiClient>(
+  (ref) => ApiClient(
+    ref.watch(dioProvider),
+    onError: (path, status) => ref.read(analyticsProvider).apiError(endpoint: path, status: status),
+  ),
+);

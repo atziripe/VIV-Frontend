@@ -1,4 +1,5 @@
 {
   "API_BASE_URL": "http://localhost:8080",
-  "APP_CHECK_DEBUG_TOKEN": ""
+  "APP_CHECK_DEBUG_TOKEN": "",
+  "AMPLITUDE_API_KEY": ""
 }

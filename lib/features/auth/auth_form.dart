@@ -3,6 +3,7 @@ import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/analytics/analytics.dart';
 import '../../core/theme/viv_theme.dart';
 import '../../core/widgets/widgets.dart';
 import 'auth_repository.dart';
@@ -16,7 +17,7 @@ class SocialSignIn extends ConsumerWidget {
   const SocialSignIn({super.key, required this.busy, required this.run});
 
   final AuthMethod? busy;
-  final Future<void> Function(AuthMethod method, Future<void> Function() action) run;
+  final Future<void> Function(AuthMethod method, Future<bool> Function() action) run;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -70,14 +71,23 @@ class _OrDivider extends StatelessWidget {
   }
 }
 
-/// Runs an auth action with shared busy/error handling.
-mixin AuthActionRunner<T extends StatefulWidget> on State<T> {
+/// Runs an auth action with shared busy/error handling and analytics.
+mixin AuthActionRunner<T extends ConsumerStatefulWidget> on ConsumerState<T> {
   AuthMethod? busy;
 
-  Future<void> runAuth(AuthMethod method, Future<void> Function() action) async {
+  /// `sign_up` or `log_in`, for analytics.
+  String get authScreen;
+
+  /// [action] returns whether it created a new account.
+  Future<void> runAuth(AuthMethod method, Future<bool> Function() action) async {
+    final analytics = ref.read(analyticsProvider);
     setState(() => busy = method);
+    analytics.authStarted(method: method.name, screen: authScreen);
     try {
-      await action();
+      final isNewUser = await action();
+      isNewUser
+          ? analytics.signUpCompleted(method: method.name)
+          : analytics.logInCompleted(method: method.name);
       // Success: the router redirects on the auth state change.
     } on SignInCancelled {
       // User closed the native sheet — nothing to report.

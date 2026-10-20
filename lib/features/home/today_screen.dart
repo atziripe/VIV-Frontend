@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/analytics/track_on_mount.dart';
 import '../../core/layout/responsive.dart';
 import '../../core/theme/viv_theme.dart';
 import '../../core/utils/dates.dart';
@@ -67,7 +68,15 @@ class TodayScreen extends ConsumerWidget {
                     padding: EdgeInsets.all(VivSpace.xxl),
                     child: LoadingView(),
                   ),
-                  data: (today) => today == null ? const _NoWeekCard() : _Timeline(home: today),
+                  data: (today) => today == null
+                      ? const _NoWeekCard()
+                      : TrackOnMount(
+                          track: (a) => a.homeViewed(
+                            nowCardKind: today.nowCard?.kind.name,
+                            isRestDay: today.isRestDay,
+                          ),
+                          child: _Timeline(home: today),
+                        ),
                 ),
               ],
             ),

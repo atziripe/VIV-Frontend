@@ -5,7 +5,9 @@ import 'package:mocktail/mocktail.dart';
 import 'package:viv/core/theme/viv_theme.dart';
 import 'package:viv/data/api/viv_api.dart';
 import 'package:viv/data/models/account.dart';
+import 'package:viv/data/models/catalog.dart';
 import 'package:viv/data/models/me.dart';
+import 'package:viv/data/models/onboarding.dart';
 import 'package:viv/features/onboarding/onboarding_draft.dart';
 import 'package:viv/features/onboarding/onboarding_screens.dart';
 import 'package:viv/features/profile/pending_deletion_banner.dart';
@@ -29,6 +31,7 @@ void main() {
   setUpAll(() {
     registerFallbackValue(ConsentPurpose.aiProcessing);
     registerFallbackValue(IneligibilityReason.notSure);
+    registerFallbackValue(_completeDraft.toRequest());
   });
 
   setUp(() {
@@ -133,7 +136,47 @@ void main() {
     verify(() => api.reportIneligibility(IneligibilityReason.perimenopauseOrMenopause)).called(1);
     verify(() => auth.signOut()).called(1);
   });
+
+  for (final optIn in [true, false]) {
+    testWidgets('Consent records health data, then analytics opt-in = $optIn', (tester) async {
+      when(() => api.completeOnboarding(any())).thenAnswer(
+        (_) async => const OnboardingResponse(onboardingCompleted: true, weeklyPlanJobId: 'job'),
+      );
+      await pumpScreen(
+        tester,
+        const ConsentScreen(),
+        auth: auth,
+        extra: [
+          vivApiProvider.overrideWithValue(api),
+          onboardingDraftProvider.overrideWith(() => _DraftWith(_completeDraft)),
+        ],
+      );
+      if (optIn) await tester.tap(find.textContaining('help improve VIV'));
+      await tester.pump();
+      await tester.tap(find.text('Build my week'));
+      await tester.pump(const Duration(milliseconds: 500));
+      verifyInOrder([
+        () => api.setConsent(ConsentPurpose.healthDataProcessing, granted: true),
+        () => api.setConsent(ConsentPurpose.researchProductImprovement, granted: optIn),
+        () => api.completeOnboarding(any()),
+      ]);
+    });
+  }
 }
+
+final _completeDraft = OnboardingDraft(
+  situation: CycleSituation.natural,
+  name: 'Atziri',
+  dob: DateTime(1996, 4, 12),
+  activities: const [ActivityChoice.strength],
+  goal: Goal.strengthMuscle,
+  daysPerWeek: DaysPerWeek.threeFour,
+  activityLevel: ActivityLevel.deskBound,
+  lastPeriod: LastPeriod.aboutAWeek,
+  cycleLength: CycleLength.typical,
+  periodLength: 5,
+  consent: true,
+);
 
 class _DraftWith extends OnboardingDraftNotifier {
   _DraftWith(this.initial);

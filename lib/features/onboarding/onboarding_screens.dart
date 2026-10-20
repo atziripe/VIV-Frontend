@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/analytics/analytics.dart';
 import '../../core/theme/viv_theme.dart';
 import '../../core/utils/dates.dart';
 import '../../core/widgets/widgets.dart';
 import '../../data/api/viv_api.dart';
 import '../../data/models/account.dart';
 import '../../data/models/catalog.dart';
+import '../../data/models/onboarding.dart';
 import '../../data/providers.dart';
 import '../../router/app_router.dart';
 import '../auth/auth_repository.dart';
@@ -18,6 +20,12 @@ import 'onboarding_draft.dart';
 // NOTE: Figma shows 3 steps; "About you" (name + date of birth, both required
 // by POST /onboarding) is an added step pending a design.
 const _totalSteps = 4;
+
+/// Moves to the next numbered step, recording that [step] was completed.
+void _next(WidgetRef ref, BuildContext context, String step, String route) {
+  ref.read(analyticsProvider).onboardingStepCompleted(step);
+  context.push(route);
+}
 
 /// Shared frame for numbered onboarding steps: back · "Step n of 4" ·
 /// progress bar · content · Continue.
@@ -76,7 +84,10 @@ class FitCheckScreen extends ConsumerWidget {
         label: 'Continue',
         onPressed: situation == null
             ? null
-            : () => context.push(situation.isFit ? Routes.aboutYou : Routes.notAFit),
+            : () {
+                if (situation.isFit) ref.read(analyticsProvider).fitCheckPassed();
+                context.push(situation.isFit ? Routes.aboutYou : Routes.notAFit);
+              },
       ),
       children: [
         const PageHeader(
@@ -235,7 +246,9 @@ class _AboutYouScreenState extends ConsumerState<AboutYouScreen> {
       step: 1,
       title: 'A little about you',
       subtitle: 'Used to size your training and nutrition. Only you see this.',
-      onContinue: draft.aboutYouComplete ? () => context.push(Routes.training) : null,
+      onContinue: draft.aboutYouComplete
+          ? () => _next(ref, context, 'about_you', Routes.training)
+          : null,
       children: [
         VivTextField(
           label: 'What should we call you?',
@@ -340,7 +353,9 @@ class TrainingPrefsScreen extends ConsumerWidget {
     return _StepPage(
       step: 2,
       title: 'How do you like to train?',
-      onContinue: draft.trainingComplete ? () => context.push(Routes.yourWeek) : null,
+      onContinue: draft.trainingComplete
+          ? () => _next(ref, context, 'training', Routes.yourWeek)
+          : null,
       children: [
         const FieldLabel('Pick any that apply'),
         Wrap(
@@ -388,7 +403,7 @@ class YourWeekScreen extends ConsumerWidget {
       step: 3,
       title: 'Your actual week',
       subtitle: 'Not the ideal one. The one you\'re really in.',
-      onContinue: draft.weekComplete ? () => context.push(Routes.cycle) : null,
+      onContinue: draft.weekComplete ? () => _next(ref, context, 'week', Routes.cycle) : null,
       children: [
         const FieldLabel('Days you can realistically train'),
         PillRow(
@@ -470,7 +485,7 @@ class CycleScreen extends ConsumerWidget {
       subtitle:
           'This is what lets VIV time your week instead of guessing at it. '
           'Rough answers are fine, check-ins sharpen them.',
-      onContinue: draft.cycleComplete ? () => context.push(Routes.consent) : null,
+      onContinue: draft.cycleComplete ? () => _next(ref, context, 'cycle', Routes.consent) : null,
       children: [
         const FieldLabel('Your last period started'),
         Wrap(
@@ -551,14 +566,25 @@ class ConsentScreen extends ConsumerStatefulWidget {
 class _ConsentScreenState extends ConsumerState<ConsentScreen> {
   bool _submitting = false;
 
+  /// Optional and off by default (GDPR opt-in): `research_product_improvement`,
+  /// which also gates product analytics.
+  bool _improve = false;
+
   Future<void> _build() async {
     setState(() => _submitting = true);
     try {
       final draft = ref.read(onboardingDraftProvider);
       final api = ref.read(vivApiProvider);
+      final analytics = ref.read(analyticsProvider);
       // Record the consent server-side before any health data is processed.
       await api.setConsent(ConsentPurpose.healthDataProcessing, granted: true);
+      await api.setConsent(ConsentPurpose.researchProductImprovement, granted: _improve);
+      // Releases (or drops) the events held since Welcome.
+      analytics.setConsent(_improve ? AnalyticsConsent.granted : AnalyticsConsent.denied);
+      ref.invalidate(consentsProvider);
+      analytics.consentGiven(analytics: _improve);
       final res = await api.completeOnboarding(draft.toRequest());
+      analytics.onboardingCompleted();
       if (!mounted) return;
       context.go(Routes.building, extra: res.weeklyPlanJobId);
     } catch (e) {
@@ -614,6 +640,31 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
             ],
           ),
         ),
+        const SizedBox(height: VivSpace.sm),
+        VivCard(
+          tone: _improve ? VivCardTone.highlight : VivCardTone.surface,
+          onTap: () => setState(() => _improve = !_improve),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox.square(
+                dimension: 24,
+                child: Checkbox(
+                  value: _improve,
+                  onChanged: (v) => setState(() => _improve = v ?? false),
+                ),
+              ),
+              const SizedBox(width: VivSpace.sm),
+              Expanded(
+                child: Text(
+                  'Optional: help improve VIV with usage data, like which screens I use. '
+                  'Never my cycle or health answers.',
+                  style: VivType.bodySmall.copyWith(color: c.textPrimary),
+                ),
+              ),
+            ],
+          ),
+        ),
         const SizedBox(height: VivSpace.md),
         Align(
           alignment: Alignment.centerLeft,
@@ -648,14 +699,21 @@ class _BuildingWeekScreenState extends ConsumerState<BuildingWeekScreen> {
 
   Future<void> _wait() async {
     final jobId = GoRouterState.of(context).extra as String?;
+    final started = DateTime.now();
+    var failed = jobId == null;
     if (jobId != null) {
       try {
-        await ref.read(vivApiProvider).waitForWeeklyPlan(jobId);
+        final status = await ref.read(vivApiProvider).waitForWeeklyPlan(jobId);
+        failed = status.state != JobState.done;
       } catch (_) {
         // Onboarding itself succeeded; Today offers to generate the week
         // if the job failed or timed out.
+        failed = true;
       }
     }
+    ref
+        .read(analyticsProvider)
+        .firstWeekReady(waitSeconds: DateTime.now().difference(started).inSeconds, failed: failed);
     ref.invalidate(meProvider);
     ref.invalidate(currentWeekProvider);
     ref.invalidate(homeTodayProvider);

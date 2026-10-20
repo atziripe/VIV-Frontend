@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/analytics/analytics.dart';
 import '../../data/api/viv_api.dart';
 import '../../data/providers.dart';
 
@@ -32,6 +33,7 @@ class MealSelections extends Notifier<Map<String, int>> {
         .read(vivApiProvider)
         .selectMeal(weekday: weekday.toLowerCase(), mealSlot: slot, optionIndex: optionIndex);
     state = {...state, keyFor(weekday, slot): optionIndex};
+    ref.read(analyticsProvider).mealSwapped();
     await ref.read(sharedPreferencesProvider).setString(_key, jsonEncode(state));
   }
 }

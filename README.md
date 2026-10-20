@@ -16,6 +16,7 @@ plan that adapts to your week and your menstrual cycle.
 | Auth | Firebase Auth (email, Google, Apple) → ID token as `Authorization: Bearer` |
 | App Check | `firebase_app_check`, sent as `X-Firebase-AppCheck` (backend is in monitor mode) |
 | Local cache | `shared_preferences` (today's check-in result, meal choices) |
+| Analytics | `amplitude_flutter` (EU), consent-gated. Plan in [`docs/analytics.md`](docs/analytics.md) |
 
 ## Getting started
 
@@ -47,6 +48,7 @@ flutter run --dart-define=API_BASE_URL=https://your-api-host
 | `GOOGLE_SERVER_CLIENT_ID` | project web client | Google Sign-In ID token on Android |
 | `APP_CHECK_DEBUG` | `true` outside release | Use App Check debug providers |
 | `APP_CHECK_DEBUG_TOKEN` | — | Fixed debug token registered in Firebase (keep it out of git) |
+| `AMPLITUDE_API_KEY` | — | Amplitude project key; empty disables analytics |
 
 ## Project layout
 

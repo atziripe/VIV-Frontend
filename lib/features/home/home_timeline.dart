@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/analytics/analytics.dart';
 import '../../core/theme/viv_theme.dart';
 import '../../core/utils/dates.dart';
 import '../../core/widgets/widgets.dart';
@@ -180,11 +181,16 @@ class _NowMomentCardState extends ConsumerState<NowMomentCard> {
     );
     if (ok != true) return;
     // Empty activity_type turns the day into a rest day.
-    await _run('secondary', () => ref.read(vivApiProvider).editDay(DaySlotEdit(date: widget.date)));
+    await _run('secondary', () async {
+      await ref.read(vivApiProvider).editDay(DaySlotEdit(date: widget.date));
+      ref.read(analyticsProvider).weekDayEdited(toRest: true);
+    });
   }
 
-  Future<void> _recovery(RecoveryActionKind kind) =>
-      _run(kind.value, () => ref.read(vivApiProvider).saveRecoveryAction(widget.date, kind));
+  Future<void> _recovery(RecoveryActionKind kind) => _run(kind.value, () async {
+    await ref.read(vivApiProvider).saveRecoveryAction(widget.date, kind);
+    ref.read(analyticsProvider).recoveryActionLogged(kind.value);
+  });
 
   /// Buttons per moment kind. `cta_label` comes from the backend; the action
   /// itself maps to the screen or endpoint `cta_action` names.
@@ -246,7 +252,12 @@ class _NowMomentCardState extends ConsumerState<NowMomentCard> {
     label: label,
     height: 48,
     loading: _busy == id,
-    onPressed: _busy == null ? onTap : null,
+    onPressed: _busy == null
+        ? () {
+            ref.read(analyticsProvider).nowCardTapped(card.kind.name);
+            onTap();
+          }
+        : null,
   );
 
   Widget _secondary(String label, VoidCallback onTap, {String id = 'secondary'}) =>

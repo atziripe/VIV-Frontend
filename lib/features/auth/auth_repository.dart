@@ -36,17 +36,22 @@ class AuthRepository {
 
   User? get currentUser => _auth.currentUser;
 
-  Future<void> signUpWithEmail(String email, String password) async {
+  // Every sign-in method returns whether it created a new account, so the
+  // caller can tell a sign-up from a log-in (Apple and Google do both).
+
+  Future<bool> signUpWithEmail(String email, String password) async {
     await _auth.createUserWithEmailAndPassword(email: email.trim(), password: password);
+    return true;
   }
 
-  Future<void> signInWithEmail(String email, String password) async {
+  Future<bool> signInWithEmail(String email, String password) async {
     await _auth.signInWithEmailAndPassword(email: email.trim(), password: password);
+    return false;
   }
 
   Future<void> sendPasswordReset(String email) => _auth.sendPasswordResetEmail(email: email.trim());
 
-  Future<void> signInWithGoogle() async {
+  Future<bool> signInWithGoogle() async {
     final google = GoogleSignIn.instance;
     if (!_googleInitialized) {
       await google.initialize(
@@ -64,10 +69,13 @@ class AuthRepository {
       rethrow;
     }
     final idToken = account.authentication.idToken;
-    await _auth.signInWithCredential(GoogleAuthProvider.credential(idToken: idToken));
+    final result = await _auth.signInWithCredential(
+      GoogleAuthProvider.credential(idToken: idToken),
+    );
+    return result.additionalUserInfo?.isNewUser ?? false;
   }
 
-  Future<void> signInWithApple() async {
+  Future<bool> signInWithApple() async {
     // Nonce protects against replay; Firebase checks the hashed value.
     final rawNonce = _randomNonce();
     final hashed = sha256.convert(utf8.encode(rawNonce)).toString();
@@ -98,6 +106,7 @@ class AuthRepository {
     if (name.isNotEmpty && (result.user?.displayName ?? '').isEmpty) {
       await result.user?.updateDisplayName(name);
     }
+    return result.additionalUserInfo?.isNewUser ?? false;
   }
 
   Future<void> signOut() async {

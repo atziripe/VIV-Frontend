@@ -18,6 +18,9 @@ class SignUpScreen extends ConsumerStatefulWidget {
 }
 
 class _SignUpScreenState extends ConsumerState<SignUpScreen> with AuthActionRunner {
+  @override
+  String get authScreen => 'sign_up';
+
   final _form = GlobalKey<FormState>();
   final _email = TextEditingController();
   final _password = TextEditingController();

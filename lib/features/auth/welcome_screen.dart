@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/analytics/track_on_mount.dart';
 import '../../core/layout/responsive.dart';
 import '../../core/theme/viv_theme.dart';
 import '../../core/widgets/widgets.dart';
@@ -14,67 +15,70 @@ class WelcomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // The hero is dark in both modes, so force the dark palette here.
-    return Theme(
-      data: VivTheme.dark(),
-      child: Builder(
-        builder: (context) {
-          final c = context.viv;
-          return Scaffold(
-            backgroundColor: VivPalette.zeus,
-            body: Stack(
-              fit: StackFit.expand,
-              children: [
-                const _HeroBackdrop(),
-                SafeArea(
-                  child: ResponsiveCenter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: VivSpace.xl),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: VivSpace.md),
-                          const VivWordmark(),
-                          const Spacer(),
-                          Semantics(
-                            header: true,
-                            child: Text(
-                              'Some weeks you train. Most weeks, life wins.',
-                              style: VivType.display.copyWith(color: c.textPrimary),
+    return TrackOnMount(
+      track: (a) => a.welcomeViewed(),
+      child: Theme(
+        data: VivTheme.dark(),
+        child: Builder(
+          builder: (context) {
+            final c = context.viv;
+            return Scaffold(
+              backgroundColor: VivPalette.zeus,
+              body: Stack(
+                fit: StackFit.expand,
+                children: [
+                  const _HeroBackdrop(),
+                  SafeArea(
+                    child: ResponsiveCenter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: VivSpace.xl),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: VivSpace.md),
+                            const VivWordmark(),
+                            const Spacer(),
+                            Semantics(
+                              header: true,
+                              child: Text(
+                                'Some weeks you train. Most weeks, life wins.',
+                                style: VivType.display.copyWith(color: c.textPrimary),
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: VivSpace.sm),
-                          Text(
-                            'VIV builds a week around the energy you actually have '
-                            'and rebuilds it the moment the week changes.',
-                            style: VivType.bodySmall.copyWith(
-                              color: VivPalette.vistaWhite.withValues(alpha: 0.76),
+                            const SizedBox(height: VivSpace.sm),
+                            Text(
+                              'VIV builds a week around the energy you actually have '
+                              'and rebuilds it the moment the week changes.',
+                              style: VivType.bodySmall.copyWith(
+                                color: VivPalette.vistaWhite.withValues(alpha: 0.76),
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: VivSpace.xl),
-                          VivButton(
-                            label: 'Get started',
-                            variant: VivButtonVariant.inverse,
-                            onPressed: () => context.push(Routes.signUp),
-                          ),
-                          const SizedBox(height: VivSpace.xs),
-                          Center(
-                            child: VivButton.text(
-                              label: 'I already have an account',
-                              onPressed: () => context.push(Routes.logIn),
+                            const SizedBox(height: VivSpace.xl),
+                            VivButton(
+                              label: 'Get started',
+                              variant: VivButtonVariant.inverse,
+                              onPressed: () => context.push(Routes.signUp),
                             ),
-                          ),
-                          const SizedBox(height: VivSpace.md),
-                          const LegalFooter(prefix: 'By continuing you agree to VIV\'s'),
-                          const SizedBox(height: VivSpace.md),
-                        ],
+                            const SizedBox(height: VivSpace.xs),
+                            Center(
+                              child: VivButton.text(
+                                label: 'I already have an account',
+                                onPressed: () => context.push(Routes.logIn),
+                              ),
+                            ),
+                            const SizedBox(height: VivSpace.md),
+                            const LegalFooter(prefix: 'By continuing you agree to VIV\'s'),
+                            const SizedBox(height: VivSpace.md),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          );
-        },
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }

@@ -17,6 +17,9 @@ class LogInScreen extends ConsumerStatefulWidget {
 }
 
 class _LogInScreenState extends ConsumerState<LogInScreen> with AuthActionRunner {
+  @override
+  String get authScreen => 'log_in';
+
   final _form = GlobalKey<FormState>();
   final _email = TextEditingController();
   final _password = TextEditingController();

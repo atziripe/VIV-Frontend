@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/analytics/analytics.dart';
 import '../../core/theme/viv_theme.dart';
 import '../../core/utils/dates.dart';
 import '../../core/widgets/widgets.dart';
@@ -26,6 +27,7 @@ class _PendingDeletionBannerState extends ConsumerState<PendingDeletionBanner> {
     setState(() => _cancelling = true);
     try {
       await ref.read(vivApiProvider).cancelAccountDeletion();
+      ref.read(analyticsProvider).deletionCancelled();
       ref.invalidate(meProvider);
       await ref.read(meProvider.future);
       if (mounted) {

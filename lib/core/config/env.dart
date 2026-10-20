@@ -24,6 +24,9 @@ abstract final class Env {
   /// token per simulator and prints it to the device log. Keep it out of git.
   static const appCheckDebugToken = String.fromEnvironment('APP_CHECK_DEBUG_TOKEN');
 
+  /// Amplitude project API key (EU data centre). Empty disables analytics.
+  static const amplitudeApiKey = String.fromEnvironment('AMPLITUDE_API_KEY');
+
   /// Web client ID of the Firebase project (Google Sign-In `serverClientId`,
   /// required on Android to receive an ID token). It's the `client_type: 3`
   /// entry in `google-services.json` — a public identifier, not a secret.

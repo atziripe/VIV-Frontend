@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../core/analytics/analytics.dart';
 import '../../core/theme/viv_theme.dart';
 import '../../core/utils/dates.dart';
 import '../../core/widgets/widgets.dart';
@@ -59,6 +60,7 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
     if (!await _confirm(_ConfirmCopy.schedule) || !mounted) return;
     await _run(_Busy.schedule, () async {
       final schedule = await _api.scheduleAccountDeletion();
+      ref.read(analyticsProvider).deletionScheduled();
       ref.invalidate(meProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -74,12 +76,15 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
 
   Future<void> _cancelDeletion() => _run(_Busy.cancel, () async {
     await _api.cancelAccountDeletion();
+    ref.read(analyticsProvider).deletionCancelled();
     ref.invalidate(meProvider);
   });
 
   Future<void> _withdrawConsent() async {
     if (!await _confirm(_ConfirmCopy.withdraw) || !mounted) return;
     await _run(_Busy.withdraw, () async {
+      // Tracked first: once the account is gone there's no one to attribute it to.
+      ref.read(analyticsProvider).consentWithdrawn();
       // Deletes the account immediately — no grace period.
       await _api.setConsent(ConsentPurpose.healthDataProcessing, granted: false);
       await endSessionLocally(ref);
@@ -90,6 +95,17 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
     setState(() => _savingConsent.add(purpose));
     try {
       await _api.setConsent(purpose, granted: granted);
+      final analytics = ref.read(analyticsProvider);
+      void track() => analytics.consentChanged(purpose: purpose.id, granted: granted);
+      if (purpose == ConsentPurpose.researchProductImprovement) {
+        // This purpose gates analytics itself: record turning it off while
+        // still allowed, and turning it on once allowed.
+        if (!granted) track();
+        analytics.setConsent(granted ? AnalyticsConsent.granted : AnalyticsConsent.denied);
+        if (granted) track();
+      } else {
+        track();
+      }
       ref.invalidate(consentsProvider);
       await ref.read(consentsProvider.future);
     } catch (e) {
@@ -111,6 +127,7 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
         sharePositionOrigin: shareOrigin,
       ),
     );
+    ref.read(analyticsProvider).dataExported();
   });
 
   @override
@@ -143,7 +160,8 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
           (
             ConsentPurpose.researchProductImprovement,
             'Help improve VIV',
-            'Lets VIV use your data, without your name, to improve its recommendations.',
+            'Usage data, like which screens you use, to improve VIV. Never your cycle or '
+                'health answers.',
           ),
         ])
           _Row(
