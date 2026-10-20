@@ -142,8 +142,6 @@ class _NotAFitScreenState extends ConsumerState<NotAFitScreen> {
 
   /// `POST /onboarding/ineligibility` records the reason anonymously and
   /// deletes the account right away, so nothing about this person is kept.
-  // Sign in with Apple isn't revoked here: the user didn't ask to delete an
-  // account, so a second Apple sheet would only confuse.
   Future<void> _close(IneligibilityReason reason) async {
     setState(() => _closing = true);
     try {

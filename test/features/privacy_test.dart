@@ -6,7 +6,6 @@ import 'package:viv/core/theme/viv_theme.dart';
 import 'package:viv/data/api/viv_api.dart';
 import 'package:viv/data/models/account.dart';
 import 'package:viv/data/models/me.dart';
-import 'package:viv/features/auth/auth_repository.dart';
 import 'package:viv/features/onboarding/onboarding_draft.dart';
 import 'package:viv/features/onboarding/onboarding_screens.dart';
 import 'package:viv/features/profile/pending_deletion_banner.dart';
@@ -37,7 +36,6 @@ void main() {
     api = _MockVivApi();
     when(() => auth.authStateChanges()).thenAnswer((_) => Stream.value(null));
     when(() => auth.signOut()).thenAnswer((_) async {});
-    when(() => auth.isAppleUser).thenReturn(false);
     when(() => api.scheduleAccountDeletion())
         .thenAnswer((_) async => DeletionSchedule(pendingDeletionAt: DateTime(2026, 11, 18)));
     when(() => api.cancelAccountDeletion()).thenAnswer((_) async {});
@@ -70,30 +68,6 @@ void main() {
       await confirm(tester, 'Delete my account', 'Delete in 30 days');
       verify(() => api.scheduleAccountDeletion()).called(1);
       verifyNever(() => auth.signOut());
-    });
-
-    testWidgets('Apple accounts revoke Apple access first', (tester) async {
-      when(() => auth.isAppleUser).thenReturn(true);
-      when(() => auth.revokeAppleAccess()).thenAnswer((_) async {});
-      await pumpPrivacy(tester);
-      await confirm(tester, 'Delete my account', 'Delete in 30 days');
-      verifyInOrder([() => auth.revokeAppleAccess(), () => api.scheduleAccountDeletion()]);
-    });
-
-    testWidgets('cancelling the Apple sheet schedules nothing', (tester) async {
-      when(() => auth.isAppleUser).thenReturn(true);
-      when(() => auth.revokeAppleAccess()).thenThrow(const SignInCancelled());
-      await pumpPrivacy(tester);
-      await confirm(tester, 'Delete my account', 'Delete in 30 days');
-      verifyNever(() => api.scheduleAccountDeletion());
-    });
-
-    testWidgets('a failed revoke still schedules the deletion', (tester) async {
-      when(() => auth.isAppleUser).thenReturn(true);
-      when(() => auth.revokeAppleAccess()).thenThrow(Exception('not configured'));
-      await pumpPrivacy(tester);
-      await confirm(tester, 'Delete my account', 'Delete in 30 days');
-      verify(() => api.scheduleAccountDeletion()).called(1);
     });
 
     testWidgets('a pending deletion offers to keep the account', (tester) async {

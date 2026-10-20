@@ -58,7 +58,6 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
   Future<void> _scheduleDeletion() async {
     if (!await _confirm(_ConfirmCopy.schedule) || !mounted) return;
     await _run(_Busy.schedule, () async {
-      if (!await revokeAppleIfNeeded(ref)) return;
       final schedule = await _api.scheduleAccountDeletion();
       ref.invalidate(meProvider);
       if (mounted) {
@@ -81,7 +80,6 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
   Future<void> _withdrawConsent() async {
     if (!await _confirm(_ConfirmCopy.withdraw) || !mounted) return;
     await _run(_Busy.withdraw, () async {
-      if (!await revokeAppleIfNeeded(ref)) return;
       // Deletes the account immediately — no grace period.
       await _api.setConsent(ConsentPurpose.healthDataProcessing, granted: false);
       await endSessionLocally(ref);
