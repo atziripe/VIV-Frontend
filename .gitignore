@@ -50,5 +50,7 @@ app.*.map.json
 # Golden/screenshot scratch output
 test/**/failures/
 
-# Local run config (App Check debug token, local URLs). Copy from dart_defines.example.json.
-dart_defines.local.json
+# Run configs per environment (App Check debug token, API URLs, Amplitude keys).
+# Copy from dart_defines.example.json, which is the only one committed.
+dart_defines.*.json
+!dart_defines.example.json
