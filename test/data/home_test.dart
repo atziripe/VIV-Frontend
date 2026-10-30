@@ -72,14 +72,19 @@ void main() {
     expect(card.showsTime, isFalse);
   });
 
-  test('phaseCountdownText', () {
+  test('phaseCountdownText uses McNulty names', () {
     const f = CyclePhase.follicular, o = CyclePhase.ovulatory;
-    expect(phaseCountdownText(f, o, 3), 'Follicular phase · Ovulatory in 3 days');
-    expect(phaseCountdownText(f, o, 1), 'Follicular phase · Ovulatory tomorrow');
-    expect(phaseCountdownText(f, o, 0), 'Follicular phase · Ovulatory starts today');
-    expect(phaseCountdownText(f, null, 5), 'Follicular phase · Next phase in 5 days');
-    expect(phaseCountdownText(f, o, null), 'Follicular phase');
+    expect(phaseCountdownText(f, o, 3), 'Late follicular phase · Ovulatory in 3 days');
+    expect(phaseCountdownText(f, o, 1), 'Late follicular phase · Ovulatory tomorrow');
+    expect(phaseCountdownText(f, o, 0), 'Late follicular phase · Ovulatory starts today');
+    expect(phaseCountdownText(f, null, 5), 'Late follicular phase · Next phase in 5 days');
+    expect(phaseCountdownText(f, o, null), 'Late follicular phase');
     expect(phaseCountdownText(null, null, null), isNull);
+    // No "menstrual" phase: menstruation sits inside early follicular.
+    expect(
+      phaseCountdownText(CyclePhase.menstrual, f, 4),
+      'Early follicular phase · Late follicular in 4 days',
+    );
   });
 
   group('composeHomeEntries', () {

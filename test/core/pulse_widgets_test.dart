@@ -87,7 +87,13 @@ Widget _gallery({required VoidCallback onTap, bool selected = true}) => ListView
   ],
 );
 
-Future<void> _pump(WidgetTester tester, Widget child, {Size? size, Brightness? brightness}) async {
+Future<void> _pump(
+  WidgetTester tester,
+  Widget child, {
+  Size? size,
+  Brightness? brightness,
+  bool settle = true,
+}) async {
   tester.view.physicalSize = size ?? const Size(360, 1600);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
@@ -101,7 +107,7 @@ Future<void> _pump(WidgetTester tester, Widget child, {Size? size, Brightness? b
       home: Scaffold(body: child),
     ),
   );
-  await tester.pumpAndSettle();
+  settle ? await tester.pumpAndSettle() : await tester.pump();
 }
 
 void main() {
@@ -137,8 +143,15 @@ void main() {
 
   testWidgets('a busy pill ignores taps', (tester) async {
     var taps = 0;
-    await _pump(tester, PillButton(label: 'Save', busy: true, onPressed: () => taps++));
-    await tester.tap(find.text('Save'));
+    await _pump(
+      tester,
+      PillButton(label: 'Save', busy: true, onPressed: () => taps++),
+      settle: false,
+    );
+    // A spinner replaces the label while busy.
+    expect(find.text('Save'), findsNothing);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    await tester.tap(find.byType(PillButton));
     expect(taps, 0);
   });
 

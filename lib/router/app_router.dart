@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/theme/viv_motion.dart';
 import '../features/auth/log_in_screen.dart';
 import '../features/auth/sign_up_screen.dart';
 import '../features/auth/welcome_screen.dart';
@@ -145,7 +146,21 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         parentNavigatorKey: _rootKey,
         path: Routes.checkin,
-        pageBuilder: (_, _) => const MaterialPage(fullscreenDialog: true, child: CheckinScreen()),
+        // Rises over Home in 460 ms.
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          fullscreenDialog: true,
+          transitionDuration: const Duration(milliseconds: 460),
+          reverseTransitionDuration: const Duration(milliseconds: 320),
+          child: const CheckinScreen(),
+          transitionsBuilder: (context, animation, _, child) => SlideTransition(
+            position: Tween(
+              begin: const Offset(0, 1),
+              end: Offset.zero,
+            ).animate(CurvedAnimation(parent: animation, curve: VivMotion.curve)),
+            child: child,
+          ),
+        ),
       ),
       GoRoute(
         parentNavigatorKey: _rootKey,

@@ -57,10 +57,16 @@ class HomeShell extends StatelessWidget {
           color: c.page,
           border: Border(top: BorderSide(color: c.line)),
         ),
-        child: SafeArea(
-          top: false,
+        child: Padding(
+          // 10 top, 30 bottom inset (the home indicator, or a floor of 14).
+          padding: EdgeInsets.fromLTRB(
+            4,
+            10,
+            4,
+            MediaQuery.paddingOf(context).bottom > 0 ? MediaQuery.paddingOf(context).bottom : 14,
+          ),
           child: SizedBox(
-            height: 56,
+            height: 34,
             child: Row(
               children: [
                 for (var i = 0; i < _tabs.length; i++)
@@ -90,34 +96,32 @@ class _TabButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.viv;
-    final color = selected ? c.accent : c.subtle;
     return Semantics(
       selected: selected,
       button: true,
       label: '$label tab',
       excludeSemantics: true,
-      child: InkResponse(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: onTap,
-        radius: 36,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            AnimatedOpacity(
-              opacity: selected ? 1 : 0,
-              duration: const Duration(milliseconds: 150),
-              child: Container(
-                width: 4,
-                height: 4,
-                decoration: BoxDecoration(color: c.accent, shape: BoxShape.circle),
+            Container(
+              width: 5,
+              height: 5,
+              decoration: BoxDecoration(
+                color: selected ? c.accent : Colors.transparent,
+                shape: BoxShape.circle,
               ),
             ),
             const SizedBox(height: 6),
             Text(
               label,
-              style: VivType.caption.copyWith(
-                color: color,
+              style: VivType.meta.copyWith(
                 fontSize: 12,
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                color: selected ? c.ink : c.muted,
               ),
             ),
           ],

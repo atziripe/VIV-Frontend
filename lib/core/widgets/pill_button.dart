@@ -32,6 +32,9 @@ enum PillSize {
   /// 54: in-card buttons.
   control(VivSize.control, 16.5, FontWeight.w700),
 
+  /// 50: the secondary under a bottom CTA ("Keep the original").
+  medium(50, 16.5, FontWeight.w600),
+
   /// 48: compact.
   compact(VivSize.compact, 15, FontWeight.w600);
 
@@ -43,8 +46,9 @@ enum PillSize {
 
 /// A fully rounded Pulse button. Primary-style pills press to 97%.
 ///
-/// There are no spinners in Pulse: while [busy] the pill only stops taking
-/// taps, so a double tap can't send twice.
+/// While [busy] the pill shows a small spinner in place of the label, so a
+/// wait on the network reads as "working", and it ignores taps so a double
+/// tap can't send twice.
 class PillButton extends StatelessWidget {
   const PillButton({
     super.key,
@@ -91,23 +95,31 @@ class PillButton extends StatelessWidget {
       color: fg,
     );
 
-    final label = Row(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        if (icon != null) ...[
-          IconTheme(
-            data: IconThemeData(color: fg, size: 20),
-            child: icon!,
-          ),
-          const SizedBox(width: 8),
-        ],
-        Flexible(
-          child: Text(this.label, style: style, maxLines: 1, overflow: TextOverflow.ellipsis),
-        ),
-        if (arrow) ...[const SizedBox(width: 8), Text('→', style: style.copyWith(fontSize: 18))],
-      ],
-    );
+    final label = busy
+        ? SizedBox.square(
+            dimension: 20,
+            child: CircularProgressIndicator(strokeWidth: 2.2, color: fg),
+          )
+        : Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (icon != null) ...[
+                IconTheme(
+                  data: IconThemeData(color: fg, size: 20),
+                  child: icon!,
+                ),
+                const SizedBox(width: 8),
+              ],
+              Flexible(
+                child: Text(this.label, style: style, maxLines: 1, overflow: TextOverflow.ellipsis),
+              ),
+              if (arrow) ...[
+                const SizedBox(width: 8),
+                Text('→', style: style.copyWith(fontSize: 18)),
+              ],
+            ],
+          );
 
     final button = Semantics(
       button: true,

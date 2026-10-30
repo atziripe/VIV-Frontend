@@ -143,3 +143,87 @@ class TodayCheckinNotifier extends Notifier<DailyCheckinResult?> {
 final todayCheckinProvider = NotifierProvider<TodayCheckinNotifier, DailyCheckinResult?>(
   TodayCheckinNotifier.new,
 );
+
+/// What she chose after today's check-in. Drives the Home field's tag
+/// ("Adjusted · your call", "Kept · your call").
+enum TodayDecision {
+  /// Took the proposed session.
+  adjusted,
+
+  /// Kept the original when VIV proposed a change.
+  kept,
+
+  /// Nothing to change; she confirmed the plan.
+  asPlanned,
+
+  /// Skipped the check-in: usual plan.
+  skipped,
+}
+
+/// Today's decision plus her answers in short ("Restless · Heavier ·
+/// Packed · Meet me") for the "Checked in" row. Device-only: the API has
+/// neither a skip nor a "kept" state.
+class TodayLoop {
+  const TodayLoop({required this.date, required this.decision, this.summary, this.answers});
+
+  final String date;
+  final TodayDecision decision;
+  final String? summary;
+
+  /// Today's four answers, to rebuild "Why today" on Home.
+  final DailyCheckinRequest? answers;
+
+  Map<String, dynamic> toJson() => {
+    'date': date,
+    'decision': decision.name,
+    'summary': ?summary,
+    'answers': ?answers?.toJson(),
+  };
+
+  static TodayLoop? fromJson(Map<String, dynamic> j) {
+    final decision = TodayDecision.values.asNameMap()[j['decision']];
+    final date = j['date'];
+    if (decision == null || date is! String) return null;
+    final a = j['answers'];
+    return TodayLoop(
+      date: date,
+      decision: decision,
+      summary: j['summary'] as String?,
+      answers: a is Map<String, dynamic> ? DailyCheckinRequest.tryFromJson(a) : null,
+    );
+  }
+}
+
+class TodayLoopNotifier extends Notifier<TodayLoop?> {
+  static const _key = 'viv.checkin.decision';
+
+  @override
+  TodayLoop? build() {
+    ref.watch(authStateProvider);
+    final raw = ref.read(sharedPreferencesProvider).getString(_key);
+    if (raw == null) return null;
+    try {
+      final loop = TodayLoop.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+      return loop?.date == Dates.todayYmd() ? loop : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> decide(
+    TodayDecision decision, {
+    String? summary,
+    DailyCheckinRequest? answers,
+  }) async {
+    final loop = TodayLoop(
+      date: Dates.todayYmd(),
+      decision: decision,
+      summary: summary ?? state?.summary,
+      answers: answers ?? state?.answers,
+    );
+    state = loop;
+    await ref.read(sharedPreferencesProvider).setString(_key, jsonEncode(loop.toJson()));
+  }
+}
+
+final todayLoopProvider = NotifierProvider<TodayLoopNotifier, TodayLoop?>(TodayLoopNotifier.new);

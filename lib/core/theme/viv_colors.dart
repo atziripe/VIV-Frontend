@@ -26,6 +26,7 @@ class VivColors extends ThemeExtension<VivColors> {
     required this.field,
     required this.photo,
     required this.stage,
+    required this.stageMuted,
     required this.scrim,
     required this.toast,
     required this.onToast,
@@ -82,6 +83,9 @@ class VivColors extends ThemeExtension<VivColors> {
 
   /// Session-done background.
   final Color stage;
+
+  /// Body text on [stage].
+  final Color stageMuted;
 
   /// Behind bottom sheets.
   final Color scrim;
@@ -165,6 +169,7 @@ class VivColors extends ThemeExtension<VivColors> {
     field: Color(0xFF8A4A57),
     photo: Color(0xFFE9DFDB),
     stage: Color(0xFF1A1310),
+    stageMuted: Color(0xFFB9ABA6),
     scrim: Color(0x731A1310), // rgba(26,19,16,.45)
     toast: Color(0xFF1A1310),
     onToast: Color(0xFFF5EFEC),
@@ -189,6 +194,7 @@ class VivColors extends ThemeExtension<VivColors> {
     field: Color(0xFF8E4D5B),
     photo: Color(0xFF2A221F),
     stage: Color(0xFF211A17),
+    stageMuted: Color(0xFFA2938E),
     scrim: Color(0x99000000), // rgba(0,0,0,.6)
     toast: Color(0xFFF5EFEC),
     onToast: Color(0xFF1A1310),
@@ -214,6 +220,7 @@ class VivColors extends ThemeExtension<VivColors> {
     Color? field,
     Color? photo,
     Color? stage,
+    Color? stageMuted,
     Color? scrim,
     Color? toast,
     Color? onToast,
@@ -237,6 +244,7 @@ class VivColors extends ThemeExtension<VivColors> {
       field: field ?? this.field,
       photo: photo ?? this.photo,
       stage: stage ?? this.stage,
+      stageMuted: stageMuted ?? this.stageMuted,
       scrim: scrim ?? this.scrim,
       toast: toast ?? this.toast,
       onToast: onToast ?? this.onToast,
@@ -266,6 +274,7 @@ class VivColors extends ThemeExtension<VivColors> {
       field: l(field, other.field),
       photo: l(photo, other.photo),
       stage: l(stage, other.stage),
+      stageMuted: l(stageMuted, other.stageMuted),
       scrim: l(scrim, other.scrim),
       toast: l(toast, other.toast),
       onToast: l(onToast, other.onToast),

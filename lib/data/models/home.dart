@@ -192,11 +192,11 @@ class HomeToday {
 String? phaseCountdownText(CyclePhase? current, CyclePhase? next, int? days) {
   final countdown = switch (days) {
     null || < 0 => null,
-    0 => '${next?.label ?? 'Next phase'} starts today',
-    1 => '${next?.label ?? 'Next phase'} tomorrow',
-    _ => '${next?.label ?? 'Next phase'} in $days days',
+    0 => '${next?.displayName ?? 'Next phase'} starts today',
+    1 => '${next?.displayName ?? 'Next phase'} tomorrow',
+    _ => '${next?.displayName ?? 'Next phase'} in $days days',
   };
-  final parts = [?current == null ? null : '${current.label} phase', ?countdown];
+  final parts = [?current == null ? null : '${current.displayName} phase', ?countdown];
   return parts.isEmpty ? null : parts.join(' · ');
 }
 

@@ -101,6 +101,16 @@ enum CyclePhase {
     }
     return null;
   }
+
+  /// Display name (McNulty et al. 2020). There is no "menstrual" phase:
+  /// menstruation sits inside early follicular.
+  String get displayName => switch (this) {
+    menstrual => 'Early follicular',
+    follicular => 'Late follicular',
+    ovulatory => 'Ovulatory',
+    earlyLuteal => 'Early luteal',
+    lateLuteal => 'Late luteal',
+  };
 }
 
 /// Human title for a training day: "Lower strength", "Easy yoga", "Rest".

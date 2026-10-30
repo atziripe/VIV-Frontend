@@ -30,6 +30,7 @@ class WineField extends StatelessWidget {
     this.compact = false,
     this.radius,
     this.animateIn = true,
+    this.enterDelay = VivMotion.fieldEnterDelay,
     this.pulse = true,
   });
 
@@ -64,6 +65,9 @@ class WineField extends StatelessWidget {
 
   /// Scale .94 → 1 + fade, 620 ms, 120 ms delay.
   final bool animateIn;
+
+  /// When the scale-in starts (120 ms by default).
+  final Duration enterDelay;
 
   /// Whether the eyebrow dot pulses (only for what's due now).
   final bool pulse;
@@ -187,7 +191,7 @@ class WineField extends StatelessWidget {
       ),
     );
 
-    return animateIn ? Enter.scale(child: field) : field;
+    return animateIn ? Enter.scale(delay: enterDelay, child: field) : field;
   }
 }
 
@@ -203,10 +207,12 @@ class FieldTag extends StatelessWidget {
       height: 26,
       padding: const EdgeInsets.symmetric(horizontal: 11),
       decoration: const ShapeDecoration(shape: StadiumBorder(), color: VivColors.onField),
-      alignment: Alignment.center,
-      child: Text(
-        label.toUpperCase(),
-        style: VivType.eyebrow.copyWith(fontSize: 11, color: VivColors.onFieldInv),
+      child: Center(
+        widthFactor: 1,
+        child: Text(
+          label.toUpperCase(),
+          style: VivType.eyebrow.copyWith(fontSize: 11, color: VivColors.onFieldInv),
+        ),
       ),
     );
   }

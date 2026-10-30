@@ -7,13 +7,14 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/analytics/analytics.dart';
 import '../../core/theme/viv_theme.dart';
-import '../../core/utils/dates.dart';
 import '../../core/widgets/widgets.dart';
 import '../../data/api/viv_api.dart';
+import '../../data/models/home.dart';
 import '../../data/models/session.dart';
 import '../../data/models/weekly_plan.dart';
 import '../../data/providers.dart';
 import '../../router/app_router.dart';
+import 'session_done_view.dart';
 
 /// 02 · In session → 03 · Rest → 04 · Session done.
 ///
@@ -444,15 +445,17 @@ class _DoneView extends ConsumerStatefulWidget {
 }
 
 class _DoneViewState extends ConsumerState<_DoneView> {
-  SessionFeedback? _feedback;
   bool _saving = false;
 
-  Future<void> _finish() async {
+  /// This week before this session, read once so the ring starts there.
+  late final WeekProgress? _progress = ref.read(homeTodayProvider).value?.weekProgress;
+
+  Future<void> _finish(SessionFeedback? feedback) async {
     setState(() => _saving = true);
     try {
       final log = await ref
           .read(vivApiProvider)
-          .completeSession(widget.day.date, feedback: _feedback);
+          .completeSession(widget.day.date, feedback: feedback);
       final started = widget.startedAt;
       ref
           .read(analyticsProvider)
@@ -477,70 +480,13 @@ class _DoneViewState extends ConsumerState<_DoneView> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.viv;
-    final minutes = widget.startedAt == null
-        ? null
-        : DateTime.now().toUtc().difference(widget.startedAt!.toUtc()).inMinutes;
-    return VivPage(
-      bottom: VivButton(label: 'Back to today', loading: _saving, onPressed: _finish),
-      children: [
-        SizedBox(height: MediaQuery.sizeOf(context).height * 0.06),
-        Eyebrow('${Dates.capitalize(widget.day.weekday)} · done', accent: true),
-        const SizedBox(height: VivSpace.xs),
-        Text('That\'s the session behind you.', style: VivType.title.copyWith(color: c.ink)),
-        const SizedBox(height: VivSpace.xs),
-        Text(
-          'Log it and VIV sizes the rest of the week around it.',
-          style: VivType.bodySmall.copyWith(color: c.muted),
-        ),
-        const SizedBox(height: VivSpace.lg),
-        Row(
-          children: [
-            Expanded(
-              child: _Stat(label: 'Time', value: minutes == null ? '—' : '$minutes min'),
-            ),
-            const SizedBox(width: VivSpace.xs),
-            Expanded(
-              child: _Stat(label: 'Sets', value: '${widget.setsDone} of ${widget.setsTotal}'),
-            ),
-          ],
-        ),
-        const SizedBox(height: VivSpace.xl),
-        const FieldLabel('How did that feel?'),
-        PillRow(
-          children: [
-            for (final f in SessionFeedback.values)
-              ChoicePill(
-                label: f.label,
-                selected: _feedback == f,
-                onTap: () => setState(() => _feedback = f),
-              ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _Stat extends StatelessWidget {
-  const _Stat({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.viv;
-    return VivCard(
-      padding: const EdgeInsets.all(VivSpace.sm),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Eyebrow(label),
-          const SizedBox(height: 4),
-          Text(value, style: VivType.cardTitle.copyWith(color: c.ink)),
-        ],
-      ),
+    return SessionDoneView(
+      sessionTitle: widget.day.displayTitle,
+      completedBefore: _progress?.completedSessions,
+      total: _progress?.totalSessions ?? 0,
+      adjusted: ref.watch(todayLoopProvider)?.decision == TodayDecision.adjusted,
+      saving: _saving,
+      onBack: _finish,
     );
   }
 }

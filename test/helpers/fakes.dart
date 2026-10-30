@@ -351,13 +351,17 @@ Future<void> pumpScreen(
   AuthRepository? auth,
   Me? me,
   List<Override> extra = const [],
+  List<RouteBase> extraRoutes = const [],
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
 
   final router = GoRouter(
-    routes: [GoRoute(path: '/', builder: (_, _) => screen)],
+    routes: [
+      GoRoute(path: '/', builder: (_, _) => screen),
+      ...extraRoutes,
+    ],
   );
   await tester.pumpWidget(
     ProviderScope(

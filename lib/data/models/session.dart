@@ -20,7 +20,7 @@ enum SessionStatus { inProgress, completed }
 
 enum SessionFeedback {
   easy('easy', 'Easy'),
-  right('right', 'Right'),
+  right('right', 'About right'),
   tooMuch('too_much', 'Too much');
 
   const SessionFeedback(this.value, this.label);
