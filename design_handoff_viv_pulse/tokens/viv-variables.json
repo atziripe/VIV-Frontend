@@ -1,0 +1,207 @@
+{
+  "$description": "VIV design variables. Import with Tokens Studio for Figma, then push to Figma Variables. One collection carries modes: Semantic (Light/Dark). Everything else is single-mode.",
+
+  "primitive": {
+    "$description": "Raw values. Never referenced from a design layer — only aliased by Semantic.",
+    "clay": {
+      "25":  { "$type": "color", "$value": "#FBF7F5" },
+      "50":  { "$type": "color", "$value": "#F3EDEA" },
+      "100": { "$type": "color", "$value": "#EAE2DE" },
+      "150": { "$type": "color", "$value": "#E9E0DC" },
+      "200": { "$type": "color", "$value": "#E4DAD6" },
+      "300": { "$type": "color", "$value": "#DCD1CC" },
+      "400": { "$type": "color", "$value": "#D3C6C2" },
+      "500": { "$type": "color", "$value": "#C4B6B1" },
+      "600": { "$type": "color", "$value": "#9A8C88" },
+      "700": { "$type": "color", "$value": "#6E6260" },
+      "800": { "$type": "color", "$value": "#4A403D" },
+      "900": { "$type": "color", "$value": "#1A1310" },
+      "white": { "$type": "color", "$value": "#FFFFFF" }
+    },
+    "wine": {
+      "50":  { "$type": "color", "$value": "#F6EEEF" },
+      "100": { "$type": "color", "$value": "#F0E4E6" },
+      "300": { "$type": "color", "$value": "#D8949F" },
+      "400": { "$type": "color", "$value": "#C97F8D" },
+      "600": { "$type": "color", "$value": "#8A4A57" },
+      "700": { "$type": "color", "$value": "#6E3745" }
+    },
+    "umber": {
+      "50":  { "$type": "color", "$value": "#F5EFEC" },
+      "100": { "$type": "color", "$value": "#D8CCC7" },
+      "150": { "$type": "color", "$value": "#A2938E" },
+      "200": { "$type": "color", "$value": "#8A7B76" },
+      "300": { "$type": "color", "$value": "#6E5F5A" },
+      "400": { "$type": "color", "$value": "#4A3E39" },
+      "500": { "$type": "color", "$value": "#3A302C" },
+      "550": { "$type": "color", "$value": "#352C28" },
+      "600": { "$type": "color", "$value": "#33242A" },
+      "650": { "$type": "color", "$value": "#2E2125" },
+      "700": { "$type": "color", "$value": "#2A221F" },
+      "750": { "$type": "color", "$value": "#251E1B" },
+      "800": { "$type": "color", "$value": "#211A17" },
+      "900": { "$type": "color", "$value": "#16110F" },
+      "ink": { "$type": "color", "$value": "#1A1210" }
+    },
+    "scrim": {
+      "light": { "$type": "color", "$value": "rgba(26,19,16,0.50)" },
+      "dark":  { "$type": "color", "$value": "rgba(0,0,0,0.62)" }
+    }
+  },
+
+  "semantic-light": {
+    "$description": "Figma collection 'Semantic', mode 'Light'.",
+    "surface": {
+      "page":        { "$type": "color", "$value": "{primitive.clay.25}" },
+      "raised":      { "$type": "color", "$value": "{primitive.clay.white}" },
+      "sunken":      { "$type": "color", "$value": "{primitive.clay.50}" },
+      "accent-tint": { "$type": "color", "$value": "{primitive.wine.50}" },
+      "avatar":      { "$type": "color", "$value": "{primitive.wine.100}" },
+      "disabled":    { "$type": "color", "$value": "{primitive.clay.100}" },
+      "track":       { "$type": "color", "$value": "{primitive.clay.150}" },
+      "toggle-off":  { "$type": "color", "$value": "{primitive.clay.300}" },
+      "scrim":       { "$type": "color", "$value": "{primitive.scrim.light}" }
+    },
+    "border": {
+      "default": { "$type": "color", "$value": "{primitive.clay.200}" },
+      "strong":  { "$type": "color", "$value": "{primitive.clay.400}" }
+    },
+    "text": {
+      "primary":   { "$type": "color", "$value": "{primitive.clay.900}" },
+      "secondary": { "$type": "color", "$value": "{primitive.clay.800}" },
+      "muted":     { "$type": "color", "$value": "{primitive.clay.700}" },
+      "subtle":    { "$type": "color", "$value": "{primitive.clay.600}" },
+      "faint":     { "$type": "color", "$value": "{primitive.clay.500}" },
+      "on-accent": { "$type": "color", "$value": "{primitive.clay.white}" }
+    },
+    "accent": {
+      "default": { "$type": "color", "$value": "{primitive.wine.600}" },
+      "hover":   { "$type": "color", "$value": "{primitive.wine.700}" }
+    }
+  },
+
+  "semantic-dark": {
+    "$description": "Figma collection 'Semantic', mode 'Dark'. Same token names — only the alias target changes.",
+    "surface": {
+      "page":        { "$type": "color", "$value": "{primitive.umber.900}" },
+      "raised":      { "$type": "color", "$value": "{primitive.umber.800}" },
+      "sunken":      { "$type": "color", "$value": "{primitive.umber.750}" },
+      "accent-tint": { "$type": "color", "$value": "{primitive.umber.650}" },
+      "avatar":      { "$type": "color", "$value": "{primitive.umber.600}" },
+      "disabled":    { "$type": "color", "$value": "{primitive.umber.700}" },
+      "track":       { "$type": "color", "$value": "{primitive.umber.550}" },
+      "toggle-off":  { "$type": "color", "$value": "{primitive.umber.500}" },
+      "scrim":       { "$type": "color", "$value": "{primitive.scrim.dark}" }
+    },
+    "border": {
+      "default": { "$type": "color", "$value": "{primitive.umber.550}" },
+      "strong":  { "$type": "color", "$value": "{primitive.umber.400}" }
+    },
+    "text": {
+      "primary":   { "$type": "color", "$value": "{primitive.umber.50}" },
+      "secondary": { "$type": "color", "$value": "{primitive.umber.100}" },
+      "muted":     { "$type": "color", "$value": "{primitive.umber.150}" },
+      "subtle":    { "$type": "color", "$value": "{primitive.umber.200}" },
+      "faint":     { "$type": "color", "$value": "{primitive.umber.300}" },
+      "on-accent": { "$type": "color", "$value": "{primitive.umber.ink}" }
+    },
+    "accent": {
+      "default": { "$type": "color", "$value": "{primitive.wine.400}" },
+      "hover":   { "$type": "color", "$value": "{primitive.wine.300}" }
+    }
+  },
+
+  "phase": {
+    "$description": "Figma collection 'Phase', single mode. One lightness (.62) and one chroma (.09) across all five — only hue moves. Hues run in cycle order ~70 apart. Identical in Light and Dark. Never use as a text colour: fill or dot only. Max one phase dot per screen. Names follow McNulty et al. 2020.",
+    "early-follicular":  { "$type": "color", "$value": "#B66F75", "$description": "oklch(0.62 0.09 15) — menstruation happens inside this phase; it is not a separate phase" },
+    "late-follicular":   { "$type": "color", "$value": "#978642", "$description": "oklch(0.62 0.09 95) — rising capacity, heavy block lands here" },
+    "ovulatory":         { "$type": "color", "$value": "#57966E", "$description": "oklch(0.62 0.09 155)" },
+    "early-mid-luteal":  { "$type": "color", "$value": "#4590B2", "$description": "oklch(0.62 0.09 230)" },
+    "late-luteal":       { "$type": "color", "$value": "#9777AF", "$description": "oklch(0.62 0.09 310) — capacity dips, moderate by design" }
+  },
+
+  "type": {
+    "$description": "NOT a Figma variable collection. type.family and type.weight import as variables; type.role are DTCG composite typography tokens that Figma cannot hold as variables — Tokens Studio emits them as TEXT STYLES. Bind text styles, not layers.",
+    "family": {
+      "sans": { "$type": "fontFamily", "$value": "Schibsted Grotesk" },
+      "mono": { "$type": "fontFamily", "$value": "JetBrains Mono" }
+    },
+    "weight": {
+      "regular":  { "$type": "fontWeight", "$value": 400 },
+      "medium":   { "$type": "fontWeight", "$value": 500 },
+      "semibold": { "$type": "fontWeight", "$value": 600 },
+      "bold":     { "$type": "fontWeight", "$value": 700 }
+    },
+    "role": {
+      "display-hero":   { "$type": "typography", "$value": { "fontSize": 32, "lineHeight": "110%", "fontWeight": 700, "letterSpacing": "-2.8%" }, "$description": "Completion and handoff headlines only. One per screen." },
+      "display-screen": { "$type": "typography", "$value": { "fontSize": 29, "lineHeight": "115%", "fontWeight": 700, "letterSpacing": "-2.5%" }, "$description": "Screen title (Today, This week, Your info)" },
+      "title-card":     { "$type": "typography", "$value": { "fontSize": 25, "lineHeight": "115%", "fontWeight": 700, "letterSpacing": "-2%" }, "$description": "The prescription. The largest thing inside a card." },
+      "title-section":  { "$type": "typography", "$value": { "fontSize": 20, "lineHeight": "125%", "fontWeight": 700, "letterSpacing": "-2%" } },
+      "body-lead":      { "$type": "typography", "$value": { "fontSize": 15.5, "lineHeight": "150%", "fontWeight": 400 }, "$description": "The one-line why, under a title" },
+      "body-default":   { "$type": "typography", "$value": { "fontSize": 15, "lineHeight": "150%", "fontWeight": 400 } },
+      "body-small":     { "$type": "typography", "$value": { "fontSize": 14, "lineHeight": "145%", "fontWeight": 400 } },
+      "label-value":    { "$type": "typography", "$value": { "fontSize": 16.5, "lineHeight": "130%", "fontWeight": 600 }, "$description": "A stated value in a settings row" },
+      "label-option":   { "$type": "typography", "$value": { "fontSize": 16, "lineHeight": "100%", "fontWeight": 400 }, "$description": "Selectable option; goes to weight.semibold when selected" },
+      "label-action":   { "$type": "typography", "$value": { "fontSize": 17, "lineHeight": "100%", "fontWeight": 600 }, "$description": "Primary CTA" },
+      "eyebrow":        { "$type": "typography", "$value": { "fontSize": 11.5, "lineHeight": "100%", "fontWeight": 700, "letterSpacing": "11%", "textCase": "uppercase" }, "$description": "TODAY, EAT, NEXT, WHAT MOVED" },
+      "meta":           { "$type": "typography", "$value": { "fontSize": 13, "lineHeight": "140%", "fontWeight": 400 } },
+      "meta-strong":    { "$type": "typography", "$value": { "fontSize": 13.5, "lineHeight": "100%", "fontWeight": 600 }, "$description": "Counters, day labels, inline links" },
+      "legal":          { "$type": "typography", "$value": { "fontSize": 12.5, "lineHeight": "150%", "fontWeight": 400 }, "$description": "The not-a-medical-device line. Smallest permitted size." },
+      "timer":          { "$type": "typography", "$value": { "fontSize": 74, "lineHeight": "100%", "fontWeight": 700, "letterSpacing": "-4%", "numericStyle": "tabular" }, "$description": "Rest countdown only" }
+    }
+  },
+
+  "space": {
+    "$description": "Figma collection 'Space', single mode. Use as auto-layout gap and padding. Nothing off-scale.",
+    "1":  { "$type": "number", "$value": 4 },
+    "2":  { "$type": "number", "$value": 6 },
+    "3":  { "$type": "number", "$value": 8 },
+    "4":  { "$type": "number", "$value": 10 },
+    "5":  { "$type": "number", "$value": 12 },
+    "6":  { "$type": "number", "$value": 14 },
+    "7":  { "$type": "number", "$value": 16 },
+    "8":  { "$type": "number", "$value": 18 },
+    "9":  { "$type": "number", "$value": 20 },
+    "10": { "$type": "number", "$value": 22 },
+    "11": { "$type": "number", "$value": 26 },
+    "12": { "$type": "number", "$value": 34 },
+    "13": { "$type": "number", "$value": 44 }
+  },
+
+  "radius": {
+    "$description": "Figma collection 'Radius', single mode.",
+    "chip":    { "$type": "number", "$value": 9 },
+    "control": { "$type": "number", "$value": 12 },
+    "row":     { "$type": "number", "$value": 13 },
+    "cta":     { "$type": "number", "$value": 14 },
+    "tile":    { "$type": "number", "$value": 15 },
+    "card":    { "$type": "number", "$value": 18 },
+    "sheet":   { "$type": "number", "$value": 22 },
+    "pill":    { "$type": "number", "$value": 999 }
+  },
+
+  "size": {
+    "$description": "Figma collection 'Size', single mode. Control heights. tap-min is the floor for anything interactive.",
+    "tap-min":     { "$type": "number", "$value": 44 },
+    "control-sm":  { "$type": "number", "$value": 40 },
+    "control-md":  { "$type": "number", "$value": 46 },
+    "control-lg":  { "$type": "number", "$value": 48 },
+    "control-xl":  { "$type": "number", "$value": 52 },
+    "cta":         { "$type": "number", "$value": 56 },
+    "row":         { "$type": "number", "$value": 58 },
+    "row-tall":    { "$type": "number", "$value": 66 },
+    "avatar":      { "$type": "number", "$value": 42 },
+    "phase-dot":   { "$type": "number", "$value": 9 },
+    "radio":       { "$type": "number", "$value": 21 },
+    "check":       { "$type": "number", "$value": 26 }
+  },
+
+  "screen": {
+    "$description": "Figma collection 'Screen', single mode. Frame is 402x874 (iPhone 16 Pro).",
+    "width":          { "$type": "number", "$value": 402 },
+    "height":         { "$type": "number", "$value": 874 },
+    "padding-x":      { "$type": "number", "$value": 24 },
+    "padding-top":    { "$type": "number", "$value": 66, "$description": "Clears the status bar. Set on the scaffold, not per screen." },
+    "padding-bottom": { "$type": "number", "$value": 34, "$description": "Home-indicator inset. Lives on the pinned footer, never inside the scroll area." }
+  }
+}
