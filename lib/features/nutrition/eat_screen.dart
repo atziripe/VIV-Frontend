@@ -120,7 +120,7 @@ class _Today extends ConsumerWidget {
           Text(
             'Meal names are still being polished…',
             textAlign: TextAlign.center,
-            style: VivType.caption.copyWith(color: c.textTertiary),
+            style: VivType.caption.copyWith(color: c.subtle),
           ),
       ],
     );
@@ -151,7 +151,7 @@ class _MealRow extends StatelessWidget {
       onTap: onOpen,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: c.border)),
+          border: Border(bottom: BorderSide(color: c.line)),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: VivSpace.sm),
@@ -166,10 +166,7 @@ class _MealRow extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       option?.name ?? '—',
-                      style: VivType.bodySmall.copyWith(
-                        color: c.textPrimary,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: VivType.bodySmall.copyWith(color: c.ink, fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -179,7 +176,7 @@ class _MealRow extends StatelessWidget {
                   onPressed: onSwap,
                   child: Text(
                     'Swap',
-                    style: VivType.caption.copyWith(color: c.primary, fontWeight: FontWeight.w600),
+                    style: VivType.caption.copyWith(color: c.accent, fontWeight: FontWeight.w600),
                   ),
                 ),
             ],
@@ -206,7 +203,7 @@ class _Stat extends StatelessWidget {
         children: [
           Eyebrow(label),
           const SizedBox(height: 4),
-          Text(value, style: VivType.headline.copyWith(color: c.textPrimary, fontSize: 22)),
+          Text(value, style: VivType.headline.copyWith(color: c.ink, fontSize: 22)),
         ],
       ),
     );

@@ -217,13 +217,13 @@ class _SessionState extends ConsumerState<_Session> {
     final c = context.viv;
     final e = _current;
     return VivPage(
-      topCenter: Text(_elapsed, style: VivType.label.copyWith(color: c.textPrimary)),
+      topCenter: Text(_elapsed, style: VivType.label.copyWith(color: c.ink)),
       topTrailing: VivButton.text(label: 'End', onPressed: _confirmEnd),
       bottom: VivButton(label: 'Log set $_set', loading: _busy, onPressed: _logSet),
       children: [
         Text(
           'Exercise ${_exercise + 1} of ${_exercises.length}',
-          style: VivType.caption.copyWith(color: c.textSecondary),
+          style: VivType.caption.copyWith(color: c.muted),
         ),
         const SizedBox(height: VivSpace.xs),
         StepProgress(current: _exercise + 1, total: _exercises.length),
@@ -246,15 +246,15 @@ class _SessionState extends ConsumerState<_Session> {
           children: [
             SizedBox(
               width: 48,
-              child: Text('Set $s', style: VivType.caption.copyWith(color: c.textTertiary)),
+              child: Text('Set $s', style: VivType.caption.copyWith(color: c.subtle)),
             ),
             Expanded(
               child: Text(
                 '${_fmtKg(logged.weightKg ?? 0)} kg · ${logged.reps ?? 0} reps',
-                style: VivType.bodySmall.copyWith(color: c.textPrimary),
+                style: VivType.bodySmall.copyWith(color: c.ink),
               ),
             ),
-            Icon(Icons.check_circle, size: 20, color: c.primary),
+            Icon(Icons.check_circle, size: 20, color: c.accent),
           ],
         ),
       );
@@ -268,12 +268,12 @@ class _SessionState extends ConsumerState<_Session> {
             Row(
               children: [
                 Expanded(
-                  child: Text('Set $s', style: VivType.label.copyWith(color: c.primary)),
+                  child: Text('Set $s', style: VivType.label.copyWith(color: c.accent)),
                 ),
                 if (e.reps != null)
                   Text(
                     'target ${e.reps} reps',
-                    style: VivType.caption.copyWith(color: c.textTertiary, fontSize: 12),
+                    style: VivType.caption.copyWith(color: c.subtle, fontSize: 12),
                   ),
               ],
             ),
@@ -310,12 +310,9 @@ class _SessionState extends ConsumerState<_Session> {
         children: [
           SizedBox(
             width: 48,
-            child: Text('Set $s', style: VivType.caption.copyWith(color: c.textTertiary)),
+            child: Text('Set $s', style: VivType.caption.copyWith(color: c.subtle)),
           ),
-          Text(
-            s == _set + 1 ? 'up next' : '',
-            style: VivType.caption.copyWith(color: c.textTertiary),
-          ),
+          Text(s == _set + 1 ? 'up next' : '', style: VivType.caption.copyWith(color: c.subtle)),
         ],
       ),
     );
@@ -344,15 +341,12 @@ class _Stepper extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label.toUpperCase(),
-          style: VivType.eyebrow.copyWith(color: c.textTertiary, fontSize: 10),
-        ),
+        Text(label.toUpperCase(), style: VivType.eyebrow.copyWith(color: c.subtle, fontSize: 10)),
         const SizedBox(height: 4),
         Container(
           height: 44,
           decoration: BoxDecoration(
-            color: c.surfaceMuted,
+            color: c.sunken,
             borderRadius: BorderRadius.circular(VivRadius.sm),
           ),
           child: Row(
@@ -360,19 +354,19 @@ class _Stepper extends StatelessWidget {
               IconButton(
                 onPressed: onMinus,
                 tooltip: 'Decrease $label',
-                icon: Icon(Icons.remove, size: 16, color: c.textSecondary),
+                icon: Icon(Icons.remove, size: 16, color: c.muted),
               ),
               Expanded(
                 child: Text(
                   value,
                   textAlign: TextAlign.center,
-                  style: VivType.cardTitle.copyWith(color: c.textPrimary, fontSize: 16),
+                  style: VivType.cardTitle.copyWith(color: c.ink, fontSize: 16),
                 ),
               ),
               IconButton(
                 onPressed: onPlus,
                 tooltip: 'Increase $label',
-                icon: Icon(Icons.add, size: 16, color: c.textSecondary),
+                icon: Icon(Icons.add, size: 16, color: c.muted),
               ),
             ],
           ),
@@ -419,14 +413,14 @@ class _RestView extends StatelessWidget {
           child: Text(
             '$m:$s',
             style: VivType.display.copyWith(
-              color: c.textPrimary,
+              color: c.ink,
               fontSize: 64,
               fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
         ),
         const SizedBox(height: VivSpace.xs),
-        Text(nextLabel, style: VivType.bodySmall.copyWith(color: c.textSecondary)),
+        Text(nextLabel, style: VivType.bodySmall.copyWith(color: c.muted)),
       ],
     );
   }
@@ -493,14 +487,11 @@ class _DoneViewState extends ConsumerState<_DoneView> {
         SizedBox(height: MediaQuery.sizeOf(context).height * 0.06),
         Eyebrow('${Dates.capitalize(widget.day.weekday)} · done', accent: true),
         const SizedBox(height: VivSpace.xs),
-        Text(
-          'That\'s the session behind you.',
-          style: VivType.title.copyWith(color: c.textPrimary),
-        ),
+        Text('That\'s the session behind you.', style: VivType.title.copyWith(color: c.ink)),
         const SizedBox(height: VivSpace.xs),
         Text(
           'Log it and VIV sizes the rest of the week around it.',
-          style: VivType.bodySmall.copyWith(color: c.textSecondary),
+          style: VivType.bodySmall.copyWith(color: c.muted),
         ),
         const SizedBox(height: VivSpace.lg),
         Row(
@@ -547,7 +538,7 @@ class _Stat extends StatelessWidget {
         children: [
           Eyebrow(label),
           const SizedBox(height: 4),
-          Text(value, style: VivType.cardTitle.copyWith(color: c.textPrimary)),
+          Text(value, style: VivType.cardTitle.copyWith(color: c.ink)),
         ],
       ),
     );

@@ -62,7 +62,7 @@ class TimelineRow extends StatelessWidget {
                 child: Text(
                   item.time ?? '',
                   style: VivType.caption.copyWith(
-                    color: c.textTertiary,
+                    color: c.subtle,
                     fontSize: 13,
                     fontFeatures: const [FontFeature.tabularFigures()],
                   ),
@@ -77,7 +77,7 @@ class TimelineRow extends StatelessWidget {
                     Text(
                       item.title,
                       style: VivType.bodySmall.copyWith(
-                        color: item.isDone ? c.textSecondary : c.textPrimary,
+                        color: item.isDone ? c.muted : c.ink,
                         fontWeight: item.isDone ? FontWeight.w400 : FontWeight.w500,
                       ),
                     ),
@@ -86,7 +86,7 @@ class TimelineRow extends StatelessWidget {
                         item.detail!,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: VivType.caption.copyWith(color: c.textTertiary),
+                        style: VivType.caption.copyWith(color: c.subtle),
                       ),
                   ],
                 ),
@@ -116,10 +116,10 @@ class _StatusCircle extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: done ? c.primary : null,
-        border: done ? null : Border.all(color: highlight ? c.primary : c.borderStrong, width: 1.4),
+        color: done ? c.accent : null,
+        border: done ? null : Border.all(color: highlight ? c.accent : c.ring, width: 1.4),
       ),
-      child: done ? Icon(Icons.check_rounded, size: size * 0.62, color: c.onPrimary) : null,
+      child: done ? Icon(Icons.check_rounded, size: size * 0.62, color: c.ctaText) : null,
     );
   }
 }
@@ -285,9 +285,9 @@ class _NowMomentCardState extends ConsumerState<NowMomentCard> {
       margin: const EdgeInsets.symmetric(vertical: VivSpace.xs),
       padding: const EdgeInsets.all(VivSpace.lg),
       decoration: BoxDecoration(
-        color: c.surface,
+        color: c.raised,
         borderRadius: BorderRadius.circular(VivRadius.lg + 2),
-        border: Border.all(color: c.primary, width: 1.2),
+        border: Border.all(color: c.accent, width: 1.2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -308,11 +308,11 @@ class _NowMomentCardState extends ConsumerState<NowMomentCard> {
           const SizedBox(height: VivSpace.sm),
           Semantics(
             header: true,
-            child: Text(card.title, style: VivType.headline.copyWith(color: c.textPrimary)),
+            child: Text(card.title, style: VivType.headline.copyWith(color: c.ink)),
           ),
           if (card.detail != null) ...[
             const SizedBox(height: VivSpace.sm),
-            Text(card.detail!, style: VivType.bodySmall.copyWith(color: c.textSecondary)),
+            Text(card.detail!, style: VivType.bodySmall.copyWith(color: c.muted)),
           ],
           if (buttons.isNotEmpty) ...[
             const SizedBox(height: VivSpace.lg),
@@ -339,13 +339,10 @@ class _CostChip extends StatelessWidget {
     final c = context.viv;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: c.primarySoft,
-        borderRadius: BorderRadius.circular(VivRadius.pill),
-      ),
+      decoration: BoxDecoration(color: c.tint, borderRadius: BorderRadius.circular(VivRadius.pill)),
       child: Text(
         '$tier cost'.toUpperCase(),
-        style: VivType.eyebrow.copyWith(color: c.primary, fontSize: 10.5),
+        style: VivType.eyebrow.copyWith(color: c.accent, fontSize: 10.5),
       ),
     );
   }
@@ -371,7 +368,7 @@ class WeekProgressCard extends StatelessWidget {
               const Expanded(child: Eyebrow('This week')),
               Text(
                 '${progress.completedSessions} of ${progress.totalSessions} sessions',
-                style: VivType.label.copyWith(color: c.textPrimary),
+                style: VivType.label.copyWith(color: c.ink),
               ),
             ],
           ),
@@ -399,10 +396,7 @@ class _DayDotView extends StatelessWidget {
       DayDotStatus.rest => Container(
         width: dot.isToday ? 7 : 5,
         height: dot.isToday ? 7 : 5,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: dot.isToday ? c.primary : c.borderStrong,
-        ),
+        decoration: BoxDecoration(shape: BoxShape.circle, color: dot.isToday ? c.accent : c.ring),
       ),
     };
     return Semantics(
@@ -415,7 +409,7 @@ class _DayDotView extends StatelessWidget {
           Text(
             dot.letter,
             style: VivType.caption.copyWith(
-              color: dot.isToday ? c.textPrimary : c.textTertiary,
+              color: dot.isToday ? c.ink : c.subtle,
               fontWeight: dot.isToday ? FontWeight.w700 : FontWeight.w400,
               fontSize: 12,
             ),

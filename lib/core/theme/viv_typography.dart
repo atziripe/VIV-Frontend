@@ -1,91 +1,166 @@
 import 'package:flutter/material.dart';
 
-/// Text styles taken from the Figma text styles (SF Pro + JetBrains Mono).
+/// Pulse type scale (`design_handoff_viv_pulse/README.md` → Typography):
+/// Schibsted Grotesk 400–800, bundled in `assets/fonts`. Letter spacing in
+/// the handoff is in em; here it's converted to logical pixels.
 ///
-/// The sans family is left as the platform default on purpose: on iOS that
-/// is SF Pro (exactly what the design uses); on Android it falls back to
-/// Roboto. Colors are applied by [VivTheme] — these only carry metrics.
+/// Colors are applied by [VivTheme] or with `.copyWith(color: ...)` — these
+/// only carry metrics.
 abstract final class VivType {
-  static const mono = 'JetBrainsMono';
+  static const family = 'SchibstedGrotesk';
 
-  /// Welcome hero: "Some weeks you train. Most weeks, life wins."
-  static const display = TextStyle(
+  static const _tabular = [FontFeature.tabularFigures()];
+
+  // ── Headlines ────────────────────────────────────────────────────────────
+
+  /// Hero / proposal headline: 40 / 1.02 / 800 / −0.04em.
+  static const hero = TextStyle(
+    fontFamily: family,
+    fontSize: 40,
+    height: 1.02,
+    fontWeight: FontWeight.w800,
+    letterSpacing: -1.6,
+  );
+
+  /// Screen title (h1): 32–36 / 1.04 / 800 / −0.038em.
+  static const h1 = TextStyle(
+    fontFamily: family,
     fontSize: 34,
-    fontWeight: FontWeight.w700,
+    height: 1.04,
+    fontWeight: FontWeight.w800,
+    letterSpacing: -1.29,
+  );
+
+  /// Check-in question: 36 / 1.06 / 800 / −0.035em.
+  static const question = TextStyle(
+    fontFamily: family,
+    fontSize: 36,
+    height: 1.06,
+    fontWeight: FontWeight.w800,
+    letterSpacing: -1.26,
+  );
+
+  /// Wine field title: 30–34 / 1.04 / 800 / −0.035em.
+  static const fieldTitle = TextStyle(
+    fontFamily: family,
+    fontSize: 34,
+    height: 1.04,
+    fontWeight: FontWeight.w800,
+    letterSpacing: -1.19,
+  );
+
+  /// Card title (h3): 22–28 / 1.08 / 800 / −0.03em.
+  static const h3 = TextStyle(
+    fontFamily: family,
+    fontSize: 26,
     height: 1.08,
-    letterSpacing: -1.12,
+    fontWeight: FontWeight.w800,
+    letterSpacing: -0.78,
   );
 
-  /// Screen titles: "Create your account", "This week". Semantic/Heading 2.
-  static const title = TextStyle(
-    fontSize: 28,
-    fontWeight: FontWeight.w700,
-    height: 1.12,
-    letterSpacing: -0.75,
-  );
+  // ── Body ─────────────────────────────────────────────────────────────────
 
-  /// Big number/section headline, e.g. "Hey Atziri", "Eat today".
-  static const headline = TextStyle(
-    fontSize: 24,
-    fontWeight: FontWeight.w700,
-    height: 1.15,
-    letterSpacing: -0.6,
-  );
-
-  /// Card titles: "Lower strength · 60 min". SF Pro/Semibold 17.
-  static const cardTitle = TextStyle(
-    fontSize: 17,
-    fontWeight: FontWeight.w600,
-    height: 1.25,
-    letterSpacing: -0.17,
-  );
-
-  /// Primary body copy. SF Pro/Regular 16.
-  static const body = TextStyle(
+  /// Body lead: 15.5–16 / 1.5 / 400.
+  static const lead = TextStyle(
+    fontFamily: family,
     fontSize: 16,
-    fontWeight: FontWeight.w400,
-    height: 1.4,
-    letterSpacing: -0.32,
-  );
-
-  /// Supporting copy under titles (15.5 / 22.48 in Figma).
-  static const bodySmall = TextStyle(
-    fontSize: 15,
-    fontWeight: FontWeight.w400,
-    height: 1.45,
-    letterSpacing: -0.24,
-  );
-
-  /// Buttons and list-row titles. SF Pro/Medium 16.
-  static const button = TextStyle(
-    fontSize: 16,
-    fontWeight: FontWeight.w600,
-    height: 1.0,
-    letterSpacing: -0.32,
-  );
-
-  /// Field labels, row titles. Semantic/Label.
-  static const label = TextStyle(
-    fontSize: 13,
-    fontWeight: FontWeight.w600,
-    height: 1.3,
-    letterSpacing: 0.13,
-  );
-
-  /// Captions and hints (12.5 / 18.75 in Figma).
-  static const caption = TextStyle(
-    fontSize: 12.5,
-    fontWeight: FontWeight.w400,
     height: 1.5,
-    letterSpacing: 0,
+    fontWeight: FontWeight.w400,
   );
 
-  /// Uppercase eyebrow: "BEFORE YOU START", "TODAY". JetBrains Mono/Regular.
+  /// Body: 14.5–15 / 1.45 / 400.
+  static const body = TextStyle(
+    fontFamily: family,
+    fontSize: 15,
+    height: 1.45,
+    fontWeight: FontWeight.w400,
+  );
+
+  /// Row title: 15.5–16 / 500–700.
+  static const rowTitle = TextStyle(
+    fontFamily: family,
+    fontSize: 16,
+    height: 1.3,
+    fontWeight: FontWeight.w600,
+  );
+
+  /// Eyebrow: 12 / 700 / +0.1em, uppercase (callers upper-case the text).
   static const eyebrow = TextStyle(
-    fontFamily: mono,
-    fontSize: 11,
-    fontWeight: FontWeight.w500,
+    fontFamily: family,
+    fontSize: 12,
     height: 1.2,
+    fontWeight: FontWeight.w700,
     letterSpacing: 1.2,
   );
+
+  /// Meta: 13 / 400–600.
+  static const meta = TextStyle(
+    fontFamily: family,
+    fontSize: 13,
+    height: 1.35,
+    fontWeight: FontWeight.w400,
+  );
+
+  /// Legal: 12.5 / 1.5 / 400 — the smallest allowed.
+  static const legal = TextStyle(
+    fontFamily: family,
+    fontSize: 12.5,
+    height: 1.5,
+    fontWeight: FontWeight.w400,
+  );
+
+  /// Pill buttons: 16.5 / 700.
+  static const button = TextStyle(
+    fontFamily: family,
+    fontSize: 16.5,
+    height: 1.0,
+    fontWeight: FontWeight.w700,
+  );
+
+  // ── Numbers (protein, rest timer, ring) ──────────────────────────────────
+
+  /// Protein in the field: 52 / 800 / −0.045em, tabular.
+  static const number = TextStyle(
+    fontFamily: family,
+    fontSize: 52,
+    height: 1,
+    fontWeight: FontWeight.w800,
+    letterSpacing: -2.34,
+    fontFeatures: _tabular,
+  );
+
+  /// Rest timer: 96 / 800 / −0.05em, tabular.
+  static const timer = TextStyle(
+    fontFamily: family,
+    fontSize: 96,
+    height: 1,
+    fontWeight: FontWeight.w800,
+    letterSpacing: -4.8,
+    fontFeatures: _tabular,
+  );
+
+  /// Done ring count: 62 / 800 / −0.05em, tabular.
+  static const ringCount = TextStyle(
+    fontFamily: family,
+    fontSize: 62,
+    height: 1,
+    fontWeight: FontWeight.w800,
+    letterSpacing: -3.1,
+    fontFeatures: _tabular,
+  );
+
+  // ── Pre-Pulse names, kept so screens not yet rebuilt still compile ───────
+
+  static const display = h1;
+  static const title = h1;
+  static const headline = h3;
+  static const cardTitle = rowTitle;
+  static const bodySmall = body;
+  static const label = TextStyle(
+    fontFamily: family,
+    fontSize: 13,
+    height: 1.3,
+    fontWeight: FontWeight.w600,
+  );
+  static const caption = meta;
 }

@@ -31,9 +31,9 @@ class VivCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.viv;
     final (Color bg, Color? border) = switch (tone) {
-      VivCardTone.surface => (c.surface, c.border),
-      VivCardTone.highlight => (c.primarySoft, c.primaryBorder),
-      VivCardTone.muted => (c.surfaceMuted, null),
+      VivCardTone.surface => (c.raised, c.line),
+      VivCardTone.highlight => (c.tint, c.accent),
+      VivCardTone.muted => (c.sunken, null),
     };
     final radius = BorderRadius.circular(VivRadius.lg);
 
@@ -67,17 +67,17 @@ class VivNote extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(VivSpace.md),
       decoration: BoxDecoration(
-        color: highlight ? c.primarySoft : c.surfaceMuted,
+        color: highlight ? c.tint : c.sunken,
         borderRadius: BorderRadius.circular(VivRadius.md),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (eyebrow != null) ...[
-            Text(eyebrow!.toUpperCase(), style: VivType.eyebrow.copyWith(color: c.primary)),
+            Text(eyebrow!.toUpperCase(), style: VivType.eyebrow.copyWith(color: c.accent)),
             const SizedBox(height: VivSpace.xs),
           ],
-          Text(text, style: VivType.bodySmall.copyWith(color: c.textPrimary)),
+          Text(text, style: VivType.bodySmall.copyWith(color: c.ink)),
         ],
       ),
     );

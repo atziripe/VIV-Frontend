@@ -63,20 +63,17 @@ class _VivTextFieldState extends State<VivTextField> {
           textCapitalization: widget.textCapitalization,
           autocorrect: !widget.obscurable,
           enableSuggestions: !widget.obscurable,
-          style: VivType.body.copyWith(color: c.textPrimary),
+          style: VivType.body.copyWith(color: c.ink),
           decoration: InputDecoration(
             hintText: widget.hint,
             helperText: widget.helper,
-            helperStyle: VivType.caption.copyWith(color: c.textTertiary),
+            helperStyle: VivType.caption.copyWith(color: c.subtle),
             suffixIcon: widget.obscurable
                 ? TextButton(
                     onPressed: () => setState(() => _obscured = !_obscured),
                     child: Text(
                       _obscured ? 'Show' : 'Hide',
-                      style: VivType.caption.copyWith(
-                        color: c.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: VivType.caption.copyWith(color: c.accent, fontWeight: FontWeight.w600),
                     ),
                   )
                 : null,

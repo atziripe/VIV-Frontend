@@ -61,12 +61,12 @@ class _SwapSheetState extends ConsumerState<_SwapSheet> {
         children: [
           Text(
             'Swap ${widget.slot.mealName.toLowerCase()}',
-            style: VivType.headline.copyWith(color: c.textPrimary),
+            style: VivType.headline.copyWith(color: c.ink),
           ),
           const SizedBox(height: VivSpace.xxs),
           Text(
             'Same targets, different food. Pick one and the day still adds up.',
-            style: VivType.bodySmall.copyWith(color: c.textSecondary),
+            style: VivType.bodySmall.copyWith(color: c.muted),
           ),
           const SizedBox(height: VivSpace.lg),
           for (var i = 0; i < options.length; i++) ...[

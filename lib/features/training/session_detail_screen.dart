@@ -81,7 +81,7 @@ class _Detail extends StatelessWidget {
           ),
         if (day.warning != null) ...[
           const SizedBox(height: VivSpace.xs),
-          Text(day.warning!, style: VivType.bodySmall.copyWith(color: c.textSecondary)),
+          Text(day.warning!, style: VivType.bodySmall.copyWith(color: c.muted)),
         ],
         const SizedBox(height: VivSpace.md),
         if (day.warmup case final w?) _BlockCard(label: 'Warm-up', block: w),
@@ -92,7 +92,7 @@ class _Detail extends StatelessWidget {
           for (final e in day.mainExercises)
             DecoratedBox(
               decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: c.border)),
+                border: Border(bottom: BorderSide(color: c.line)),
               ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: VivSpace.sm),
@@ -102,12 +102,12 @@ class _Detail extends StatelessWidget {
                       child: Text(
                         e.name,
                         style: VivType.bodySmall.copyWith(
-                          color: c.textPrimary,
+                          color: c.ink,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
-                    Text(e.prescription, style: VivType.caption.copyWith(color: c.textTertiary)),
+                    Text(e.prescription, style: VivType.caption.copyWith(color: c.subtle)),
                   ],
                 ),
               ),
@@ -121,7 +121,7 @@ class _Detail extends StatelessWidget {
           const SizedBox(height: VivSpace.lg),
           Text(
             'Doing your own thing today? Keep it close to this. The intent is what matters, not the list.',
-            style: VivType.caption.copyWith(color: c.textTertiary),
+            style: VivType.caption.copyWith(color: c.subtle),
           ),
         ],
       ],
@@ -139,11 +139,8 @@ class _Chip extends StatelessWidget {
     final c = context.viv;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: c.surfaceMuted,
-        borderRadius: BorderRadius.circular(VivRadius.sm),
-      ),
-      child: Text(text, style: VivType.caption.copyWith(color: c.textPrimary, fontSize: 12)),
+      decoration: BoxDecoration(color: c.sunken, borderRadius: BorderRadius.circular(VivRadius.sm)),
+      child: Text(text, style: VivType.caption.copyWith(color: c.ink, fontSize: 12)),
     );
   }
 }
@@ -168,13 +165,13 @@ class _BlockCard extends StatelessWidget {
           Row(
             children: [
               Expanded(child: Eyebrow(label)),
-              Text(meta, style: VivType.caption.copyWith(color: c.textTertiary, fontSize: 12)),
+              Text(meta, style: VivType.caption.copyWith(color: c.subtle, fontSize: 12)),
             ],
           ),
           const SizedBox(height: VivSpace.xs),
           Text(
             block.movements.isNotEmpty ? block.movements.join(' · ') : (block.description ?? ''),
-            style: VivType.bodySmall.copyWith(color: c.textPrimary, fontSize: 14),
+            style: VivType.bodySmall.copyWith(color: c.ink, fontSize: 14),
           ),
         ],
       ),

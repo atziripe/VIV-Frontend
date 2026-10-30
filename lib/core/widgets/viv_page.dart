@@ -111,17 +111,17 @@ class VivBackButton extends StatelessWidget {
       button: true,
       label: 'Back',
       child: Material(
-        color: c.surface,
+        color: c.raised,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(VivRadius.sm),
-          side: BorderSide(color: c.border),
+          side: BorderSide(color: c.line),
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onPressed ?? () => context.canPop() ? context.pop() : null,
           child: SizedBox.square(
             dimension: 32,
-            child: Icon(Icons.chevron_left_rounded, size: 20, color: c.textPrimary),
+            child: Icon(Icons.chevron_left_rounded, size: 20, color: c.ink),
           ),
         ),
       ),
@@ -157,12 +157,12 @@ class PageHeader extends StatelessWidget {
             header: true,
             child: Text(
               title,
-              style: (large ? VivType.display : VivType.title).copyWith(color: c.textPrimary),
+              style: (large ? VivType.display : VivType.title).copyWith(color: c.ink),
             ),
           ),
           if (subtitle != null) ...[
             const SizedBox(height: VivSpace.xs),
-            Text(subtitle!, style: VivType.bodySmall.copyWith(color: c.textSecondary)),
+            Text(subtitle!, style: VivType.bodySmall.copyWith(color: c.muted)),
           ],
         ],
       ),
@@ -185,7 +185,7 @@ class FieldLabel extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Text(text, style: VivType.label.copyWith(color: c.textPrimary)),
+            child: Text(text, style: VivType.label.copyWith(color: c.ink)),
           ),
           ?trailing,
         ],
@@ -209,7 +209,7 @@ class VivWordmark extends StatelessWidget {
         fontSize: 14,
         fontWeight: FontWeight.w800,
         letterSpacing: 4.2,
-        color: color ?? context.viv.textPrimary,
+        color: color ?? context.viv.ink,
       ),
     );
   }

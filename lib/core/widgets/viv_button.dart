@@ -65,15 +65,11 @@ class VivButton extends StatelessWidget {
     final enabled = onPressed != null && !loading;
 
     final (Color bg, Color fg, BorderSide side) = switch (variant) {
-      VivButtonVariant.primary => (c.primary, c.onPrimary, BorderSide.none),
-      VivButtonVariant.inverse => (c.inverse, c.onInverse, BorderSide.none),
-      VivButtonVariant.secondary => (c.surface, c.textPrimary, BorderSide(color: c.border)),
-      VivButtonVariant.outline => (
-        Colors.transparent,
-        c.primary,
-        BorderSide(color: c.primaryBorder),
-      ),
-      VivButtonVariant.text => (Colors.transparent, c.textPrimary, BorderSide.none),
+      VivButtonVariant.primary => (c.accent, c.ctaText, BorderSide.none),
+      VivButtonVariant.inverse => (c.ink, c.page, BorderSide.none),
+      VivButtonVariant.secondary => (c.raised, c.ink, BorderSide(color: c.line)),
+      VivButtonVariant.outline => (Colors.transparent, c.accent, BorderSide(color: c.accent)),
+      VivButtonVariant.text => (Colors.transparent, c.ink, BorderSide.none),
     };
 
     final disabledFilled =
@@ -84,12 +80,12 @@ class VivButton extends StatelessWidget {
       padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: VivSpace.lg)),
       backgroundColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.disabled) && disabledFilled && !loading) {
-          return c.surfaceMuted;
+          return c.sunken;
         }
         return bg;
       }),
       foregroundColor: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.disabled) && !loading) return c.textTertiary;
+        if (states.contains(WidgetState.disabled) && !loading) return c.subtle;
         return fg;
       }),
       overlayColor: WidgetStatePropertyAll(fg.withValues(alpha: 0.08)),

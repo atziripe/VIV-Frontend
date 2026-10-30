@@ -180,7 +180,7 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
               ),
               error: (_, _) => IconButton(
                 tooltip: 'Retry',
-                icon: Icon(Icons.refresh_rounded, color: c.textTertiary),
+                icon: Icon(Icons.refresh_rounded, color: c.subtle),
                 onPressed: () => ref.invalidate(consentsProvider),
               ),
             ),
@@ -203,13 +203,13 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
                     dimension: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : Icon(Icons.ios_share_rounded, size: 20, color: c.textTertiary),
+                : Icon(Icons.ios_share_rounded, size: 20, color: c.subtle),
           ),
         ),
         // TODO(product): link the privacy policy URL.
         _Row(
           title: 'Privacy policy',
-          trailing: Icon(Icons.chevron_right_rounded, size: 20, color: c.textTertiary),
+          trailing: Icon(Icons.chevron_right_rounded, size: 20, color: c.subtle),
         ),
         const SizedBox(height: VivSpace.lg),
         if (pendingAt != null)
@@ -246,7 +246,7 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
         Text(
           'VIV is a training and nutrition coach, not a medical device. It doesn\'t '
           'diagnose anything and doesn\'t replace your doctor.',
-          style: VivType.caption.copyWith(color: c.textTertiary),
+          style: VivType.caption.copyWith(color: c.subtle),
         ),
       ],
     );
@@ -269,7 +269,7 @@ class _Row extends StatelessWidget {
       onTap: onTap,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: c.border)),
+          border: Border(bottom: BorderSide(color: c.line)),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: VivSpace.sm + 2),
@@ -281,14 +281,11 @@ class _Row extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: VivType.bodySmall.copyWith(
-                        color: c.textPrimary,
-                        fontWeight: FontWeight.w500,
-                      ),
+                      style: VivType.bodySmall.copyWith(color: c.ink, fontWeight: FontWeight.w500),
                     ),
                     if (subtitle != null) ...[
                       const SizedBox(height: 2),
-                      Text(subtitle!, style: VivType.caption.copyWith(color: c.textSecondary)),
+                      Text(subtitle!, style: VivType.caption.copyWith(color: c.muted)),
                     ],
                   ],
                 ),
@@ -308,7 +305,7 @@ class _RequiredTag extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.viv;
-    return Text('REQUIRED', style: VivType.eyebrow.copyWith(color: c.textTertiary));
+    return Text('REQUIRED', style: VivType.eyebrow.copyWith(color: c.subtle));
   }
 }
 
@@ -334,9 +331,9 @@ class _ActionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(title, style: VivType.cardTitle.copyWith(color: c.textPrimary, fontSize: 16)),
+          Text(title, style: VivType.cardTitle.copyWith(color: c.ink, fontSize: 16)),
           const SizedBox(height: VivSpace.xxs),
-          Text(body, style: VivType.caption.copyWith(color: c.textSecondary, fontSize: 13)),
+          Text(body, style: VivType.caption.copyWith(color: c.muted, fontSize: 13)),
           const SizedBox(height: VivSpace.md),
           VivButton(
             label: buttonLabel,
@@ -385,9 +382,9 @@ class _ConfirmSheet extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(copy.title, style: VivType.headline.copyWith(color: c.textPrimary)),
+          Text(copy.title, style: VivType.headline.copyWith(color: c.ink)),
           const SizedBox(height: VivSpace.xs),
-          Text(copy.body, style: VivType.bodySmall.copyWith(color: c.textSecondary)),
+          Text(copy.body, style: VivType.bodySmall.copyWith(color: c.muted)),
           const SizedBox(height: VivSpace.xl),
           VivButton(label: copy.confirmLabel, onPressed: () => Navigator.of(context).pop(true)),
           const SizedBox(height: VivSpace.xs),

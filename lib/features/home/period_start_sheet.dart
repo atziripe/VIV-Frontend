@@ -84,11 +84,11 @@ class _PeriodStartSheetState extends ConsumerState<_PeriodStartSheet> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('When did it start?', style: VivType.headline.copyWith(color: c.textPrimary)),
+        Text('When did it start?', style: VivType.headline.copyWith(color: c.ink)),
         const SizedBox(height: VivSpace.xxs),
         Text(
           'Your week rebuilds from this day. Close enough is fine.',
-          style: VivType.bodySmall.copyWith(color: c.textSecondary),
+          style: VivType.bodySmall.copyWith(color: c.muted),
         ),
         const SizedBox(height: VivSpace.lg),
         OptionTile(
@@ -132,7 +132,7 @@ class _PeriodStartSheetState extends ConsumerState<_PeriodStartSheet> {
           result.weekRebuilt
               ? 'Got it. Your week starts over from ${_when == _When.today ? 'today' : Dates.dayMonth(_date)}.'
               : 'Got it. Your week already fits.',
-          style: VivType.headline.copyWith(color: c.textPrimary),
+          style: VivType.headline.copyWith(color: c.ink),
         ),
         const SizedBox(height: VivSpace.md),
         if (result.moved.isNotEmpty)
@@ -150,7 +150,7 @@ class _PeriodStartSheetState extends ConsumerState<_PeriodStartSheet> {
                         Expanded(
                           child: Text(
                             Dates.capitalize(day.weekday),
-                            style: VivType.bodySmall.copyWith(color: c.textPrimary),
+                            style: VivType.bodySmall.copyWith(color: c.ink),
                           ),
                         ),
                         Text(
@@ -161,7 +161,7 @@ class _PeriodStartSheetState extends ConsumerState<_PeriodStartSheet> {
                                   if (day.durationMinutes != null) '${day.durationMinutes} min',
                                 ].whereType<String>().join(' · '),
                           style: VivType.bodySmall.copyWith(
-                            color: c.textPrimary,
+                            color: c.ink,
                             fontWeight: FontWeight.w600,
                           ),
                         ),

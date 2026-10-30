@@ -28,9 +28,9 @@ class OptionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.viv;
     final filled = selected && filledWhenSelected;
-    final bg = filled ? c.primary : (selected ? c.primarySoft : c.surface);
-    final fg = filled ? c.onPrimary : c.textPrimary;
-    final border = filled ? c.primary : (selected ? c.primaryBorder : c.border);
+    final bg = filled ? c.accent : (selected ? c.tint : c.raised);
+    final fg = filled ? c.ctaText : c.ink;
+    final border = filled ? c.accent : (selected ? c.accent : c.line);
 
     return Semantics(
       selected: selected,
@@ -67,7 +67,7 @@ class OptionTile extends StatelessWidget {
                           Text(
                             subtitle!,
                             style: VivType.caption.copyWith(
-                              color: filled ? c.onPrimary.withValues(alpha: 0.8) : c.textTertiary,
+                              color: filled ? c.ctaText.withValues(alpha: 0.8) : c.subtle,
                             ),
                           ),
                         ],
@@ -76,7 +76,7 @@ class OptionTile extends StatelessWidget {
                   ),
                   if (showRadio) ...[
                     const SizedBox(width: VivSpace.sm),
-                    _Radio(selected: selected, color: filled ? c.onPrimary : c.primary),
+                    _Radio(selected: selected, color: filled ? c.ctaText : c.accent),
                   ],
                 ],
               ),
@@ -103,7 +103,7 @@ class _Radio extends StatelessWidget {
       height: 20,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: selected ? color : c.borderStrong, width: 1.4),
+        border: Border.all(color: selected ? color : c.ring, width: 1.4),
       ),
       alignment: Alignment.center,
       child: selected

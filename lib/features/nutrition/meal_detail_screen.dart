@@ -77,21 +77,18 @@ class MealDetailScreen extends ConsumerWidget {
           for (final ing in option.ingredients)
             DecoratedBox(
               decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: c.border)),
+                border: Border(bottom: BorderSide(color: c.line)),
               ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: VivSpace.sm),
                 child: Row(
                   children: [
                     Expanded(
-                      child: Text(
-                        ing.name,
-                        style: VivType.bodySmall.copyWith(color: c.textPrimary),
-                      ),
+                      child: Text(ing.name, style: VivType.bodySmall.copyWith(color: c.ink)),
                     ),
                     Text(
                       ing.approx ?? (ing.amountG == null ? '' : '${ing.amountG!.round()} g'),
-                      style: VivType.caption.copyWith(color: c.textTertiary),
+                      style: VivType.caption.copyWith(color: c.subtle),
                     ),
                   ],
                 ),
@@ -119,7 +116,7 @@ class _Stat extends StatelessWidget {
         children: [
           Eyebrow(label),
           const SizedBox(height: 4),
-          Text(value, style: VivType.cardTitle.copyWith(color: c.textPrimary)),
+          Text(value, style: VivType.cardTitle.copyWith(color: c.ink)),
         ],
       ),
     );

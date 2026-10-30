@@ -109,7 +109,7 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
               padding: const EdgeInsets.only(bottom: VivSpace.lg + 4),
               child: Text(
                 '${_current == -1 ? 4 : _current + 1} of 4',
-                style: VivType.caption.copyWith(color: c.textTertiary),
+                style: VivType.caption.copyWith(color: c.subtle),
               ),
             ),
           ],
@@ -142,10 +142,7 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(4, 4, 4, VivSpace.sm),
-              child: Text(
-                q.prompt,
-                style: VivType.label.copyWith(color: c.textPrimary, fontSize: 14),
-              ),
+              child: Text(q.prompt, style: VivType.label.copyWith(color: c.ink, fontSize: 14)),
             ),
             for (final (value, label) in q.options) ...[
               OptionTile(
@@ -173,23 +170,17 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    q.prompt,
-                    style: VivType.caption.copyWith(color: c.textTertiary, fontSize: 11.5),
-                  ),
+                  Text(q.prompt, style: VivType.caption.copyWith(color: c.subtle, fontSize: 11.5)),
                   Text(
                     q.labelOf(answer),
-                    style: VivType.bodySmall.copyWith(
-                      color: c.textPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: VivType.bodySmall.copyWith(color: c.ink, fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
             ),
             Text(
               'Change',
-              style: VivType.caption.copyWith(color: c.primary, fontWeight: FontWeight.w600),
+              style: VivType.caption.copyWith(color: c.accent, fontWeight: FontWeight.w600),
             ),
           ],
         ),
@@ -200,7 +191,7 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
       key: ValueKey('todo$i'),
       tone: VivCardTone.muted,
       padding: const EdgeInsets.symmetric(horizontal: VivSpace.md, vertical: VivSpace.sm),
-      child: Text(q.prompt, style: VivType.caption.copyWith(color: c.textTertiary, fontSize: 13)),
+      child: Text(q.prompt, style: VivType.caption.copyWith(color: c.subtle, fontSize: 13)),
     );
   }
 }
@@ -265,7 +256,7 @@ class _CompletionMoment extends StatelessWidget {
                     VivSpace.gutter,
                     VivSpace.xxl,
                   ),
-                  child: Text(result.reason!, style: VivType.body.copyWith(color: c.textPrimary)),
+                  child: Text(result.reason!, style: VivType.body.copyWith(color: c.ink)),
                 ),
               ),
             ),
@@ -275,13 +266,13 @@ class _CompletionMoment extends StatelessWidget {
         SizedBox(height: MediaQuery.sizeOf(context).height * 0.12),
         Eyebrow(Dates.eyebrow(Dates.today()), accent: true),
         const SizedBox(height: VivSpace.xs),
-        Text(_headline, style: VivType.title.copyWith(color: c.textPrimary)),
+        Text(_headline, style: VivType.title.copyWith(color: c.ink)),
         const SizedBox(height: VivSpace.xs),
         Text(
           result.suggestion != null
               ? 'VIV has a lighter option if you want it. It\'s on Today.'
               : 'Same purpose, sized to the day you actually have.',
-          style: VivType.bodySmall.copyWith(color: c.textSecondary),
+          style: VivType.bodySmall.copyWith(color: c.muted),
         ),
         const SizedBox(height: VivSpace.lg),
         VivCard(
@@ -294,17 +285,17 @@ class _CompletionMoment extends StatelessWidget {
                   if (result.suggestion != null || result.regenerated)
                     Text(
                       result.regenerated ? 'New week' : 'Suggestion ready',
-                      style: VivType.caption.copyWith(color: c.primary, fontSize: 12),
+                      style: VivType.caption.copyWith(color: c.accent, fontSize: 12),
                     ),
                 ],
               ),
               const SizedBox(height: VivSpace.xs),
-              Text(title, style: VivType.cardTitle.copyWith(color: c.textPrimary)),
+              Text(title, style: VivType.cardTitle.copyWith(color: c.ink)),
               if (a?.intensity != null) ...[
                 const SizedBox(height: VivSpace.xxs),
                 Text(
                   Intensity.labelFor(a!.intensity),
-                  style: VivType.caption.copyWith(color: c.textSecondary),
+                  style: VivType.caption.copyWith(color: c.muted),
                 ),
               ],
             ],

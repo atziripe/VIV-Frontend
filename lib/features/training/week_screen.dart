@@ -59,7 +59,7 @@ class _WeekScreenState extends ConsumerState<WeekScreen> {
                     padding: const EdgeInsets.only(bottom: VivSpace.sm),
                     child: Text(
                       'Tap a day to change it.',
-                      style: VivType.caption.copyWith(color: c.primary),
+                      style: VivType.caption.copyWith(color: c.accent),
                     ),
                   ),
                 for (final day in plan.days) ...[
@@ -105,15 +105,12 @@ class _DayRow extends StatelessWidget {
           children: [
             SizedBox(
               width: 44,
-              child: Text(weekday, style: VivType.caption.copyWith(color: c.textTertiary)),
+              child: Text(weekday, style: VivType.caption.copyWith(color: c.subtle)),
             ),
             Expanded(
-              child: Text(
-                'Rest',
-                style: VivType.caption.copyWith(color: c.textTertiary, fontSize: 13),
-              ),
+              child: Text('Rest', style: VivType.caption.copyWith(color: c.subtle, fontSize: 13)),
             ),
-            if (editing) Icon(Icons.edit_outlined, size: 16, color: c.textTertiary),
+            if (editing) Icon(Icons.edit_outlined, size: 16, color: c.subtle),
           ],
         ),
       );
@@ -133,7 +130,7 @@ class _DayRow extends StatelessWidget {
                 child: Text(
                   weekday,
                   style: VivType.caption.copyWith(
-                    color: day.isToday ? c.textPrimary : c.textTertiary,
+                    color: day.isToday ? c.ink : c.subtle,
                     fontWeight: day.isToday ? FontWeight.w600 : FontWeight.w400,
                   ),
                 ),
@@ -145,7 +142,7 @@ class _DayRow extends StatelessWidget {
                     Text(
                       day.title,
                       style: VivType.bodySmall.copyWith(
-                        color: isPast ? c.textSecondary : c.textPrimary,
+                        color: isPast ? c.muted : c.ink,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -154,7 +151,7 @@ class _DayRow extends StatelessWidget {
                         day.subtitle,
                         if (day.isToday) 'today',
                       ].where((s) => s.isNotEmpty).join(' · '),
-                      style: VivType.caption.copyWith(color: c.textTertiary, fontSize: 12),
+                      style: VivType.caption.copyWith(color: c.subtle, fontSize: 12),
                     ),
                   ],
                 ),
@@ -162,13 +159,13 @@ class _DayRow extends StatelessWidget {
               Icon(
                 editing ? Icons.edit_outlined : Icons.chevron_right_rounded,
                 size: editing ? 16 : 20,
-                color: c.textTertiary,
+                color: c.subtle,
               ),
             ],
           ),
           if (day.warning != null) ...[
             const SizedBox(height: VivSpace.xs),
-            Text(day.warning!, style: VivType.caption.copyWith(color: c.primary)),
+            Text(day.warning!, style: VivType.caption.copyWith(color: c.accent)),
           ],
           if (day.isToday && !editing) ...[
             const SizedBox(height: VivSpace.sm),

@@ -28,11 +28,11 @@ class _LegalFooterState extends State<LegalFooter> {
   @override
   Widget build(BuildContext context) {
     final c = context.viv;
-    final base = VivType.caption.copyWith(color: c.textTertiary);
+    final base = VivType.caption.copyWith(color: c.subtle);
     final link = base.copyWith(
-      color: c.textSecondary,
+      color: c.muted,
       decoration: TextDecoration.underline,
-      decorationColor: c.textSecondary,
+      decorationColor: c.muted,
     );
     return Text.rich(
       TextSpan(

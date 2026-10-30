@@ -40,7 +40,7 @@ class TodayScreen extends ConsumerWidget {
     return Scaffold(
       body: SafeArea(
         child: RefreshIndicator(
-          color: c.primary,
+          color: c.accent,
           onRefresh: () => _refresh(ref),
           child: ResponsiveCenter(
             child: ListView(
@@ -108,6 +108,7 @@ class _Greeting extends StatelessWidget {
 
     // "Follicular phase · Ovulatory in 3 days" (falls back to /me's phase)
     final status = home?.phaseCountdown ?? phaseCountdownText(me?.cyclePhase, null, null);
+    final phase = home?.currentPhase ?? me?.cyclePhase;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -122,7 +123,7 @@ class _Greeting extends StatelessWidget {
                 header: true,
                 child: Text(
                   name.isEmpty ? 'Hey there' : 'Hey $name',
-                  style: VivType.title.copyWith(color: c.textPrimary),
+                  style: VivType.title.copyWith(color: c.ink),
                 ),
               ),
               if (status != null) ...[
@@ -132,13 +133,16 @@ class _Greeting extends StatelessWidget {
                     Container(
                       width: 7,
                       height: 7,
-                      decoration: BoxDecoration(color: c.signal, shape: BoxShape.circle),
+                      decoration: BoxDecoration(
+                        color: phase == null ? c.subtle : VivColors.phaseDot(phase),
+                        shape: BoxShape.circle,
+                      ),
                     ),
                     const SizedBox(width: 6),
                     Flexible(
                       child: Text(
                         status,
-                        style: VivType.caption.copyWith(color: c.textSecondary, fontSize: 13.5),
+                        style: VivType.caption.copyWith(color: c.muted, fontSize: 13.5),
                       ),
                     ),
                   ],
@@ -212,8 +216,8 @@ class _Avatar extends StatelessWidget {
         onTap: () => context.push(Routes.profile),
         child: CircleAvatar(
           radius: 18,
-          backgroundColor: c.primarySoft,
-          child: Text(initial ?? '', style: VivType.label.copyWith(color: c.primary, fontSize: 14)),
+          backgroundColor: c.tint,
+          child: Text(initial ?? '', style: VivType.label.copyWith(color: c.accent, fontSize: 14)),
         ),
       ),
     );
@@ -240,7 +244,7 @@ class _LatePeriodCard extends StatelessWidget {
             accent: true,
           ),
           const SizedBox(height: VivSpace.xs),
-          Text('Still not here?', style: VivType.cardTitle.copyWith(color: c.textPrimary)),
+          Text('Still not here?', style: VivType.cardTitle.copyWith(color: c.ink)),
           const SizedBox(height: VivSpace.md),
           Row(
             children: [
@@ -304,14 +308,11 @@ class _NoWeekCardState extends ConsumerState<_NoWeekCard> {
         children: [
           const Eyebrow('This week'),
           const SizedBox(height: VivSpace.xs),
-          Text(
-            'Your week isn\'t built yet.',
-            style: VivType.cardTitle.copyWith(color: c.textPrimary),
-          ),
+          Text('Your week isn\'t built yet.', style: VivType.cardTitle.copyWith(color: c.ink)),
           const SizedBox(height: VivSpace.xxs),
           Text(
             'Check in to build it around today, or build it now.',
-            style: VivType.caption.copyWith(color: c.textSecondary),
+            style: VivType.caption.copyWith(color: c.muted),
           ),
           const SizedBox(height: VivSpace.md),
           VivButton.secondary(
@@ -379,14 +380,11 @@ class _SuggestionCardState extends ConsumerState<_SuggestionCard> {
           const SizedBox(height: VivSpace.xs),
           Text(
             sessionTitle(activityType: a.activityType, intensity: a.intensity),
-            style: VivType.cardTitle.copyWith(color: c.textPrimary),
+            style: VivType.cardTitle.copyWith(color: c.ink),
           ),
           if (widget.suggestion.reason != null) ...[
             const SizedBox(height: VivSpace.xxs),
-            Text(
-              widget.suggestion.reason!,
-              style: VivType.caption.copyWith(color: c.textSecondary),
-            ),
+            Text(widget.suggestion.reason!, style: VivType.caption.copyWith(color: c.muted)),
           ],
           const SizedBox(height: VivSpace.md),
           VivButton(label: 'Switch to this', height: 44, loading: _saving, onPressed: _accept),

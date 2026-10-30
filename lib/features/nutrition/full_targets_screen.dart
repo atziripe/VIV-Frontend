@@ -72,7 +72,7 @@ class _FullTargetsScreenState extends ConsumerState<FullTargetsScreen> {
         const SizedBox(height: VivSpace.sm),
         Text(
           'Rounded on purpose. Anything more precise than this is noise at your training volume.',
-          style: VivType.caption.copyWith(color: c.textTertiary),
+          style: VivType.caption.copyWith(color: c.subtle),
         ),
       ],
     );
@@ -93,7 +93,7 @@ class _Row extends StatelessWidget {
     final c = context.viv;
     return DecoratedBox(
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: c.border)),
+        border: Border(bottom: BorderSide(color: c.line)),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: VivSpace.sm + 2),
@@ -105,20 +105,14 @@ class _Row extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style: VivType.bodySmall.copyWith(
-                      color: c.textPrimary,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: VivType.bodySmall.copyWith(color: c.ink, fontWeight: FontWeight.w500),
                   ),
                   if (hint != null)
-                    Text(
-                      hint!,
-                      style: VivType.caption.copyWith(color: c.textTertiary, fontSize: 12),
-                    ),
+                    Text(hint!, style: VivType.caption.copyWith(color: c.subtle, fontSize: 12)),
                 ],
               ),
             ),
-            Text(value, style: VivType.cardTitle.copyWith(color: c.textPrimary)),
+            Text(value, style: VivType.cardTitle.copyWith(color: c.ink)),
           ],
         ),
       ),

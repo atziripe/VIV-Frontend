@@ -78,12 +78,12 @@ class _EditDaySheetState extends ConsumerState<_EditDaySheet> {
         children: [
           Text(
             Dates.longWeekday(widget.day.dateTime),
-            style: VivType.headline.copyWith(color: c.textPrimary),
+            style: VivType.headline.copyWith(color: c.ink),
           ),
           const SizedBox(height: VivSpace.xxs),
           Text(
             'Only this day changes. The other six stay put.',
-            style: VivType.bodySmall.copyWith(color: c.textSecondary),
+            style: VivType.bodySmall.copyWith(color: c.muted),
           ),
           const SizedBox(height: VivSpace.lg),
           const FieldLabel('Activity'),

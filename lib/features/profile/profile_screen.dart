@@ -34,21 +34,21 @@ class ProfileScreen extends ConsumerWidget {
           children: [
             CircleAvatar(
               radius: 24,
-              backgroundColor: c.primarySoft,
+              backgroundColor: c.tint,
               child: Text(
                 name.isEmpty ? '' : name[0].toUpperCase(),
-                style: VivType.cardTitle.copyWith(color: c.primary),
+                style: VivType.cardTitle.copyWith(color: c.accent),
               ),
             ),
             const SizedBox(width: VivSpace.sm),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: VivType.cardTitle.copyWith(color: c.textPrimary)),
+                Text(name, style: VivType.cardTitle.copyWith(color: c.ink)),
                 if (me?.weekWithViv != null)
                   Text(
                     'Week ${me!.weekWithViv} with VIV',
-                    style: VivType.caption.copyWith(color: c.textTertiary),
+                    style: VivType.caption.copyWith(color: c.subtle),
                   ),
               ],
             ),
@@ -100,7 +100,7 @@ class ProfileScreen extends ConsumerWidget {
         if (me?.goalId != null)
           Text(
             'Optimising for ${Goal.values.firstWhere((g) => g.id == me!.goalId, orElse: () => Goal.consistencyWellbeing).label.toLowerCase()}',
-            style: VivType.caption.copyWith(color: c.textTertiary),
+            style: VivType.caption.copyWith(color: c.subtle),
           ),
       ],
     );
@@ -121,7 +121,7 @@ class _MenuRow extends StatelessWidget {
       onTap: onTap,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: c.border)),
+          border: Border(bottom: BorderSide(color: c.line)),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: VivSpace.sm + 2),
@@ -134,19 +134,19 @@ class _MenuRow extends StatelessWidget {
                     Text(
                       title,
                       style: VivType.bodySmall.copyWith(
-                        color: onTap == null ? c.textTertiary : c.textPrimary,
+                        color: onTap == null ? c.subtle : c.ink,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                     if (subtitle != null && subtitle!.isNotEmpty)
                       Text(
                         subtitle!,
-                        style: VivType.caption.copyWith(color: c.textTertiary, fontSize: 12),
+                        style: VivType.caption.copyWith(color: c.subtle, fontSize: 12),
                       ),
                   ],
                 ),
               ),
-              if (onTap != null) Icon(Icons.chevron_right_rounded, size: 20, color: c.textTertiary),
+              if (onTap != null) Icon(Icons.chevron_right_rounded, size: 20, color: c.subtle),
             ],
           ),
         ),

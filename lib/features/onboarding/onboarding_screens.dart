@@ -51,7 +51,7 @@ class _StepPage extends StatelessWidget {
       showBack: true,
       topCenter: Text(
         'Step $step of $_totalSteps',
-        style: VivType.caption.copyWith(color: c.textSecondary, fontSize: 13),
+        style: VivType.caption.copyWith(color: c.muted, fontSize: 13),
       ),
       bottom: VivButton(label: 'Continue', onPressed: onContinue),
       children: [
@@ -107,7 +107,7 @@ class FitCheckScreen extends ConsumerWidget {
           const SizedBox(height: VivSpace.xs),
         ],
         const SizedBox(height: VivSpace.sm),
-        _WhyWeAsk(color: c.textSecondary),
+        _WhyWeAsk(color: c.muted),
       ],
     );
   }
@@ -270,12 +270,10 @@ class _AboutYouScreenState extends ConsumerState<AboutYouScreen> {
                   draft.dob == null
                       ? 'Pick a date'
                       : '${Dates.dayMonth(draft.dob!)} ${draft.dob!.year}',
-                  style: VivType.body.copyWith(
-                    color: draft.dob == null ? c.textTertiary : c.textPrimary,
-                  ),
+                  style: VivType.body.copyWith(color: draft.dob == null ? c.subtle : c.ink),
                 ),
               ),
-              Icon(Icons.calendar_today_outlined, size: 18, color: c.textSecondary),
+              Icon(Icons.calendar_today_outlined, size: 18, color: c.muted),
             ],
           ),
         ),
@@ -332,7 +330,7 @@ class _NumberField extends StatelessWidget {
           onChanged: (v) => onChanged(double.tryParse(v.replaceAll(',', '.'))),
           decoration: InputDecoration(
             suffixText: suffix,
-            suffixStyle: VivType.caption.copyWith(color: c.textTertiary),
+            suffixStyle: VivType.caption.copyWith(color: c.subtle),
           ),
         ),
       ],
@@ -432,7 +430,7 @@ class YourWeekScreen extends ConsumerWidget {
         const SizedBox(height: VivSpace.xs),
         Text(
           'VIV puts the lightest sessions here.',
-          style: VivType.caption.copyWith(color: c.textTertiary),
+          style: VivType.caption.copyWith(color: c.subtle),
         ),
         const SizedBox(height: VivSpace.xl),
         const FieldLabel('Outside training, your days are mostly'),
@@ -507,14 +505,14 @@ class CycleScreen extends ConsumerWidget {
             Expanded(
               child: Text(
                 lastDate == null ? ' ' : 'Using ${Dates.dayMonth(lastDate)}',
-                style: VivType.caption.copyWith(color: c.textTertiary),
+                style: VivType.caption.copyWith(color: c.subtle),
               ),
             ),
             GestureDetector(
               onTap: pickExact,
               child: Text(
                 'Pick exact date',
-                style: VivType.caption.copyWith(color: c.primary, fontWeight: FontWeight.w600),
+                style: VivType.caption.copyWith(color: c.accent, fontWeight: FontWeight.w600),
               ),
             ),
           ],
@@ -547,7 +545,7 @@ class CycleScreen extends ConsumerWidget {
         const SizedBox(height: VivSpace.xs),
         Text(
           'Daily check-ins correct this as VIV learns you.',
-          style: VivType.caption.copyWith(color: c.textTertiary),
+          style: VivType.caption.copyWith(color: c.subtle),
         ),
       ],
     );
@@ -634,7 +632,7 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
                 child: Text(
                   'I agree to VIV processing my cycle and health data to personalise '
                   'my recommendations.',
-                  style: VivType.bodySmall.copyWith(color: c.textPrimary),
+                  style: VivType.bodySmall.copyWith(color: c.ink),
                 ),
               ),
             ],
@@ -659,7 +657,7 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
                 child: Text(
                   'Optional: help improve VIV with usage data, like which screens I use. '
                   'Never my cycle or health answers.',
-                  style: VivType.bodySmall.copyWith(color: c.textPrimary),
+                  style: VivType.bodySmall.copyWith(color: c.ink),
                 ),
               ),
             ],
@@ -671,7 +669,7 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
           child: Text(
             // TODO(product): link to the data policy.
             'Read the full data policy',
-            style: VivType.caption.copyWith(color: c.primary, fontWeight: FontWeight.w600),
+            style: VivType.caption.copyWith(color: c.accent, fontWeight: FontWeight.w600),
           ),
         ),
       ],
@@ -734,7 +732,7 @@ class _BuildingWeekScreenState extends ConsumerState<BuildingWeekScreen> {
               const SizedBox(height: VivSpace.sm),
               Text(
                 'Fitting training around the week you actually have.',
-                style: VivType.title.copyWith(color: c.textPrimary),
+                style: VivType.title.copyWith(color: c.ink),
               ),
               const SizedBox(height: VivSpace.xl),
               const LinearProgressIndicator(minHeight: 3),

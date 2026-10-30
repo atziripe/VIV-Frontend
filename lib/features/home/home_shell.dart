@@ -30,21 +30,21 @@ class HomeShell extends StatelessWidget {
         body: Row(
           children: [
             NavigationRail(
-              backgroundColor: c.background,
+              backgroundColor: c.page,
               selectedIndex: shell.currentIndex,
               onDestinationSelected: _go,
               labelType: NavigationRailLabelType.all,
-              indicatorColor: c.primarySoft,
-              selectedIconTheme: IconThemeData(color: c.primary),
-              unselectedIconTheme: IconThemeData(color: c.textTertiary),
-              selectedLabelTextStyle: VivType.caption.copyWith(color: c.primary),
-              unselectedLabelTextStyle: VivType.caption.copyWith(color: c.textTertiary),
+              indicatorColor: c.tint,
+              selectedIconTheme: IconThemeData(color: c.accent),
+              unselectedIconTheme: IconThemeData(color: c.subtle),
+              selectedLabelTextStyle: VivType.caption.copyWith(color: c.accent),
+              unselectedLabelTextStyle: VivType.caption.copyWith(color: c.subtle),
               destinations: [
                 for (var i = 0; i < _tabs.length; i++)
                   NavigationRailDestination(icon: Icon(_icons[i]), label: Text(_tabs[i])),
               ],
             ),
-            VerticalDivider(width: 1, color: c.border),
+            VerticalDivider(width: 1, color: c.line),
             Expanded(child: PendingDeletionBanner(child: shell)),
           ],
         ),
@@ -54,8 +54,8 @@ class HomeShell extends StatelessWidget {
       body: PendingDeletionBanner(child: shell),
       bottomNavigationBar: DecoratedBox(
         decoration: BoxDecoration(
-          color: c.background,
-          border: Border(top: BorderSide(color: c.border)),
+          color: c.page,
+          border: Border(top: BorderSide(color: c.line)),
         ),
         child: SafeArea(
           top: false,
@@ -90,7 +90,7 @@ class _TabButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.viv;
-    final color = selected ? c.primary : c.textTertiary;
+    final color = selected ? c.accent : c.subtle;
     return Semantics(
       selected: selected,
       button: true,
@@ -108,7 +108,7 @@ class _TabButton extends StatelessWidget {
               child: Container(
                 width: 4,
                 height: 4,
-                decoration: BoxDecoration(color: c.primary, shape: BoxShape.circle),
+                decoration: BoxDecoration(color: c.accent, shape: BoxShape.circle),
               ),
             ),
             const SizedBox(height: 6),

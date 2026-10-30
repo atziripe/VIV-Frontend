@@ -63,7 +63,7 @@ class _OrDivider extends StatelessWidget {
         const Expanded(child: Divider()),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: VivSpace.sm),
-          child: Text('or use email', style: VivType.caption.copyWith(color: c.textTertiary)),
+          child: Text('or use email', style: VivType.caption.copyWith(color: c.subtle)),
         ),
         const Expanded(child: Divider()),
       ],
@@ -126,12 +126,12 @@ class SwitchLink extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: VivSpace.xs, horizontal: VivSpace.sm),
         child: Text.rich(
           TextSpan(
-            style: VivType.caption.copyWith(color: c.textSecondary, fontSize: 13),
+            style: VivType.caption.copyWith(color: c.muted, fontSize: 13),
             children: [
               TextSpan(text: '$text '),
               TextSpan(
                 text: action,
-                style: TextStyle(color: c.primary, fontWeight: FontWeight.w600),
+                style: TextStyle(color: c.accent, fontWeight: FontWeight.w600),
               ),
             ],
           ),

@@ -17,7 +17,7 @@ class Eyebrow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.viv;
-    final color = accent ? c.primary : c.textTertiary;
+    final color = accent ? c.accent : c.subtle;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [

@@ -23,7 +23,7 @@ class WelcomeScreen extends StatelessWidget {
           builder: (context) {
             final c = context.viv;
             return Scaffold(
-              backgroundColor: VivPalette.zeus,
+              backgroundColor: VivColors.dark.page,
               body: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -42,7 +42,7 @@ class WelcomeScreen extends StatelessWidget {
                               header: true,
                               child: Text(
                                 'Some weeks you train. Most weeks, life wins.',
-                                style: VivType.display.copyWith(color: c.textPrimary),
+                                style: VivType.display.copyWith(color: c.ink),
                               ),
                             ),
                             const SizedBox(height: VivSpace.sm),
@@ -50,7 +50,7 @@ class WelcomeScreen extends StatelessWidget {
                               'VIV builds a week around the energy you actually have '
                               'and rebuilds it the moment the week changes.',
                               style: VivType.bodySmall.copyWith(
-                                color: VivPalette.vistaWhite.withValues(alpha: 0.76),
+                                color: VivColors.light.page.withValues(alpha: 0.76),
                               ),
                             ),
                             const SizedBox(height: VivSpace.xl),
@@ -92,12 +92,12 @@ class _HeroBackdrop extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFF3A2E2A), Color(0xFF241C19), VivPalette.zeus],
-          stops: [0, 0.55, 1],
+          colors: [const Color(0xFF3A2E2A), const Color(0xFF241C19), VivColors.dark.page],
+          stops: const [0, 0.55, 1],
         ),
       ),
       child: CustomPaint(painter: _StripePainter()),

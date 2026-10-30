@@ -29,10 +29,10 @@ class ChoicePill extends StatelessWidget {
       selected: selected,
       button: true,
       child: Material(
-        color: selected ? c.primary : c.surface,
+        color: selected ? c.accent : c.raised,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(VivRadius.sm),
-          side: BorderSide(color: selected ? c.primary : c.border),
+          side: BorderSide(color: selected ? c.accent : c.line),
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -46,7 +46,7 @@ class ChoicePill extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   if (showCheck && selected) ...[
-                    Icon(Icons.check_rounded, size: 16, color: c.onPrimary),
+                    Icon(Icons.check_rounded, size: 16, color: c.ctaText),
                     const SizedBox(width: 4),
                   ],
                   Flexible(
@@ -57,7 +57,7 @@ class ChoicePill extends StatelessWidget {
                       textAlign: TextAlign.center,
                       style: VivType.bodySmall.copyWith(
                         fontSize: 14,
-                        color: selected ? c.onPrimary : c.textPrimary,
+                        color: selected ? c.ctaText : c.ink,
                         fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                       ),
                     ),

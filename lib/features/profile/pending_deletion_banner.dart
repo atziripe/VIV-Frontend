@@ -49,7 +49,7 @@ class _PendingDeletionBannerState extends ConsumerState<PendingDeletionBanner> {
     return Column(
       children: [
         Material(
-          color: c.primarySoft,
+          color: c.tint,
           child: SafeArea(
             bottom: false,
             child: Padding(
@@ -61,12 +61,12 @@ class _PendingDeletionBannerState extends ConsumerState<PendingDeletionBanner> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.schedule_rounded, size: 18, color: c.primary),
+                  Icon(Icons.schedule_rounded, size: 18, color: c.accent),
                   const SizedBox(width: VivSpace.xs),
                   Expanded(
                     child: Text(
                       'Your account will be deleted on ${Dates.dayMonth(at)}.',
-                      style: VivType.caption.copyWith(color: c.textPrimary, fontSize: 13),
+                      style: VivType.caption.copyWith(color: c.ink, fontSize: 13),
                     ),
                   ),
                   _cancelling
@@ -82,7 +82,7 @@ class _PendingDeletionBannerState extends ConsumerState<PendingDeletionBanner> {
                           child: Text(
                             'Cancel',
                             style: VivType.caption.copyWith(
-                              color: c.primary,
+                              color: c.accent,
                               fontWeight: FontWeight.w600,
                             ),
                           ),

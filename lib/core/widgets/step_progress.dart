@@ -24,7 +24,7 @@ class StepProgress extends StatelessWidget {
                 duration: const Duration(milliseconds: 250),
                 height: 3,
                 decoration: BoxDecoration(
-                  color: i <= current ? c.primary : c.border,
+                  color: i <= current ? c.accent : c.line,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),

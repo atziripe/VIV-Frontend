@@ -109,10 +109,7 @@ class _LogInScreenState extends ConsumerState<LogInScreen> with AuthActionRunner
                     onTap: _forgot,
                     child: Text(
                       'Forgot?',
-                      style: VivType.caption.copyWith(
-                        color: c.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: VivType.caption.copyWith(color: c.accent, fontWeight: FontWeight.w600),
                     ),
                   ),
                 ),

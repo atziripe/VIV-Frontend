@@ -138,7 +138,7 @@ class YourInfoScreen extends ConsumerWidget {
             child: Text(
               'Next period expected around '
               '${Dates.dayMonth(Dates.parseYmd(me.expectedPeriodDate!))}.',
-              style: VivType.caption.copyWith(color: context.viv.textTertiary),
+              style: VivType.caption.copyWith(color: context.viv.subtle),
             ),
           ),
         const SizedBox(height: VivSpace.lg),
@@ -183,25 +183,25 @@ class _InfoRow extends StatelessWidget {
       onTap: onTap,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: c.border)),
+          border: Border(bottom: BorderSide(color: c.line)),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: VivSpace.sm + 2),
           child: Row(
             children: [
               Expanded(
-                child: Text(label, style: VivType.bodySmall.copyWith(color: c.textPrimary)),
+                child: Text(label, style: VivType.bodySmall.copyWith(color: c.ink)),
               ),
               Text(
                 value,
                 style: VivType.bodySmall.copyWith(
-                  color: isAdd || accent ? c.primary : c.textPrimary,
+                  color: isAdd || accent ? c.accent : c.ink,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               if (unit != null) ...[
                 const SizedBox(width: 4),
-                Text(unit!, style: VivType.caption.copyWith(color: c.textTertiary)),
+                Text(unit!, style: VivType.caption.copyWith(color: c.subtle)),
               ],
             ],
           ),
@@ -266,7 +266,7 @@ class _NumberSheetState extends ConsumerState<_NumberSheet> with _SaveProfile {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(widget.title, style: VivType.headline.copyWith(color: c.textPrimary)),
+          Text(widget.title, style: VivType.headline.copyWith(color: c.ink)),
           const SizedBox(height: VivSpace.xl),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -282,7 +282,7 @@ class _NumberSheetState extends ConsumerState<_NumberSheet> with _SaveProfile {
                 child: Text(
                   '$display ${widget.unit}',
                   textAlign: TextAlign.center,
-                  style: VivType.headline.copyWith(color: c.textPrimary),
+                  style: VivType.headline.copyWith(color: c.ink),
                 ),
               ),
               IconButton.outlined(
@@ -336,10 +336,10 @@ class _ChoiceSheetState extends ConsumerState<_ChoiceSheet> with _SaveProfile {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(widget.title, style: VivType.headline.copyWith(color: c.textPrimary)),
+          Text(widget.title, style: VivType.headline.copyWith(color: c.ink)),
           if (widget.subtitle != null) ...[
             const SizedBox(height: VivSpace.xxs),
-            Text(widget.subtitle!, style: VivType.bodySmall.copyWith(color: c.textSecondary)),
+            Text(widget.subtitle!, style: VivType.bodySmall.copyWith(color: c.muted)),
           ],
           const SizedBox(height: VivSpace.lg),
           Wrap(

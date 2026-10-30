@@ -44,7 +44,7 @@ class SplashScreen extends ConsumerWidget {
                     const SizedBox(height: VivSpace.lg),
                     SizedBox.square(
                       dimension: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: c.textTertiary),
+                      child: CircularProgressIndicator(strokeWidth: 2, color: c.subtle),
                     ),
                   ],
                 ),

@@ -35,7 +35,7 @@ class RecoverScreen extends ConsumerWidget {
         Text(
           'If something feels off beyond a normal heavy week, that\'s a conversation for '
           'your doctor, not for VIV.',
-          style: VivType.caption.copyWith(color: c.textTertiary),
+          style: VivType.caption.copyWith(color: c.subtle),
         ),
       ],
     );
@@ -63,13 +63,13 @@ class _Card extends StatelessWidget {
                   : 'A few things tonight. That\'s the whole list.'),
         ),
         if (card.context != null) ...[
-          Text(card.context!, style: VivType.caption.copyWith(color: c.textTertiary)),
+          Text(card.context!, style: VivType.caption.copyWith(color: c.subtle)),
           const SizedBox(height: VivSpace.sm),
         ],
         for (final item in items)
           DecoratedBox(
             decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: c.border)),
+              border: Border(bottom: BorderSide(color: c.line)),
             ),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: VivSpace.md),
@@ -81,7 +81,7 @@ class _Card extends StatelessWidget {
                     child: Container(
                       width: 6,
                       height: 6,
-                      decoration: BoxDecoration(color: c.primary, shape: BoxShape.circle),
+                      decoration: BoxDecoration(color: c.accent, shape: BoxShape.circle),
                     ),
                   ),
                   Expanded(
@@ -91,16 +91,13 @@ class _Card extends StatelessWidget {
                         Text(
                           item.title,
                           style: VivType.bodySmall.copyWith(
-                            color: c.textPrimary,
+                            color: c.ink,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                         if (item.detail != null) ...[
                           const SizedBox(height: 2),
-                          Text(
-                            item.detail!,
-                            style: VivType.caption.copyWith(color: c.textSecondary),
-                          ),
+                          Text(item.detail!, style: VivType.caption.copyWith(color: c.muted)),
                         ],
                       ],
                     ),
