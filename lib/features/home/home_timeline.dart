@@ -32,8 +32,8 @@ final dismissedMomentsProvider = NotifierProvider<DismissedMoments, Set<String>>
 const _timeColumn = 52.0;
 
 /// One timeline row: time · status circle · title + detail.
-class TimelineRow extends StatelessWidget {
-  const TimelineRow({super.key, required this.item, this.onTap});
+class LegacyTimelineRow extends StatelessWidget {
+  const LegacyTimelineRow({super.key, required this.item, this.onTap});
 
   final TimelineItem item;
   final VoidCallback? onTap;

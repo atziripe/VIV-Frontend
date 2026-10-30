@@ -370,6 +370,12 @@ Future<void> pumpScreen(
         darkTheme: VivTheme.dark(),
         themeMode: brightness == Brightness.light ? ThemeMode.light : ThemeMode.dark,
         routerConfig: router,
+        // Reduce Motion: ambient loops (field glow, now dot) stay still, so
+        // pumpAndSettle can settle. Entrance fades still run.
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(disableAnimations: true),
+          child: child!,
+        ),
       ),
     ),
   );

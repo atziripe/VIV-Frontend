@@ -178,11 +178,14 @@ class _Timeline extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (skipped && !skippedHasRow) TimelineRow(item: home.nowCard!),
+        if (skipped && !skippedHasRow) LegacyTimelineRow(item: home.nowCard!),
         for (final e in entries)
           switch (e) {
             HomeNowEntry(:final card) => NowMomentCard(card: card, date: home.date),
-            HomeItemEntry(:final item) => TimelineRow(item: item, onTap: _onTap(context, item)),
+            HomeItemEntry(:final item) => LegacyTimelineRow(
+              item: item,
+              onTap: _onTap(context, item),
+            ),
           },
         if (home.weekProgress case final progress? when progress.days.isNotEmpty) ...[
           const SizedBox(height: VivSpace.md),
