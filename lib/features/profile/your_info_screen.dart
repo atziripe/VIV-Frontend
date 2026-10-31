@@ -88,7 +88,7 @@ class YourInfoScreen extends ConsumerWidget {
             _ChoiceSheet(
               title: 'Outside training',
               subtitle: 'Your days are mostly…',
-              options: {for (final l in ActivityLevel.values) l.label: l.label},
+              options: {for (final l in ActivityLevel.values) l.apiValue: l.label},
               selected: me.dailyActivityLevel,
               build: (v) => ProfileUpdate(dailyActivityLevel: v),
             ),

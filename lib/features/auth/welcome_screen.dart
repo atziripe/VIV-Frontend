@@ -8,114 +8,113 @@ import '../../core/widgets/widgets.dart';
 import '../../router/app_router.dart';
 import 'legal_footer.dart';
 
-/// 01 · Welcome — always dark, over a full-bleed photo.
+/// 01 · Welcome: the photo slot on top, then the hook and "Get started".
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // The hero is dark in both modes, so force the dark palette here.
+    final c = context.viv;
     return TrackOnMount(
       track: (a) => a.welcomeViewed(),
-      child: Theme(
-        data: VivTheme.dark(),
-        child: Builder(
-          builder: (context) {
-            final c = context.viv;
-            return Scaffold(
-              backgroundColor: VivColors.dark.page,
-              body: Stack(
-                fit: StackFit.expand,
-                children: [
-                  const _HeroBackdrop(),
-                  SafeArea(
-                    child: ResponsiveCenter(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: VivSpace.xl),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: VivSpace.md),
-                            const VivWordmark(),
-                            const Spacer(),
-                            Semantics(
-                              header: true,
-                              child: Text(
-                                'Some weeks you train. Most weeks, life wins.',
-                                style: VivType.display.copyWith(color: c.ink),
-                              ),
-                            ),
-                            const SizedBox(height: VivSpace.sm),
-                            Text(
-                              'VIV builds a week around the energy you actually have '
-                              'and rebuilds it the moment the week changes.',
-                              style: VivType.bodySmall.copyWith(
-                                color: VivColors.light.page.withValues(alpha: 0.76),
-                              ),
-                            ),
-                            const SizedBox(height: VivSpace.xl),
-                            VivButton(
-                              label: 'Get started',
-                              variant: VivButtonVariant.inverse,
-                              onPressed: () => context.push(Routes.signUp),
-                            ),
-                            const SizedBox(height: VivSpace.xs),
-                            Center(
-                              child: VivButton.text(
-                                label: 'I already have an account',
-                                onPressed: () => context.push(Routes.logIn),
-                              ),
-                            ),
-                            const SizedBox(height: VivSpace.md),
-                            const LegalFooter(prefix: 'By continuing you agree to VIV\'s'),
-                            const SizedBox(height: VivSpace.md),
-                          ],
+      child: Scaffold(
+        backgroundColor: c.page,
+        body: ResponsiveCenter(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Expanded(child: _HeroPhoto()),
+              SafeArea(
+                top: false,
+                minimum: const EdgeInsets.only(bottom: 18),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(22, 28, 22, 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Enter(
+                        child: Semantics(
+                          header: true,
+                          child: Text(
+                            'Some weeks you train. Most weeks, life wins.',
+                            style: VivType.h1.copyWith(fontSize: 36, color: c.ink),
+                          ),
                         ),
                       ),
-                    ),
+                      const SizedBox(height: 14),
+                      Enter(
+                        delay: const Duration(milliseconds: 60),
+                        child: Text(
+                          'VIV builds a week around the energy you actually have, and '
+                          'rebuilds it the moment the week changes.',
+                          style: VivType.lead.copyWith(fontSize: 15.5, color: c.muted),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      PillButton(
+                        label: 'Get started',
+                        arrow: true,
+                        size: PillSize.cta,
+                        onPressed: () => context.push(Routes.signUp),
+                      ),
+                      const SizedBox(height: 8),
+                      PillButton(
+                        label: 'I already have an account',
+                        variant: PillVariant.text,
+                        size: PillSize.compact,
+                        onPressed: () => context.push(Routes.logIn),
+                      ),
+                      const SizedBox(height: 8),
+                      const LegalFooter(prefix: 'By continuing you agree to the'),
+                    ],
                   ),
-                ],
+                ),
               ),
-            );
-          },
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-/// Placeholder for the hero photo ("someone mid-week, ordinary setting…").
-/// Swap for `Image.asset` once the photo is exported from Figma.
-class _HeroBackdrop extends StatelessWidget {
-  const _HeroBackdrop();
+/// Placeholder for the hero photo: "a real woman mid-week, ordinary setting,
+/// face visible". Swap for `Image.asset` once the photo exists.
+class _HeroPhoto extends StatelessWidget {
+  const _HeroPhoto();
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [const Color(0xFF3A2E2A), const Color(0xFF241C19), VivColors.dark.page],
-          stops: const [0, 0.55, 1],
+    final c = context.viv;
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(36)),
+      child: ColoredBox(
+        color: c.photo,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            const Positioned(
+              bottom: -120,
+              left: -80,
+              child: FieldGlow(size: 300, blur: 70, opacity: 0.35, period: Duration(seconds: 12)),
+            ),
+            SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+                child: Align(
+                  alignment: Alignment.topLeft,
+                  child: Text(
+                    'VIV',
+                    semanticsLabel: 'VIV',
+                    style: VivType.h3.copyWith(fontSize: 22, letterSpacing: 3.5, color: c.ink),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
-      child: CustomPaint(painter: _StripePainter()),
     );
   }
-}
-
-class _StripePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0x0DFFFFFF)
-      ..strokeWidth = 18;
-    for (var x = -size.height; x < size.width; x += 44) {
-      canvas.drawLine(Offset(x, size.height), Offset(x + size.height, 0), paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

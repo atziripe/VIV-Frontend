@@ -28,7 +28,7 @@ class _LegalFooterState extends State<LegalFooter> {
   @override
   Widget build(BuildContext context) {
     final c = context.viv;
-    final base = VivType.caption.copyWith(color: c.subtle);
+    final base = VivType.legal.copyWith(color: c.subtle);
     final link = base.copyWith(
       color: c.muted,
       decoration: TextDecoration.underline,
@@ -45,7 +45,6 @@ class _LegalFooterState extends State<LegalFooter> {
           const TextSpan(text: '.'),
         ],
       ),
-      textAlign: TextAlign.center,
     );
   }
 }

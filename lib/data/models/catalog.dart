@@ -38,9 +38,9 @@ enum Activity {
 
 /// VIV-102 goal — a single value.
 enum Goal {
-  consistencyWellbeing('consistency_wellbeing', 'Consistency & wellbeing'),
-  strengthMuscle('strength_muscle', 'Strength & muscle'),
-  endurancePerformance('endurance_performance', 'Endurance & performance'),
+  consistencyWellbeing('consistency_wellbeing', 'Showing up consistently'),
+  strengthMuscle('strength_muscle', 'Getting stronger'),
+  endurancePerformance('endurance_performance', 'Endurance'),
   bodyComposition('body_composition', 'Body composition');
 
   const Goal(this.id, this.label);

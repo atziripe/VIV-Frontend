@@ -44,7 +44,7 @@ class _LogInScreenState extends ConsumerState<LogInScreen> with AuthActionRunner
     final messenger = ScaffoldMessenger.of(context);
     if (error != null) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('Enter your email above, then tap Forgot again.')),
+        const SnackBar(content: Text('Enter your email above, then tap Forgot password again.')),
       );
       return;
     }
@@ -61,7 +61,6 @@ class _LogInScreenState extends ConsumerState<LogInScreen> with AuthActionRunner
     final c = context.viv;
     return VivPage(
       showBack: true,
-      topCenter: const VivWordmark(),
       bottom: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -70,7 +69,7 @@ class _LogInScreenState extends ConsumerState<LogInScreen> with AuthActionRunner
             loading: busy == AuthMethod.email,
             onPressed: busy == null ? _submit : null,
           ),
-          const SizedBox(height: VivSpace.xs),
+          const SizedBox(height: 4),
           SwitchLink(
             text: 'New to VIV?',
             action: 'Create an account',
@@ -99,17 +98,29 @@ class _LogInScreenState extends ConsumerState<LogInScreen> with AuthActionRunner
                 VivTextField(
                   label: 'Password',
                   controller: _password,
-                  hint: 'Password',
                   obscurable: true,
                   textInputAction: TextInputAction.done,
                   autofillHints: const [AutofillHints.password],
                   onSubmitted: (_) => _submit(),
                   validator: (v) => (v ?? '').isEmpty ? 'Enter your password' : null,
-                  labelTrailing: GestureDetector(
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
                     onTap: _forgot,
-                    child: Text(
-                      'Forgot?',
-                      style: VivType.caption.copyWith(color: c.accent, fontWeight: FontWeight.w600),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: VivSize.minTap),
+                      child: Center(
+                        widthFactor: 1,
+                        child: Text(
+                          'Forgot password?',
+                          style: VivType.body.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: c.accent,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),

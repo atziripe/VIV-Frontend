@@ -29,24 +29,26 @@ class SocialSignIn extends ConsumerWidget {
     return Column(
       children: [
         if (showApple) ...[
-          VivButton(
+          PillButton(
             label: 'Continue with Apple',
-            variant: VivButtonVariant.inverse,
-            icon: const Icon(Icons.apple, size: 20),
-            loading: busy == AuthMethod.apple,
+            variant: PillVariant.outline,
+            size: PillSize.control,
+            icon: const Icon(Icons.apple),
+            busy: busy == AuthMethod.apple,
             onPressed: disabled ? null : () => run(AuthMethod.apple, repo.signInWithApple),
           ),
-          const SizedBox(height: VivSpace.xs),
+          const SizedBox(height: 11),
         ],
-        VivButton(
+        PillButton(
           label: 'Continue with Google',
-          variant: showApple ? VivButtonVariant.secondary : VivButtonVariant.inverse,
-          loading: busy == AuthMethod.google,
+          variant: PillVariant.outline,
+          size: PillSize.control,
+          busy: busy == AuthMethod.google,
           onPressed: disabled ? null : () => run(AuthMethod.google, repo.signInWithGoogle),
         ),
-        const SizedBox(height: VivSpace.lg),
+        const SizedBox(height: 15),
         const _OrDivider(),
-        const SizedBox(height: VivSpace.md),
+        const SizedBox(height: 15),
       ],
     );
   }
@@ -63,7 +65,7 @@ class _OrDivider extends StatelessWidget {
         const Expanded(child: Divider()),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: VivSpace.sm),
-          child: Text('or use email', style: VivType.caption.copyWith(color: c.subtle)),
+          child: Text('or email', style: VivType.meta.copyWith(color: c.subtle)),
         ),
         const Expanded(child: Divider()),
       ],
@@ -123,15 +125,15 @@ class SwitchLink extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(VivRadius.sm),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: VivSpace.xs, horizontal: VivSpace.sm),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: VivSpace.sm),
         child: Text.rich(
           TextSpan(
-            style: VivType.caption.copyWith(color: c.muted, fontSize: 13),
+            style: VivType.body.copyWith(color: c.muted),
             children: [
               TextSpan(text: '$text '),
               TextSpan(
                 text: action,
-                style: TextStyle(color: c.accent, fontWeight: FontWeight.w600),
+                style: TextStyle(color: c.accent, fontWeight: FontWeight.w700),
               ),
             ],
           ),

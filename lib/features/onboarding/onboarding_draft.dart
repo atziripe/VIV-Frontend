@@ -8,7 +8,7 @@ import '../auth/auth_repository.dart';
 
 /// 00 · Fit check — "Which describes you right now?"
 enum CycleSituation {
-  natural('Natural menstrual cycle'),
+  natural('Natural cycle'),
   hormonal('Hormonal contraception', 'pill, IUD, implant, ring'),
   pregnant('Pregnant or postpartum'),
   menopause('Perimenopause or menopause'),
@@ -71,7 +71,7 @@ enum ActivityChoice {
   yoga('Yoga', [Activity.yoga]),
   mobility('Mobility', [Activity.mobility]),
   swimming('Swimming', [Activity.swimming]),
-  team('Team or racket sport', [Activity.teamRacketSports]);
+  team('Team or racket', [Activity.teamRacketSports]);
 
   const ActivityChoice(this.label, this.activities);
   final String label;
@@ -90,12 +90,17 @@ enum DaysPerWeek {
 }
 
 enum ActivityLevel {
-  deskBound('Desk-bound'),
-  someMovement('Some movement'),
-  onMyFeet('On my feet'),
-  physicalWork('Physical work');
+  deskBound('Desk-bound', 'Desk'),
+  someMovement('Some movement', 'Mixed'),
+  onMyFeet('On my feet', 'On feet'),
+  physicalWork('Physical work', 'Physical');
 
-  const ActivityLevel(this.label);
+  const ActivityLevel(this.apiValue, this.label);
+
+  /// `daily_activity_level` value (unchanged for the backend).
+  final String apiValue;
+
+  /// Chip label.
   final String label;
 }
 
@@ -194,7 +199,7 @@ class OnboardingDraft {
       cycleDuration: cycleLength?.days?.toString(),
       periodDuration: periodLength?.toString(),
       trainingOften: daysPerWeek?.apiValue,
-      dailyActivityLevel: activityLevel?.label,
+      dailyActivityLevel: activityLevel?.apiValue,
       activities: ids,
       goalId: goal!.id,
     );

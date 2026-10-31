@@ -10,6 +10,7 @@ import '../../data/api/viv_api.dart';
 import '../../data/models/account.dart';
 import '../../data/models/catalog.dart';
 import '../../data/models/onboarding.dart';
+import '../../data/models/weekly_plan.dart';
 import '../../data/providers.dart';
 import '../../router/app_router.dart';
 import '../auth/auth_repository.dart';
@@ -46,18 +47,14 @@ class _StepPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.viv;
     return VivPage(
       showBack: true,
-      topCenter: Text(
-        'Step $step of $_totalSteps',
-        style: VivType.caption.copyWith(color: c.muted, fontSize: 13),
-      ),
+      topTrailing: StepProgress(current: step, total: _totalSteps),
       bottom: VivButton(label: 'Continue', onPressed: onContinue),
       children: [
-        const SizedBox(height: VivSpace.xs),
-        StepProgress(current: step, total: _totalSteps),
-        PageHeader(title: title, subtitle: subtitle),
+        Enter.fromRight(
+          child: PageHeader(title: title, subtitle: subtitle),
+        ),
         ...children,
       ],
     );
@@ -93,50 +90,40 @@ class FitCheckScreen extends ConsumerWidget {
         const PageHeader(
           title: 'First, so we don\'t hand you the wrong plan',
           subtitle:
-              'VIV\'s guidance is calibrated to a natural menstrual cycle. '
-              'If that isn\'t you right now, we\'d rather say so than guess.',
+              'VIV\'s timing is built on a natural cycle. If that isn\'t you right now, '
+              'we\'d rather say so than guess.',
         ),
-        const FieldLabel('Which describes you right now?'),
         for (final s in CycleSituation.values) ...[
-          OptionTile(
-            title: s.label,
-            subtitle: s.hint,
+          OptionRow(
+            label: s.label,
+            hint: s.hint,
             selected: situation == s,
             onTap: () => notifier.update((d) => d.copyWith(situation: s)),
           ),
-          const SizedBox(height: VivSpace.xs),
+          const SizedBox(height: 9),
         ],
-        const SizedBox(height: VivSpace.sm),
-        _WhyWeAsk(color: c.muted),
+        const SizedBox(height: 4),
+        WhyLink(label: 'Why we ask', color: c.accent, onTap: () => _showWhyWeAsk(context)),
       ],
     );
   }
 }
 
-class _WhyWeAsk extends StatelessWidget {
-  const _WhyWeAsk({required this.color});
-
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Theme(
-      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-      child: ExpansionTile(
-        tilePadding: EdgeInsets.zero,
-        childrenPadding: const EdgeInsets.only(bottom: VivSpace.sm),
-        title: Text('Why we ask', style: VivType.caption.copyWith(color: color, fontSize: 13)),
-        children: [
-          Text(
-            'Hormonal contraception, pregnancy and menopause change how energy moves '
-            'through the month. Our model isn\'t built for those yet, and a confident '
-            'wrong plan is worse than no plan.',
-            style: VivType.caption.copyWith(color: color),
-          ),
-        ],
-      ),
-    );
-  }
+void _showWhyWeAsk(BuildContext context) {
+  showVivSheet<void>(
+    context,
+    builder: (sheet) => VivBottomSheet(
+      eyebrow: 'Why we ask',
+      title: 'A plan built for your physiology',
+      body:
+          'Hormonal contraception, pregnancy and menopause change how energy moves '
+          'through the month. Our model isn\'t built for those yet, and a confident '
+          'wrong plan is worse than no plan.',
+      actions: [
+        PillButton(label: 'Got it', size: PillSize.control, onPressed: () => Navigator.pop(sheet)),
+      ],
+    ),
+  );
 }
 
 // ── 00b · Not a fit yet ─────────────────────────────────────────────────────
@@ -351,11 +338,11 @@ class TrainingPrefsScreen extends ConsumerWidget {
     return _StepPage(
       step: 2,
       title: 'How do you like to train?',
+      subtitle: 'Pick any. You can change this later.',
       onContinue: draft.trainingComplete
           ? () => _next(ref, context, 'training', Routes.yourWeek)
           : null,
       children: [
-        const FieldLabel('Pick any that apply'),
         Wrap(
           spacing: VivSpace.xs,
           runSpacing: VivSpace.xs,
@@ -369,15 +356,23 @@ class TrainingPrefsScreen extends ConsumerWidget {
               ),
           ],
         ),
-        const SizedBox(height: VivSpace.xl),
-        const FieldLabel('What should VIV optimise for?'),
+        const SizedBox(height: 28),
+        Text(
+          'What matters most right now?',
+          style: VivType.rowTitle.copyWith(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+            color: context.viv.ink,
+          ),
+        ),
+        const SizedBox(height: 10),
         for (final g in Goal.values) ...[
-          OptionTile(
-            title: g.label,
+          OptionRow(
+            label: g.label,
             selected: draft.goal == g,
             onTap: () => notifier.update((d) => d.copyWith(goal: g)),
           ),
-          const SizedBox(height: VivSpace.xs),
+          const SizedBox(height: 9),
         ],
       ],
     );
@@ -429,14 +424,12 @@ class YourWeekScreen extends ConsumerWidget {
         ),
         const SizedBox(height: VivSpace.xs),
         Text(
-          'VIV puts the lightest sessions here.',
-          style: VivType.caption.copyWith(color: c.subtle),
+          'VIV keeps those days light.',
+          style: VivType.meta.copyWith(fontSize: 13.5, color: c.muted),
         ),
         const SizedBox(height: VivSpace.xl),
-        const FieldLabel('Outside training, your days are mostly'),
-        Wrap(
-          spacing: VivSpace.xs,
-          runSpacing: VivSpace.xs,
+        const FieldLabel('Outside training, you\'re mostly'),
+        PillRow(
           children: [
             for (final l in ActivityLevel.values)
               ChoicePill(
@@ -481,8 +474,8 @@ class CycleScreen extends ConsumerWidget {
       step: 4,
       title: 'Last piece: your cycle',
       subtitle:
-          'This is what lets VIV time your week instead of guessing at it. '
-          'Rough answers are fine, check-ins sharpen them.',
+          'This lets VIV time your week instead of guessing. Rough answers are fine; '
+          'check-ins sharpen them.',
       onContinue: draft.cycleComplete ? () => _next(ref, context, 'cycle', Routes.consent) : null,
       children: [
         const FieldLabel('Your last period started'),
@@ -500,22 +493,27 @@ class CycleScreen extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: VivSpace.xs),
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                lastDate == null ? ' ' : 'Using ${Dates.dayMonth(lastDate)}',
-                style: VivType.caption.copyWith(color: c.subtle),
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: pickExact,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: VivSize.minTap),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text.rich(
+                TextSpan(
+                  text: lastDate == null ? '' : 'Using ${Dates.dayMonth(lastDate)} · ',
+                  children: [
+                    TextSpan(
+                      text: 'pick exact date',
+                      style: TextStyle(fontWeight: FontWeight.w700, color: c.accent),
+                    ),
+                  ],
+                ),
+                style: VivType.meta.copyWith(fontSize: 13.5, color: c.muted),
               ),
             ),
-            GestureDetector(
-              onTap: pickExact,
-              child: Text(
-                'Pick exact date',
-                style: VivType.caption.copyWith(color: c.accent, fontWeight: FontWeight.w600),
-              ),
-            ),
-          ],
+          ),
         ),
         const SizedBox(height: VivSpace.xl),
         const FieldLabel('Typical cycle length'),
@@ -545,7 +543,7 @@ class CycleScreen extends ConsumerWidget {
         const SizedBox(height: VivSpace.xs),
         Text(
           'Daily check-ins correct this as VIV learns you.',
-          style: VivType.caption.copyWith(color: c.subtle),
+          style: VivType.meta.copyWith(fontSize: 13.5, color: c.muted),
         ),
       ],
     );
@@ -688,7 +686,26 @@ class BuildingWeekScreen extends ConsumerStatefulWidget {
   ConsumerState<BuildingWeekScreen> createState() => _BuildingWeekScreenState();
 }
 
+const _weekdayNames = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+];
+const _numberWords = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven'];
+
+/// "Tuesday and Thursday", "Monday, Wednesday and Friday".
+String _joinDays(List<String> days) => days.length <= 1
+    ? days.join()
+    : '${days.sublist(0, days.length - 1).join(', ')} and ${days.last}';
+
 class _BuildingWeekScreenState extends ConsumerState<BuildingWeekScreen> {
+  WeeklyPlan? _week;
+  bool _ready = false;
+
   @override
   void initState() {
     super.initState();
@@ -712,34 +729,120 @@ class _BuildingWeekScreenState extends ConsumerState<BuildingWeekScreen> {
     ref
         .read(analyticsProvider)
         .firstWeekReady(waitSeconds: DateTime.now().difference(started).inSeconds, failed: failed);
+    WeeklyPlan? week;
+    if (!failed) {
+      ref.invalidate(currentWeekProvider);
+      week = await ref.read(currentWeekProvider.future).catchError((Object _) => null);
+    }
+    if (!mounted) return;
+    if (week == null) return _seeToday();
+    setState(() {
+      _week = week;
+      _ready = true;
+    });
+  }
+
+  /// Refreshing `/me` flips the session to ready; the router moves to Today.
+  void _seeToday() {
     ref.invalidate(meProvider);
-    ref.invalidate(currentWeekProvider);
     ref.invalidate(homeTodayProvider);
   }
 
   @override
   Widget build(BuildContext context) {
+    return VivPage(
+      bottom: _ready ? VivButton(label: 'See today', onPressed: _seeToday) : null,
+      children: [
+        const SizedBox(height: 24),
+        if (_ready) _FirstWeek(week: _week!) else const _FirstWeekSkeleton(),
+      ],
+    );
+  }
+}
+
+/// "Your first week": instant, and it explains itself.
+class _FirstWeek extends ConsumerWidget {
+  const _FirstWeek({required this.week});
+
+  final WeeklyPlan week;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     final c = context.viv;
-    return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(VivSpace.gutter),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Spacer(),
-              const Eyebrow('Building your week', accent: true),
-              const SizedBox(height: VivSpace.sm),
-              Text(
-                'Fitting training around the week you actually have.',
-                style: VivType.title.copyWith(color: c.ink),
-              ),
-              const SizedBox(height: VivSpace.xl),
-              const LinearProgressIndicator(minHeight: 3),
-              const Spacer(flex: 2),
-            ],
+    final hardDays = ref.watch(onboardingDraftProvider).hardDays.toList()..sort();
+    final sessions = week.days.where((d) => !d.isRestDay).toList();
+    final count = sessions.length < _numberWords.length
+        ? _numberWords[sessions.length]
+        : '${sessions.length}';
+    final hardNames = [
+      for (final d in hardDays)
+        if (d >= 1 && d <= 7) _weekdayNames[d - 1],
+    ];
+
+    final first = sessions.firstOrNull;
+    final rest = sessions.skip(1).take(3).toList();
+    String line(WeekDay d) =>
+        [d.title, if (d.durationMinutes != null) '${d.durationMinutes} min'].join(' · ');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Enter(
+          child: PageHeader(
+            eyebrow: Text('YOUR FIRST WEEK', style: VivType.eyebrow.copyWith(color: c.tintInk)),
+            title: hardNames.isEmpty
+                ? '$count sessions this week.'
+                : '$count sessions, built around ${_joinDays(hardNames)}.',
+            subtitle: hardNames.isEmpty
+                ? 'Everything moves if your week does.'
+                : 'Those are the days you said fall apart, so they stay light. '
+                      'Everything moves if your week does.',
           ),
         ),
+        if (first != null)
+          WineField(
+            eyebrow: 'First up · ${Dates.capitalize(first.weekday)}',
+            pulse: false,
+            title: line(first),
+            body: rest.isEmpty
+                ? null
+                : 'Then ${rest.map((d) => '${Dates.capitalize(d.weekday).substring(0, 3)} ${d.title.toLowerCase()}').join(', ')}.',
+          ),
+        const SizedBox(height: 18),
+        Enter(
+          delay: const Duration(milliseconds: 300),
+          child: Text(
+            'Tomorrow morning: a 4-tap check-in. That\'s how VIV learns what your week '
+            'actually looks like.',
+            style: VivType.body.copyWith(color: c.muted),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _FirstWeekSkeleton extends StatelessWidget {
+  const _FirstWeekSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Skeleton(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SkeletonBox.line(width: 120, height: 12),
+          SizedBox(height: 14),
+          SkeletonBox(height: 34, radius: VivRadius.md),
+          SizedBox(height: 8),
+          SkeletonBox(width: 220, height: 34, radius: VivRadius.md),
+          SizedBox(height: 16),
+          SkeletonBox.line(),
+          SizedBox(height: 8),
+          SkeletonBox.line(width: 260),
+          SizedBox(height: 26),
+          SkeletonBox.field(height: 190),
+        ],
       ),
     );
   }
