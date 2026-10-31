@@ -4,6 +4,7 @@ export 'eyebrow.dart';
 export 'option_row.dart';
 export 'option_tile.dart';
 export 'pill_button.dart';
+export 'segmented_pills.dart';
 export 'settings_row.dart';
 export 'skeleton.dart';
 export 'step_progress.dart';

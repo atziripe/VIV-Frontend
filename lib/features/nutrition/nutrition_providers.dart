@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/analytics/analytics.dart';
+import '../../core/utils/dates.dart';
 import '../../data/api/viv_api.dart';
 import '../../data/providers.dart';
 
@@ -41,3 +42,34 @@ class MealSelections extends Notifier<Map<String, int>> {
 final mealSelectionsProvider = NotifierProvider<MealSelections, Map<String, int>>(
   MealSelections.new,
 );
+
+/// Meals marked "Cooked it" today, by slot key. Device only: there's no
+/// endpoint for it, and it only drives the protein bar on Eat. Resets each
+/// day.
+class CookedMeals extends Notifier<Set<String>> {
+  static const _key = 'viv.nutrition.cooked';
+
+  @override
+  Set<String> build() {
+    final raw = ref.read(sharedPreferencesProvider).getString(_key);
+    if (raw == null) return {};
+    try {
+      final j = jsonDecode(raw) as Map<String, dynamic>;
+      if (j['date'] != Dates.todayYmd()) return {};
+      return {...(j['slots'] as List).cast<String>()};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  bool isCooked(String slot) => state.contains(slot);
+
+  Future<void> toggle(String slot) async {
+    state = isCooked(slot) ? ({...state}..remove(slot)) : {...state, slot};
+    await ref
+        .read(sharedPreferencesProvider)
+        .setString(_key, jsonEncode({'date': Dates.todayYmd(), 'slots': state.toList()}));
+  }
+}
+
+final cookedMealsProvider = NotifierProvider<CookedMeals, Set<String>>(CookedMeals.new);
