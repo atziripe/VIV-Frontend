@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:viv/core/theme/viv_theme.dart';
+import 'package:viv/core/widgets/widgets.dart';
 import 'package:viv/data/api/viv_api.dart';
 import 'package:viv/data/models/account.dart';
 import 'package:viv/data/models/catalog.dart';
@@ -93,7 +94,7 @@ void main() {
 
   testWidgets('optional consents toggle through POST /me/consents', (tester) async {
     await pumpPrivacy(tester);
-    await tester.tap(find.byType(Switch).first);
+    await tester.tap(find.byType(PillToggle).first);
     await tester.pumpAndSettle();
     verify(() => api.setConsent(ConsentPurpose.aiProcessing, granted: true)).called(1);
   });

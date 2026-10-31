@@ -2,6 +2,24 @@ import 'package:flutter/material.dart';
 
 import '../theme/viv_theme.dart';
 
+/// The uppercase label above a [SettingsGroup]: "YOUR PLAN".
+class SettingsLabel extends StatelessWidget {
+  const SettingsLabel(this.text, {super.key, this.first = false});
+
+  final String text;
+
+  /// The first label on a page sits closer to what's above it.
+  final bool first;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(4, first ? 0 : 22, 0, 10),
+      child: Text(text.toUpperCase(), style: VivType.eyebrow.copyWith(color: context.viv.subtle)),
+    );
+  }
+}
+
 /// A raised grouped list: radius 24, padding 2/18, light-mode shadow. Rows
 /// get a hairline between them, never after the last.
 class SettingsGroup extends StatelessWidget {
@@ -112,12 +130,23 @@ class AddPill extends StatelessWidget {
 
 /// A navigation row: title, its current value underneath, chevron.
 class MenuRow extends StatelessWidget {
-  const MenuRow({super.key, required this.title, this.value, this.onTap, this.titleColor});
+  const MenuRow({
+    super.key,
+    required this.title,
+    this.value,
+    this.onTap,
+    this.titleColor,
+    this.trailing,
+  });
 
   final String title;
   final String? value;
   final VoidCallback? onTap;
   final Color? titleColor;
+
+  /// Replaces the chevron (a spinner, a "REQUIRED" tag). No chevron when
+  /// there's nowhere to go.
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -145,7 +174,10 @@ class MenuRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 14),
-            Text('›', style: VivType.body.copyWith(fontSize: 18, color: c.faint)),
+            trailing ??
+                (onTap == null
+                    ? const SizedBox.shrink()
+                    : Text('›', style: VivType.body.copyWith(fontSize: 18, color: c.faint))),
           ],
         ),
       ),

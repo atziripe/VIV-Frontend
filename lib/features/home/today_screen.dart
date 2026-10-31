@@ -19,6 +19,7 @@ import '../../data/providers.dart';
 import '../../router/app_router.dart';
 import '../checkin/checkin_copy.dart';
 import '../checkin/checkin_screen.dart' show showWhyTodaySheet;
+import '../profile/your_info_screen.dart' show WhatChanges, showEditNumberSheet;
 import 'home_timeline.dart';
 import 'period_start_sheet.dart';
 
@@ -666,7 +667,17 @@ class _LatePeriodCardState extends ConsumerState<_LatePeriodCard> {
             PillButton(
               label: 'Update cycle length',
               size: PillSize.medium,
-              onPressed: () => context.push(Routes.yourInfo),
+              onPressed: () => showEditNumberSheet(
+                context,
+                title: 'Typical cycle length',
+                unit: 'days',
+                initial: double.tryParse(me.cycleDuration ?? '') ?? 28,
+                step: 1,
+                min: 15,
+                max: 60,
+                whatChanges: WhatChanges.cycleLength,
+                build: (v) => ProfileUpdate(cycleDuration: v.round().toString()),
+              ),
             ),
             const SizedBox(height: 4),
             PillButton(

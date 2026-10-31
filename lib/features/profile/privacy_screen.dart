@@ -48,13 +48,7 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
   }
 
   Future<bool> _confirm(_ConfirmCopy copy) async =>
-      await showModalBottomSheet<bool>(
-        context: context,
-        useSafeArea: true,
-        isScrollControlled: true,
-        builder: (_) => _ConfirmSheet(copy),
-      ) ==
-      true;
+      await showVivSheet<bool>(context, builder: (_) => _ConfirmSheet(copy)) == true;
 
   Future<void> _scheduleDeletion() async {
     if (!await _confirm(_ConfirmCopy.schedule) || !mounted) return;
@@ -137,6 +131,21 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
     final consents = ref.watch(consentsProvider);
     final busy = _busy != null;
 
+    Widget consentRow(ConsentPurpose purpose, String title, String reason) => consents.when(
+      data: (map) => ToggleRow(
+        title: title,
+        reason: reason,
+        value: map[purpose]?.granted ?? false,
+        onChanged: _savingConsent.contains(purpose) || busy ? null : (v) => _setConsent(purpose, v),
+      ),
+      loading: () => ToggleRow(title: title, reason: reason, value: false, onChanged: null),
+      error: (_, _) => MenuRow(
+        title: title,
+        value: 'Couldn\'t load this. Tap to try again.',
+        onTap: () => ref.invalidate(consentsProvider),
+      ),
+    );
+
     return VivPage(
       showBack: true,
       children: [
@@ -144,74 +153,53 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
           title: 'Privacy & data',
           subtitle: 'Your cycle and health data stay yours.',
         ),
-        const Eyebrow('What VIV uses'),
-        const SizedBox(height: VivSpace.xs),
-        const _Row(
-          title: 'Cycle and health data',
-          subtitle: 'Needed to build your plan. To stop it, withdraw consent below.',
-          trailing: _RequiredTag(),
+        const SettingsLabel('What VIV uses', first: true),
+        SettingsGroup(
+          children: [
+            MenuRow(
+              title: 'Cycle and health data',
+              value: 'Needed to build your plan. To stop it, withdraw consent below.',
+              trailing: Text('REQUIRED', style: VivType.eyebrow.copyWith(color: c.subtle)),
+            ),
+            consentRow(
+              ConsentPurpose.aiProcessing,
+              'AI-written guidance',
+              'Lets VIV use an AI model to write your weekly note and plan copy.',
+            ),
+            consentRow(
+              ConsentPurpose.researchProductImprovement,
+              'Help improve VIV',
+              'Usage data, like which screens you use, to improve VIV. Never your cycle or '
+                  'health answers.',
+            ),
+          ],
         ),
-        for (final (purpose, title, subtitle) in const [
-          (
-            ConsentPurpose.aiProcessing,
-            'AI-written guidance',
-            'Lets VIV use an AI model to write your weekly note and plan copy.',
-          ),
-          (
-            ConsentPurpose.researchProductImprovement,
-            'Help improve VIV',
-            'Usage data, like which screens you use, to improve VIV. Never your cycle or '
-                'health answers.',
-          ),
-        ])
-          _Row(
-            title: title,
-            subtitle: subtitle,
-            trailing: consents.when(
-              data: (map) => Switch.adaptive(
-                value: map[purpose]?.granted ?? false,
-                onChanged: _savingConsent.contains(purpose) || busy
+        const SettingsLabel('Your data'),
+        SettingsGroup(
+          children: [
+            Builder(
+              builder: (rowContext) => MenuRow(
+                title: 'Download everything',
+                value: 'One file, to save or share',
+                trailing: _busy == _Busy.export
+                    ? const SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : null,
+                onTap: busy
                     ? null
-                    : (v) => _setConsent(purpose, v),
-              ),
-              loading: () => const SizedBox.square(
-                dimension: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-              error: (_, _) => IconButton(
-                tooltip: 'Retry',
-                icon: Icon(Icons.refresh_rounded, color: c.subtle),
-                onPressed: () => ref.invalidate(consentsProvider),
+                    : () {
+                        final box = rowContext.findRenderObject() as RenderBox?;
+                        _export(box == null ? null : box.localToGlobal(Offset.zero) & box.size);
+                      },
               ),
             ),
-          ),
-        const SizedBox(height: VivSpace.lg),
-        const Eyebrow('Your data'),
-        const SizedBox(height: VivSpace.xs),
-        Builder(
-          builder: (rowContext) => _Row(
-            title: 'Download everything',
-            subtitle: 'A copy of your profile, plan and history as a JSON file.',
-            onTap: busy
-                ? null
-                : () {
-                    final box = rowContext.findRenderObject() as RenderBox?;
-                    _export(box == null ? null : box.localToGlobal(Offset.zero) & box.size);
-                  },
-            trailing: _busy == _Busy.export
-                ? const SizedBox.square(
-                    dimension: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : Icon(Icons.ios_share_rounded, size: 20, color: c.subtle),
-          ),
+            // TODO(product): link the privacy policy URL.
+            const MenuRow(title: 'Privacy policy'),
+          ],
         ),
-        // TODO(product): link the privacy policy URL.
-        _Row(
-          title: 'Privacy policy',
-          trailing: Icon(Icons.chevron_right_rounded, size: 20, color: c.subtle),
-        ),
-        const SizedBox(height: VivSpace.lg),
+        const SizedBox(height: 22),
         if (pendingAt != null)
           _ActionCard(
             title: 'Deletion scheduled',
@@ -232,7 +220,7 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
             loading: _busy == _Busy.schedule,
             onPressed: busy ? null : _scheduleDeletion,
           ),
-        const SizedBox(height: VivSpace.sm),
+        const SizedBox(height: 12),
         _ActionCard(
           title: 'Withdraw consent',
           body:
@@ -242,70 +230,14 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
           loading: _busy == _Busy.withdraw,
           onPressed: busy ? null : _withdrawConsent,
         ),
-        const SizedBox(height: VivSpace.md),
+        const SizedBox(height: 18),
         Text(
           'VIV is a training and nutrition coach, not a medical device. It doesn\'t '
           'diagnose anything and doesn\'t replace your doctor.',
-          style: VivType.caption.copyWith(color: c.subtle),
+          style: VivType.legal.copyWith(color: c.subtle),
         ),
       ],
     );
-  }
-}
-
-/// A settings row with a bottom hairline, as in the Figma Privacy frame.
-class _Row extends StatelessWidget {
-  const _Row({required this.title, this.subtitle, this.trailing, this.onTap});
-
-  final String title;
-  final String? subtitle;
-  final Widget? trailing;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.viv;
-    return InkWell(
-      onTap: onTap,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: c.line)),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: VivSpace.sm + 2),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: VivType.bodySmall.copyWith(color: c.ink, fontWeight: FontWeight.w500),
-                    ),
-                    if (subtitle != null) ...[
-                      const SizedBox(height: 2),
-                      Text(subtitle!, style: VivType.caption.copyWith(color: c.muted)),
-                    ],
-                  ],
-                ),
-              ),
-              if (trailing != null) ...[const SizedBox(width: VivSpace.sm), trailing!],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RequiredTag extends StatelessWidget {
-  const _RequiredTag();
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.viv;
-    return Text('REQUIRED', style: VivType.eyebrow.copyWith(color: c.subtle));
   }
 }
 
@@ -331,15 +263,15 @@ class _ActionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(title, style: VivType.cardTitle.copyWith(color: c.ink, fontSize: 16)),
-          const SizedBox(height: VivSpace.xxs),
-          Text(body, style: VivType.caption.copyWith(color: c.muted, fontSize: 13)),
-          const SizedBox(height: VivSpace.md),
-          VivButton(
+          Text(title, style: VivType.rowTitle.copyWith(fontSize: 17, color: c.ink)),
+          const SizedBox(height: 6),
+          Text(body, style: VivType.body.copyWith(fontSize: 14, color: c.muted)),
+          const SizedBox(height: 14),
+          PillButton(
             label: buttonLabel,
-            variant: VivButtonVariant.outline,
-            height: 48,
-            loading: loading,
+            variant: PillVariant.outline,
+            size: PillSize.compact,
+            busy: loading,
             onPressed: onPressed,
           ),
         ],
@@ -375,25 +307,17 @@ class _ConfirmSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.viv;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(VivSpace.gutter, 0, VivSpace.gutter, VivSpace.lg),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(copy.title, style: VivType.headline.copyWith(color: c.ink)),
-          const SizedBox(height: VivSpace.xs),
-          Text(copy.body, style: VivType.bodySmall.copyWith(color: c.muted)),
-          const SizedBox(height: VivSpace.xl),
-          VivButton(label: copy.confirmLabel, onPressed: () => Navigator.of(context).pop(true)),
-          const SizedBox(height: VivSpace.xs),
-          VivButton.secondary(
-            label: 'Keep my account',
-            onPressed: () => Navigator.of(context).pop(false),
-          ),
-        ],
-      ),
+    return VivBottomSheet(
+      title: copy.title,
+      body: copy.body,
+      actions: [
+        PillButton(label: copy.confirmLabel, onPressed: () => Navigator.of(context).pop(true)),
+        PillButton(
+          label: 'Keep my account',
+          variant: PillVariant.outline,
+          onPressed: () => Navigator.of(context).pop(false),
+        ),
+      ],
     );
   }
 }
