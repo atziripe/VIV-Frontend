@@ -264,7 +264,10 @@ class _Day extends ConsumerWidget {
             decision: loop?.decision,
             answers: loop?.answers,
           ),
-        if (me case final me? when me.daysLate > 0 && !me.cycleEstimationDisabled) ...[
+        if (me case final me?
+            when me.daysLate > 0 &&
+                !me.cycleEstimationDisabled &&
+                !ref.watch(latePromptSnoozedProvider)) ...[
           const SizedBox(height: 14),
           _LatePeriodCard(me: me),
         ],
@@ -604,14 +607,38 @@ class _ProposalFieldState extends ConsumerState<_ProposalField> {
   }
 }
 
-class _LatePeriodCard extends StatelessWidget {
+/// The prompt near the estimate. Six or more days past it, VIV owns the
+/// miss instead: update the cycle length, or stop estimating. No counter, no
+/// irregularity flag.
+class _LatePeriodCard extends ConsumerStatefulWidget {
   const _LatePeriodCard({required this.me});
 
   final Me me;
 
   @override
+  ConsumerState<_LatePeriodCard> createState() => _LatePeriodCardState();
+}
+
+class _LatePeriodCardState extends ConsumerState<_LatePeriodCard> {
+  bool _stopping = false;
+
+  Future<void> _stopEstimating() async {
+    setState(() => _stopping = true);
+    try {
+      await ref.read(vivApiProvider).updateMe(const ProfileUpdate(cycleEstimationDisabled: true));
+      ref.invalidate(meProvider);
+    } catch (e) {
+      if (mounted) showErrorSnack(context, e);
+    } finally {
+      if (mounted) setState(() => _stopping = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final c = context.viv;
+    final me = widget.me;
+    final wrong = me.daysLate >= 6;
     final expected = Dates.tryParseYmd(me.expectedPeriodDate);
     return Container(
       padding: const EdgeInsets.all(VivSpace.card),
@@ -623,34 +650,68 @@ class _LatePeriodCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            expected == null
-                ? 'VIV expects your period around now. Started already?'
-                : 'VIV expects your period around ${Dates.longWeekday(expected)}. '
-                      'Started already?',
-            style: VivType.body.copyWith(color: c.ink2),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: PillButton(
-                  label: 'Yes, log it',
-                  size: PillSize.compact,
-                  onPressed: () => showPeriodStartSheet(context),
+          if (wrong) ...[
+            Text('VIV GOT THIS ONE WRONG', style: VivType.eyebrow.copyWith(color: c.accent)),
+            const SizedBox(height: 10),
+            Text(
+              'Your cycle may just run longer than VIV assumed.',
+              style: VivType.h3.copyWith(fontSize: 23, color: c.ink),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Set it to what you actually know and the next estimate lands closer.',
+              style: VivType.body.copyWith(fontSize: 14.5, color: c.ink2),
+            ),
+            const SizedBox(height: 14),
+            PillButton(
+              label: 'Update cycle length',
+              size: PillSize.medium,
+              onPressed: () => context.push(Routes.yourInfo),
+            ),
+            const SizedBox(height: 4),
+            PillButton(
+              label: 'It varies, stop estimating',
+              variant: PillVariant.text,
+              size: PillSize.compact,
+              busy: _stopping,
+              onPressed: _stopEstimating,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'VIV uses timing to plan training, not to tell you anything about your health. '
+              'If a late period is a question for you, it\'s one for your doctor.',
+              style: VivType.legal.copyWith(color: c.subtle),
+            ),
+          ] else ...[
+            Text(
+              expected == null
+                  ? 'VIV expects your period around now. Started already?'
+                  : 'VIV expects your period around ${Dates.longWeekday(expected)}. '
+                        'Started already?',
+              style: VivType.body.copyWith(color: c.ink2),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: PillButton(
+                    label: 'Yes, log it',
+                    size: PillSize.compact,
+                    onPressed: () => showPeriodStartSheet(context),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: PillButton(
-                  label: 'Not yet',
-                  variant: PillVariant.tint,
-                  size: PillSize.compact,
-                  onPressed: () => VivToast.show(context, 'Okay. Your plan holds.'),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: PillButton(
+                    label: 'Not yet',
+                    variant: PillVariant.tint,
+                    size: PillSize.compact,
+                    onPressed: () => showHoldingSheet(context),
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
+          ],
         ],
       ),
     );
