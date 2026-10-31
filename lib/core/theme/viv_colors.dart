@@ -111,6 +111,9 @@ class VivColors extends ThemeExtension<VivColors> {
   /// Secondary pill background, unselected options, progress track.
   static const onFieldFaint = Color(0x29FFF8F6); // 0.16
 
+  /// Progress track on the field (rest timer).
+  static const onFieldTrack = Color(0x33FFF8F6); // 0.20
+
   /// Unselected check-in options.
   static const onFieldOption = Color(0x21FFF8F6); // 0.13
 

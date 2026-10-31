@@ -126,7 +126,11 @@ class WineField extends StatelessWidget {
             ),
           ),
         ],
-        for (final child in children) ...[const SizedBox(height: 14), child],
+        for (final (i, child) in children.indexed) ...[
+          if (i > 0 || hasHeader || tag != null || title != null || body != null)
+            const SizedBox(height: 14),
+          child,
+        ],
         if (primaryLabel != null || secondaryLabel != null) ...[
           const SizedBox(height: 18),
           Row(

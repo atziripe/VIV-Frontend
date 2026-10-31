@@ -2,15 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/layout/responsive.dart';
 import '../../core/theme/viv_theme.dart';
 import '../../core/utils/dates.dart';
 import '../../core/widgets/widgets.dart';
+import '../../data/models/home.dart';
 import '../../data/models/weekly_plan.dart';
 import '../../data/providers.dart';
 import '../../router/app_router.dart';
 import 'edit_day_sheet.dart';
 
-/// 02 · Your week
+const _numberWords = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven'];
+
+/// 04 · This week: one column. Today is the wine field with Start; done days
+/// get an accent check; rest days shrink to slim pills.
 class WeekScreen extends ConsumerStatefulWidget {
   const WeekScreen({super.key});
 
@@ -26,67 +31,93 @@ class _WeekScreenState extends ConsumerState<WeekScreen> {
     final c = context.viv;
     final week = ref.watch(currentWeekProvider);
     final note = ref.watch(weeklyNoteProvider).value;
+    // Done flags come from Home's week progress (same week, Monday first).
+    final progress = ref.watch(homeTodayProvider).value?.weekProgress?.days ?? const [];
 
-    return VivPage(
-      topTrailing: week.value == null
-          ? null
-          : VivButton.text(
-              label: _editing ? 'Done' : 'Edit days',
-              onPressed: () => setState(() => _editing = !_editing),
-            ),
-      children: [
-        AsyncView<WeeklyPlan?>(
-          value: week,
-          onRetry: () => ref.invalidate(currentWeekProvider),
-          data: (plan) {
-            if (plan == null) {
-              return const PageHeader(
-                title: 'This week',
-                subtitle: 'Nothing planned yet. Check in on Today and VIV builds it.',
-              );
-            }
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Scaffold(
+      backgroundColor: c.page,
+      body: SafeArea(
+        bottom: false,
+        child: ResponsiveCenter(
+          child: AsyncView<WeeklyPlan?>(
+            value: week,
+            onRetry: () => ref.invalidate(currentWeekProvider),
+            loading: const _WeekSkeleton(),
+            data: (plan) => ListView(
+              padding: const EdgeInsets.fromLTRB(VivSpace.gutter, 16, VivSpace.gutter, 24),
               children: [
-                PageHeader(
-                  title: 'This week',
-                  subtitle:
-                      note ??
-                      '${plan.sessionCount} sessions, all moveable. Rest days fill in around them.',
-                ),
-                if (_editing)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: VivSpace.sm),
-                    child: Text(
-                      'Tap a day to change it.',
-                      style: VivType.caption.copyWith(color: c.accent),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: Semantics(
+                        header: true,
+                        child: Text('This week', style: VivType.h1.copyWith(color: c.ink)),
+                      ),
                     ),
-                  ),
-                for (final day in plan.days) ...[
-                  _DayRow(
-                    day: day,
-                    editing: _editing,
-                    onTap: () => _editing
-                        ? showEditDaySheet(context, day)
-                        : day.isRestDay
-                        ? null
-                        : context.push(Routes.sessionDetail(day.date)),
-                  ),
-                  const SizedBox(height: VivSpace.xs),
-                ],
+                    if (plan != null)
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => setState(() => _editing = !_editing),
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 12, 0, 4),
+                          child: Text(
+                            _editing ? 'Done' : 'Edit days',
+                            style: VivType.body.copyWith(
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w700,
+                              color: c.accent,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  plan == null
+                      ? 'Nothing planned yet. Check in on Today and VIV builds it.'
+                      : _editing
+                      ? 'Tap a day to change it.'
+                      : note ??
+                            '${plan.sessionCount < _numberWords.length ? _numberWords[plan.sessionCount] : plan.sessionCount} '
+                                'sessions, all moveable. Rest days fill in around them.',
+                  style: VivType.lead.copyWith(fontSize: 15.5, color: c.muted),
+                ),
+                const SizedBox(height: 18),
+                if (plan != null)
+                  for (final (i, day) in plan.days.indexed) ...[
+                    _DayRow(
+                      day: day,
+                      done: i < progress.length && progress[i].status == DayDotStatus.done,
+                      editing: _editing,
+                      onTap: () => _editing
+                          ? showEditDaySheet(context, day)
+                          : day.isRestDay
+                          ? null
+                          : context.push(Routes.sessionDetail(day.date)),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
               ],
-            );
-          },
+            ),
+          ),
         ),
-      ],
+      ),
     );
   }
 }
 
 class _DayRow extends StatelessWidget {
-  const _DayRow({required this.day, required this.editing, required this.onTap});
+  const _DayRow({
+    required this.day,
+    required this.done,
+    required this.editing,
+    required this.onTap,
+  });
 
   final WeekDay day;
+  final bool done;
   final bool editing;
   final VoidCallback onTap;
 
@@ -94,88 +125,166 @@ class _DayRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.viv;
     final weekday = Dates.shortWeekday(day.dateTime);
-    final isPast = day.date.compareTo(Dates.todayYmd()) < 0;
+    final meta = [
+      day.subtitle,
+      if (day.substituted) 'adjusted',
+    ].where((s) => s.isNotEmpty).join(' · ');
+    Widget dayLabel(Color color, {bool bold = false}) => SizedBox(
+      width: 34,
+      child: Text(
+        weekday,
+        style: VivType.meta.copyWith(
+          fontWeight: bold ? FontWeight.w800 : FontWeight.w700,
+          color: color,
+        ),
+      ),
+    );
 
     if (day.isRestDay) {
-      return VivCard(
-        tone: VivCardTone.muted,
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: editing ? onTap : null,
-        padding: const EdgeInsets.symmetric(horizontal: VivSpace.md, vertical: VivSpace.sm),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 44,
-              child: Text(weekday, style: VivType.caption.copyWith(color: c.subtle)),
-            ),
-            Expanded(
-              child: Text('Rest', style: VivType.caption.copyWith(color: c.subtle, fontSize: 13)),
-            ),
-            if (editing) Icon(Icons.edit_outlined, size: 16, color: c.subtle),
-          ],
+        child: Container(
+          height: 46,
+          padding: const EdgeInsets.symmetric(horizontal: 18),
+          decoration: ShapeDecoration(color: c.sunken, shape: const StadiumBorder()),
+          child: Row(
+            children: [
+              dayLabel(c.subtle),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text('Rest', style: VivType.body.copyWith(fontSize: 14.5, color: c.subtle)),
+              ),
+              if (editing) Icon(Icons.edit_outlined, size: 16, color: c.subtle),
+            ],
+          ),
         ),
       );
     }
 
-    return VivCard(
-      tone: day.isToday ? VivCardTone.highlight : VivCardTone.surface,
-      onTap: onTap,
-      padding: const EdgeInsets.all(VivSpace.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+    if (day.isToday && !editing) {
+      return WineField(
+        radius: VivRadius.group,
+        compact: true,
+        animateIn: false,
         children: [
           Row(
             children: [
-              SizedBox(
-                width: 44,
-                child: Text(
-                  weekday,
-                  style: VivType.caption.copyWith(
-                    color: day.isToday ? c.ink : c.subtle,
-                    fontWeight: day.isToday ? FontWeight.w600 : FontWeight.w400,
-                  ),
-                ),
-              ),
+              dayLabel(VivColors.onField, bold: true),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       day.title,
-                      style: VivType.bodySmall.copyWith(
-                        color: isPast ? c.muted : c.ink,
-                        fontWeight: FontWeight.w600,
+                      style: VivType.h3.copyWith(
+                        fontSize: 19,
+                        letterSpacing: -0.38,
+                        color: VivColors.onField,
                       ),
                     ),
+                    const SizedBox(height: 3),
                     Text(
-                      [
-                        day.subtitle,
-                        if (day.isToday) 'today',
-                      ].where((s) => s.isNotEmpty).join(' · '),
-                      style: VivType.caption.copyWith(color: c.subtle, fontSize: 12),
+                      meta,
+                      style: VivType.meta.copyWith(fontSize: 13.5, color: VivColors.onFieldSoft),
                     ),
                   ],
                 ),
               ),
-              Icon(
-                editing ? Icons.edit_outlined : Icons.chevron_right_rounded,
-                size: editing ? 16 : 20,
-                color: c.subtle,
-              ),
             ],
           ),
-          if (day.warning != null) ...[
-            const SizedBox(height: VivSpace.xs),
-            Text(day.warning!, style: VivType.caption.copyWith(color: c.accent)),
-          ],
-          if (day.isToday && !editing) ...[
-            const SizedBox(height: VivSpace.sm),
-            VivButton(
+          if (!done)
+            PillButton(
               label: 'Start session',
-              height: 44,
-              onPressed: () => context.push(Routes.sessionDetail(day.date)),
+              arrow: true,
+              variant: PillVariant.onField,
+              size: PillSize.compact,
+              onPressed: onTap,
             ),
-          ],
         ],
+      );
+    }
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 64),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+        decoration: BoxDecoration(
+          color: c.raised,
+          borderRadius: BorderRadius.circular(VivRadius.tile),
+          boxShadow: c.cardShadow,
+        ),
+        child: Row(
+          children: [
+            dayLabel(c.subtle),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    day.title,
+                    style: VivType.rowTitle.copyWith(fontWeight: FontWeight.w700, color: c.ink),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(meta, style: VivType.meta.copyWith(fontSize: 13.5, color: c.muted)),
+                  if (day.warning != null) ...[
+                    const SizedBox(height: 4),
+                    Text(day.warning!, style: VivType.meta.copyWith(color: c.tintInk)),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(width: 14),
+            if (editing)
+              Icon(Icons.edit_outlined, size: 18, color: c.subtle)
+            else if (done)
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(color: c.accent, shape: BoxShape.circle),
+                child: Icon(Icons.check_rounded, size: 16, color: c.ctaText),
+              )
+            else
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: c.ring, width: 1.5),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _WeekSkeleton extends StatelessWidget {
+  const _WeekSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(VivSpace.gutter, 16, VivSpace.gutter, 0),
+      child: Skeleton(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SkeletonBox(width: 180, height: 34, radius: VivRadius.md),
+            const SizedBox(height: 12),
+            const SkeletonBox.line(),
+            const SizedBox(height: 22),
+            for (var i = 0; i < 6; i++) ...[
+              SkeletonBox(height: i.isEven ? 64 : 46, radius: VivRadius.tile),
+              const SizedBox(height: 8),
+            ],
+          ],
+        ),
       ),
     );
   }

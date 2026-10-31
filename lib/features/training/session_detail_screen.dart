@@ -8,6 +8,8 @@ import '../../core/widgets/widgets.dart';
 import '../../data/models/weekly_plan.dart';
 import '../../data/providers.dart';
 import '../../router/app_router.dart';
+import '../checkin/checkin_copy.dart';
+import '../checkin/checkin_screen.dart' show showWhyTodaySheet;
 
 /// 01 · Session detail — warm-up, main work, cool-down.
 class SessionDetailScreen extends ConsumerWidget {
@@ -19,7 +21,7 @@ class SessionDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final detail = ref.watch(dayDetailProvider(date));
     return detail.when(
-      loading: () => const Scaffold(body: LoadingView()),
+      loading: () => const _DetailSkeleton(),
       error: (e, _) => Scaffold(
         body: ErrorView(error: e, onRetry: () => ref.invalidate(dayDetailProvider(date))),
       ),
@@ -35,34 +37,52 @@ class SessionDetailScreen extends ConsumerWidget {
   }
 }
 
-class _Detail extends StatelessWidget {
+class _Detail extends ConsumerWidget {
   const _Detail({required this.day});
 
   final DayDetail day;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final c = context.viv;
     final isToday = day.date == Dates.todayYmd();
     final session = day.session;
+    final loop = ref.watch(todayLoopProvider);
     final chips = [
       ?day.loadLabel,
       if (day.durationMinutes != null)
         '${day.durationIsEstimated ? '~' : ''}${day.durationMinutes} min',
-      if (day.mainExercises.isNotEmpty) '${day.mainExercises.length} exercises',
+      if (day.mainExercises.isNotEmpty) '${day.mainExercises.length} moves',
     ];
 
     Widget? bottom;
     if (day.loggable && isToday) {
-      bottom = VivButton(
+      final done = session?.isCompleted == true;
+      bottom = PillButton(
         label: session == null
             ? 'Start session'
-            : session.isCompleted
+            : done
             ? 'Done for today'
             : 'Resume session',
-        onPressed: session?.isCompleted == true
-            ? null
-            : () => context.push(Routes.liveSession(day.date)),
+        arrow: !done,
+        onPressed: done ? null : () => context.push(Routes.liveSession(day.date)),
+      );
+    }
+
+    VoidCallback? why;
+    final a = loop?.answers;
+    if (isToday && a != null) {
+      why = () => showWhyTodaySheet(
+        context,
+        CheckinCopy.reasons(
+          sleep: a.sleep,
+          body: a.body,
+          demand: a.demand,
+          need: a.need,
+          adjusted: loop?.decision == TodayDecision.adjusted,
+          backendReason: ref.read(todayCheckinProvider)?.reason,
+          phase: ref.read(homeTodayProvider).value?.currentPhase,
+        ),
       );
     }
 
@@ -70,58 +90,60 @@ class _Detail extends StatelessWidget {
       showBack: true,
       bottom: bottom,
       children: [
-        PageHeader(
-          eyebrow: Eyebrow('${Dates.capitalize(day.weekday)} · session', accent: true),
-          title: day.title ?? day.displayTitle,
+        Text(
+          '${Dates.capitalize(day.weekday)} · session'.toUpperCase(),
+          style: VivType.eyebrow.copyWith(color: c.tintInk),
         ),
-        if (chips.isNotEmpty)
-          Transform.translate(
-            offset: const Offset(0, -VivSpace.xs),
-            child: Wrap(spacing: 6, runSpacing: 6, children: [for (final t in chips) _Chip(t)]),
+        const SizedBox(height: 8),
+        Semantics(
+          header: true,
+          child: Text(
+            day.title ?? day.displayTitle,
+            style: VivType.h1.copyWith(fontSize: 36, color: c.ink),
           ),
-        if (day.warning != null) ...[
-          const SizedBox(height: VivSpace.xs),
-          Text(day.warning!, style: VivType.bodySmall.copyWith(color: c.muted)),
+        ),
+        if (chips.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Wrap(spacing: 7, runSpacing: 7, children: [for (final t in chips) _Chip(t)]),
         ],
-        const SizedBox(height: VivSpace.md),
-        if (day.warmup case final w?) _BlockCard(label: 'Warm-up', block: w),
-        if (day.mainExercises.isNotEmpty) ...[
-          const SizedBox(height: VivSpace.lg),
-          const Eyebrow('Main work'),
-          const SizedBox(height: VivSpace.xs),
-          for (final e in day.mainExercises)
-            DecoratedBox(
-              decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: c.line)),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: VivSpace.sm),
+        if (day.warning != null) ...[
+          const SizedBox(height: 16),
+          Text(day.warning!, style: VivType.lead.copyWith(fontSize: 15.5, color: c.ink2)),
+        ],
+        if (why != null) ...[const SizedBox(height: 4), WhyLink(onTap: why, color: c.ink)],
+        const SizedBox(height: 18),
+        SettingsGroup(
+          children: [
+            if (day.warmup case final w?) _BlockHeader(label: 'Warm-up', block: w),
+            for (final e in day.mainExercises)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 14),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
                   children: [
                     Expanded(
                       child: Text(
                         e.name,
-                        style: VivType.bodySmall.copyWith(
-                          color: c.ink,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: VivType.rowTitle.copyWith(fontSize: 15.5, color: c.ink),
                       ),
                     ),
-                    Text(e.prescription, style: VivType.caption.copyWith(color: c.subtle)),
+                    const SizedBox(width: 14),
+                    Text(
+                      e.prescription,
+                      style: VivType.meta.copyWith(fontWeight: FontWeight.w600, color: c.subtle),
+                    ),
                   ],
                 ),
               ),
-            ),
-        ],
-        if (day.cooldown case final cd?) ...[
-          const SizedBox(height: VivSpace.lg),
-          _BlockCard(label: 'Cool-down', block: cd),
-        ],
+            if (day.cooldown case final cd?) _BlockHeader(label: 'Cool-down', block: cd),
+          ],
+        ),
         if (!day.loggable && !day.isRestDay) ...[
-          const SizedBox(height: VivSpace.lg),
+          const SizedBox(height: 14),
           Text(
-            'Doing your own thing today? Keep it close to this. The intent is what matters, not the list.',
-            style: VivType.caption.copyWith(color: c.subtle),
+            'Doing your own thing? Keep it moderate. The zone matters more than the list.',
+            style: VivType.meta.copyWith(fontSize: 13.5, height: 1.5, color: c.muted),
           ),
         ],
       ],
@@ -138,15 +160,23 @@ class _Chip extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.viv;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(color: c.sunken, borderRadius: BorderRadius.circular(VivRadius.sm)),
-      child: Text(text, style: VivType.caption.copyWith(color: c.ink, fontSize: 12)),
+      height: 32,
+      padding: const EdgeInsets.symmetric(horizontal: 13),
+      decoration: ShapeDecoration(color: c.sunken, shape: const StadiumBorder()),
+      child: Center(
+        widthFactor: 1,
+        child: Text(
+          text,
+          style: VivType.meta.copyWith(fontWeight: FontWeight.w700, color: c.ink2),
+        ),
+      ),
     );
   }
 }
 
-class _BlockCard extends StatelessWidget {
-  const _BlockCard({required this.label, required this.block});
+/// "WARM-UP · 5 min" row inside the session list.
+class _BlockHeader extends StatelessWidget {
+  const _BlockHeader({required this.label, required this.block});
 
   final String label;
   final ExerciseBlock block;
@@ -154,27 +184,56 @@ class _BlockCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.viv;
-    final meta = [
-      if (block.durationMinutes != null) '${block.durationMinutes} min',
-      if (block.movements.isNotEmpty) '${block.movements.length} moves',
-    ].join(' · ');
-    return VivCard(
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 13),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Expanded(child: Eyebrow(label)),
-              Text(meta, style: VivType.caption.copyWith(color: c.subtle, fontSize: 12)),
+              Expanded(
+                child: Text(label.toUpperCase(), style: VivType.eyebrow.copyWith(color: c.subtle)),
+              ),
+              if (block.durationMinutes != null)
+                Text('${block.durationMinutes} min', style: VivType.meta.copyWith(color: c.subtle)),
             ],
           ),
-          const SizedBox(height: VivSpace.xs),
-          Text(
-            block.movements.isNotEmpty ? block.movements.join(' · ') : (block.description ?? ''),
-            style: VivType.bodySmall.copyWith(color: c.ink, fontSize: 14),
-          ),
+          if (block.movements.isNotEmpty || block.description != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              block.movements.isNotEmpty ? block.movements.join(' · ') : block.description!,
+              style: VivType.body.copyWith(fontSize: 14, color: c.ink2),
+            ),
+          ],
         ],
       ),
+    );
+  }
+}
+
+class _DetailSkeleton extends StatelessWidget {
+  const _DetailSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const VivPage(
+      showBack: true,
+      children: [
+        Skeleton(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SkeletonBox.line(width: 130, height: 12),
+              SizedBox(height: 12),
+              SkeletonBox(width: 240, height: 38, radius: VivRadius.md),
+              SizedBox(height: 14),
+              SkeletonBox.line(width: 200, height: 32),
+              SizedBox(height: 24),
+              SkeletonBox(height: 260, radius: VivRadius.group),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

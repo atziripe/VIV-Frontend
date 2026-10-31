@@ -61,6 +61,7 @@ class _SessionState extends ConsumerState<_Session> {
 
   Timer? _ticker;
   int _restLeft = 0;
+  int _restTotal = 1;
 
   List<Exercise> get _exercises => widget.day.mainExercises;
   Exercise get _current => _exercises[_exercise];
@@ -162,6 +163,7 @@ class _SessionState extends ConsumerState<_Session> {
         }
         _prefill();
         _restLeft = rest;
+        _restTotal = rest;
         _phase = _Phase.resting;
       });
     } catch (e) {
@@ -172,14 +174,23 @@ class _SessionState extends ConsumerState<_Session> {
   }
 
   Future<void> _confirmEnd() async {
-    final end = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('End session?'),
-        content: const Text('What you logged is saved.'),
+    final end = await showVivSheet<bool>(
+      context,
+      builder: (sheet) => VivBottomSheet(
+        title: 'End session?',
+        body: 'What you logged is saved.',
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Keep going')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('End')),
+          PillButton(
+            label: 'End',
+            size: PillSize.control,
+            onPressed: () => Navigator.pop(sheet, true),
+          ),
+          PillButton(
+            label: 'Keep going',
+            variant: PillVariant.secondary,
+            size: PillSize.medium,
+            onPressed: () => Navigator.pop(sheet, false),
+          ),
         ],
       ),
     );
@@ -206,9 +217,13 @@ class _SessionState extends ConsumerState<_Session> {
       ),
       _Phase.resting => _RestView(
         secondsLeft: _restLeft,
-        nextLabel: 'Then set $_set of ${_current.sets} · ${_fmtKg(_weight)} kg',
+        total: _restTotal,
+        nextLabel: 'Then set $_set · ${_fmtKg(_weight)} kg',
         onSkip: () => setState(() => _phase = _Phase.lifting),
-        onAdd: () => setState(() => _restLeft += 30),
+        onAdd: () => setState(() {
+          _restLeft += 30;
+          _restTotal += 30;
+        }),
       ),
       _Phase.lifting => _liftingView(context),
     };
@@ -217,104 +232,197 @@ class _SessionState extends ConsumerState<_Session> {
   Widget _liftingView(BuildContext context) {
     final c = context.viv;
     final e = _current;
-    return VivPage(
-      topCenter: Text(_elapsed, style: VivType.label.copyWith(color: c.ink)),
-      topTrailing: VivButton.text(label: 'End', onPressed: _confirmEnd),
-      bottom: VivButton(label: 'Log set $_set', loading: _busy, onPressed: _logSet),
-      children: [
-        Text(
-          'Exercise ${_exercise + 1} of ${_exercises.length}',
-          style: VivType.caption.copyWith(color: c.muted),
+    return Scaffold(
+      backgroundColor: c.page,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(VivSpace.gutter, 4, VivSpace.gutter, 0),
+              child: SizedBox(
+                height: 44,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '${_exercise + 1} of ${_exercises.length}',
+                        style: VivType.meta.copyWith(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w700,
+                          color: c.muted,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      _elapsed,
+                      style: VivType.rowTitle.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: c.ink,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: _confirmEnd,
+                          child: Padding(
+                            padding: const EdgeInsets.all(10),
+                            child: Text(
+                              'End',
+                              style: VivType.body.copyWith(
+                                fontSize: 14.5,
+                                fontWeight: FontWeight.w700,
+                                color: c.accent,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(VivSpace.gutter, 12, VivSpace.gutter, 16),
+                children: [
+                  Row(
+                    children: [
+                      for (var i = 0; i < _exercises.length; i++) ...[
+                        if (i > 0) const SizedBox(width: 5),
+                        Expanded(
+                          child: Container(
+                            height: 5,
+                            decoration: ShapeDecoration(
+                              color: i <= _exercise ? c.accent : c.line,
+                              shape: const StadiumBorder(),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 26),
+                  Semantics(
+                    header: true,
+                    child: Text(e.name, style: VivType.h1.copyWith(fontSize: 36, color: c.ink)),
+                  ),
+                  if ((e.formCue ?? e.loadGuidance) case final cue?) ...[
+                    const SizedBox(height: 8),
+                    Text(cue, style: VivType.lead.copyWith(fontSize: 15.5, color: c.muted)),
+                  ],
+                  const SizedBox(height: 22),
+                  for (var s = 1; s <= e.sets; s++) ...[
+                    if (s > 1) const SizedBox(height: 9),
+                    _setRow(e, s, c),
+                  ],
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(VivSpace.gutter, 12, VivSpace.gutter, 12),
+              child: PillButton(label: 'Log set $_set', busy: _busy, onPressed: _logSet),
+            ),
+          ],
         ),
-        const SizedBox(height: VivSpace.xs),
-        StepProgress(current: _exercise + 1, total: _exercises.length),
-        PageHeader(title: e.name, subtitle: e.formCue ?? e.loadGuidance),
-        for (var s = 1; s <= e.sets; s++) ...[
-          _setRow(e, s, c),
-          const SizedBox(height: VivSpace.xs),
-        ],
-      ],
+      ),
     );
   }
 
   Widget _setRow(Exercise e, int s, VivColors c) {
     final logged = _log?.setFor(e.id, s);
+    Widget label(Color color) => SizedBox(
+      width: 48,
+      child: Text(
+        'Set $s',
+        style: VivType.meta.copyWith(fontSize: 13.5, fontWeight: FontWeight.w700, color: color),
+      ),
+    );
     if (logged != null && s != _set) {
-      return VivCard(
-        tone: VivCardTone.highlight,
-        padding: const EdgeInsets.symmetric(horizontal: VivSpace.md, vertical: VivSpace.sm),
+      return Container(
+        height: 58,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        decoration: ShapeDecoration(color: c.sunken, shape: const StadiumBorder()),
         child: Row(
           children: [
-            SizedBox(
-              width: 48,
-              child: Text('Set $s', style: VivType.caption.copyWith(color: c.subtle)),
-            ),
+            label(c.subtle),
+            const SizedBox(width: 14),
             Expanded(
               child: Text(
-                '${_fmtKg(logged.weightKg ?? 0)} kg · ${logged.reps ?? 0} reps',
-                style: VivType.bodySmall.copyWith(color: c.ink),
+                '${_fmtKg(logged.weightKg ?? 0)} kg · ${logged.reps ?? 0}',
+                style: VivType.body.copyWith(fontSize: 15.5, color: c.ink2),
               ),
             ),
-            Icon(Icons.check_circle, size: 20, color: c.accent),
+            Icon(Icons.check_rounded, size: 18, color: c.accent),
           ],
         ),
       );
     }
     if (s == _set) {
-      return VivCard(
-        padding: const EdgeInsets.all(VivSpace.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text('Set $s', style: VivType.label.copyWith(color: c.accent)),
-                ),
-                if (e.reps != null)
-                  Text(
-                    'target ${e.reps} reps',
-                    style: VivType.caption.copyWith(color: c.subtle, fontSize: 12),
-                  ),
-              ],
-            ),
-            const SizedBox(height: VivSpace.sm),
-            Row(
-              children: [
-                Expanded(
-                  child: _Stepper(
-                    label: 'Weight',
-                    value: '${_fmtKg(_weight)} kg',
-                    onMinus: () => setState(() => _weight = (_weight - 2.5).clamp(0, 500)),
-                    onPlus: () => setState(() => _weight += 2.5),
+      return WineField(
+        compact: true,
+        animateIn: false,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Set $s',
+                  style: VivType.meta.copyWith(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: VivColors.onField,
                   ),
                 ),
-                const SizedBox(width: VivSpace.xs),
-                Expanded(
-                  child: _Stepper(
-                    label: 'Reps',
-                    value: '$_reps',
-                    onMinus: () => setState(() => _reps = (_reps - 1).clamp(0, 100)),
-                    onPlus: () => setState(() => _reps++),
-                  ),
+              ),
+              if (e.reps != null)
+                Text(
+                  'target ${e.reps}',
+                  style: VivType.meta.copyWith(color: VivColors.onFieldMuted),
                 ),
-              ],
-            ),
-          ],
-        ),
+            ],
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: _Stepper(
+                  label: 'Weight',
+                  value: '${_fmtKg(_weight)} kg',
+                  onMinus: () => setState(() => _weight = (_weight - 2.5).clamp(0, 500)),
+                  onPlus: () => setState(() => _weight += 2.5),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _Stepper(
+                  label: 'Reps',
+                  value: '$_reps',
+                  onMinus: () => setState(() => _reps = (_reps - 1).clamp(0, 100)),
+                  onPlus: () => setState(() => _reps++),
+                ),
+              ),
+            ],
+          ),
+        ],
       );
     }
-    return VivCard(
-      tone: VivCardTone.muted,
-      padding: const EdgeInsets.symmetric(horizontal: VivSpace.md, vertical: VivSpace.sm),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 48,
-            child: Text('Set $s', style: VivType.caption.copyWith(color: c.subtle)),
+    return CustomPaint(
+      painter: _DashedPill(color: c.ring),
+      child: SizedBox(
+        height: 58,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            children: [
+              label(c.subtle),
+              const SizedBox(width: 14),
+              Text(s == _set + 1 ? 'up next' : '', style: VivType.body.copyWith(color: c.subtle)),
+            ],
           ),
-          Text(s == _set + 1 ? 'up next' : '', style: VivType.caption.copyWith(color: c.subtle)),
-        ],
+        ),
       ),
     );
   }
@@ -323,6 +431,34 @@ class _SessionState extends ConsumerState<_Session> {
 String _fmtKg(double kg) =>
     kg == kg.roundToDouble() ? kg.toStringAsFixed(0) : kg.toStringAsFixed(1);
 
+/// A 1.5 px dashed stadium outline for sets still to come.
+class _DashedPill extends CustomPainter {
+  const _DashedPill({required this.color});
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rrect = RRect.fromRectAndRadius(
+      (Offset.zero & size).deflate(0.75),
+      Radius.circular(size.height / 2),
+    );
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    for (final metric in (Path()..addRRect(rrect)).computeMetrics()) {
+      for (double d = 0; d < metric.length; d += 9) {
+        canvas.drawPath(metric.extractPath(d, d + 5), paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedPill old) => old.color != color;
+}
+
+/// Big pill stepper on the wine field: − value +, easy for sweaty thumbs.
 class _Stepper extends StatelessWidget {
   const _Stepper({
     required this.label,
@@ -338,37 +474,54 @@ class _Stepper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.viv;
+    Widget tap(String glyph, String tooltip, VoidCallback onTap) => Semantics(
+      button: true,
+      label: tooltip,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: SizedBox(
+          width: 44,
+          height: 58,
+          child: Center(
+            child: Text(
+              glyph,
+              style: VivType.h3.copyWith(
+                fontSize: 22,
+                fontWeight: FontWeight.w400,
+                color: VivColors.onFieldSoft,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label.toUpperCase(), style: VivType.eyebrow.copyWith(color: c.subtle, fontSize: 10)),
-        const SizedBox(height: 4),
+        Text(label.toUpperCase(), style: VivType.eyebrow.copyWith(color: VivColors.onFieldMuted)),
+        const SizedBox(height: 6),
         Container(
-          height: 44,
-          decoration: BoxDecoration(
-            color: c.sunken,
-            borderRadius: BorderRadius.circular(VivRadius.sm),
-          ),
+          height: 58,
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          decoration: const ShapeDecoration(color: VivColors.onFieldFaint, shape: StadiumBorder()),
           child: Row(
             children: [
-              IconButton(
-                onPressed: onMinus,
-                tooltip: 'Decrease $label',
-                icon: Icon(Icons.remove, size: 16, color: c.muted),
-              ),
+              tap('−', 'Decrease $label', onMinus),
               Expanded(
-                child: Text(
-                  value,
-                  textAlign: TextAlign.center,
-                  style: VivType.cardTitle.copyWith(color: c.ink, fontSize: 16),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    value,
+                    style: VivType.h3.copyWith(
+                      fontSize: 22,
+                      color: VivColors.onField,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
                 ),
               ),
-              IconButton(
-                onPressed: onPlus,
-                tooltip: 'Increase $label',
-                icon: Icon(Icons.add, size: 16, color: c.muted),
-              ),
+              tap('+', 'Increase $label', onPlus),
             ],
           ),
         ),
@@ -377,15 +530,18 @@ class _Stepper extends StatelessWidget {
   }
 }
 
+/// Rest: the whole screen goes wine, the moment she looks without touching.
 class _RestView extends StatelessWidget {
   const _RestView({
     required this.secondsLeft,
+    required this.total,
     required this.nextLabel,
     required this.onSkip,
     required this.onAdd,
   });
 
   final int secondsLeft;
+  final int total;
   final String nextLabel;
   final VoidCallback onSkip;
   final VoidCallback onAdd;
@@ -395,34 +551,105 @@ class _RestView extends StatelessWidget {
     final c = context.viv;
     final m = secondsLeft ~/ 60;
     final s = (secondsLeft % 60).toString().padLeft(2, '0');
-    return VivPage(
-      bottom: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          VivButton(label: 'Skip rest', onPressed: onSkip),
-          VivButton.text(label: '+30 seconds', onPressed: onAdd),
-        ],
-      ),
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        SizedBox(height: MediaQuery.sizeOf(context).height * 0.2),
-        const Eyebrow('Rest'),
-        const SizedBox(height: VivSpace.sm),
-        Semantics(
-          liveRegion: true,
-          label: '$m minutes $s seconds of rest left',
-          child: Text(
-            '$m:$s',
-            style: VivType.display.copyWith(
-              color: c.ink,
-              fontSize: 64,
-              fontFeatures: const [FontFeature.tabularFigures()],
+    final left = total <= 0 ? 0.0 : (secondsLeft / total).clamp(0.0, 1.0);
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: VivTheme.overlayOnField,
+      child: Scaffold(
+        backgroundColor: c.field,
+        body: Stack(
+          children: [
+            const Positioned(
+              top: 180,
+              left: 30,
+              child: FieldGlow(size: 340, blur: 70, opacity: 0.6),
             ),
-          ),
+            SafeArea(
+              child: Column(
+                children: [
+                  Expanded(
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'REST',
+                            style: VivType.eyebrow.copyWith(
+                              letterSpacing: 1.44,
+                              color: VivColors.onFieldMuted,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Semantics(
+                            liveRegion: true,
+                            label: '$m minutes $s seconds of rest left',
+                            excludeSemantics: true,
+                            child: Text(
+                              '$m:$s',
+                              style: VivType.timer.copyWith(color: VivColors.onField),
+                            ),
+                          ),
+                          const SizedBox(height: 22),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(VivRadius.pill),
+                            child: Container(
+                              width: 180,
+                              height: 5,
+                              color: VivColors.onFieldTrack,
+                              alignment: Alignment.centerLeft,
+                              child: FractionallySizedBox(
+                                widthFactor: left,
+                                child: Container(color: VivColors.onField),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            nextLabel,
+                            style: VivType.lead.copyWith(
+                              fontSize: 15.5,
+                              color: VivColors.onFieldSoft,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(22, 0, 22, 12),
+                    child: Column(
+                      children: [
+                        PillButton(
+                          label: 'Skip rest',
+                          variant: PillVariant.onField,
+                          onPressed: onSkip,
+                        ),
+                        const SizedBox(height: 6),
+                        GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: onAdd,
+                          child: SizedBox(
+                            height: 44,
+                            child: Center(
+                              child: Text(
+                                '+30 seconds',
+                                style: VivType.body.copyWith(
+                                  fontSize: 15.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: VivColors.onFieldSoft,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: VivSpace.xs),
-        Text(nextLabel, style: VivType.bodySmall.copyWith(color: c.muted)),
-      ],
+      ),
     );
   }
 }
