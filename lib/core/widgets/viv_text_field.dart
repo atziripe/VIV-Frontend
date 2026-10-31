@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../theme/viv_theme.dart';
-import 'viv_page.dart';
 
 /// Labelled text field. Pass [obscurable] for passwords to get the
 /// "Show / Hide" trailing toggle from the sign-up design.
@@ -50,7 +49,20 @@ class _VivTextFieldState extends State<VivTextField> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        FieldLabel(widget.label, trailing: widget.labelTrailing),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 7),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  widget.label,
+                  style: VivType.label.copyWith(fontSize: 13.5, color: c.ink2),
+                ),
+              ),
+              ?widget.labelTrailing,
+            ],
+          ),
+        ),
         TextFormField(
           controller: widget.controller,
           obscureText: _obscured,

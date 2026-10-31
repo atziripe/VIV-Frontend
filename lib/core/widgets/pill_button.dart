@@ -9,6 +9,10 @@ enum PillVariant {
   /// Raised fill, ink text ("Keep the original").
   secondary,
 
+  /// Raised fill, 1px line border, ink text ("Continue with Google",
+  /// "Withdraw and delete").
+  outline,
+
   /// Tint fill, tintInk text ("+ Add", soft actions).
   tint,
 
@@ -81,6 +85,7 @@ class PillButton extends StatelessWidget {
     final (Color bg, Color fg) = switch (variant) {
       PillVariant.primary => (c.accent, c.ctaText),
       PillVariant.secondary => (c.raised, c.ink),
+      PillVariant.outline => (c.raised, c.ink),
       PillVariant.tint => (c.tint, c.tintInk),
       PillVariant.inverse => (c.ink, c.page),
       PillVariant.text => (Colors.transparent, c.accent),
@@ -137,7 +142,9 @@ class PillButton extends StatelessWidget {
             alignment: Alignment.center,
             decoration: ShapeDecoration(
               color: bg,
-              shape: const StadiumBorder(),
+              shape: StadiumBorder(
+                side: variant == PillVariant.outline ? BorderSide(color: c.line) : BorderSide.none,
+              ),
               shadows: variant == PillVariant.secondary ? c.cardShadow : null,
             ),
             child: label,

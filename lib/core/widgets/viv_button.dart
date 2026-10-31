@@ -1,24 +1,27 @@
 import 'package:flutter/material.dart';
 
 import '../theme/viv_theme.dart';
+import 'pill_button.dart';
 
 enum VivButtonVariant {
-  /// Filled brand color — the one main action per screen.
+  /// Filled accent — the one main action per screen.
   primary,
 
-  /// High-contrast filled — "Continue with Apple", light CTA on the hero.
+  /// High-contrast filled.
   inverse,
 
-  /// Surface with border — "Continue with Google", "Not today".
+  /// Raised with a hairline — "Continue with Google", "Not today".
   secondary,
 
-  /// Border only, brand-colored text — "Withdraw and delete".
+  /// Same as [secondary] in Pulse — "Withdraw and delete".
   outline,
 
-  /// Text only — "I already have an account", "Why it changed".
+  /// Text only — "I already have an account".
   text,
 }
 
+/// Pre-Pulse button API, now drawn as a fully rounded [PillButton]. New code
+/// should use [PillButton] directly.
 class VivButton extends StatelessWidget {
   const VivButton({
     super.key,
@@ -28,7 +31,7 @@ class VivButton extends StatelessWidget {
     this.loading = false,
     this.expand = true,
     this.icon,
-    this.height = VivSize.control,
+    this.height = VivSize.cta,
   });
 
   const VivButton.secondary({
@@ -47,7 +50,7 @@ class VivButton extends StatelessWidget {
     required this.onPressed,
     this.expand = false,
     this.icon,
-    this.height = 44,
+    this.height = VivSize.minTap,
   }) : variant = VivButtonVariant.text,
        loading = false;
 
@@ -61,68 +64,26 @@ class VivButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.viv;
-    final enabled = onPressed != null && !loading;
-
-    final (Color bg, Color fg, BorderSide side) = switch (variant) {
-      VivButtonVariant.primary => (c.accent, c.ctaText, BorderSide.none),
-      VivButtonVariant.inverse => (c.ink, c.page, BorderSide.none),
-      VivButtonVariant.secondary => (c.raised, c.ink, BorderSide(color: c.line)),
-      VivButtonVariant.outline => (Colors.transparent, c.accent, BorderSide(color: c.accent)),
-      VivButtonVariant.text => (Colors.transparent, c.ink, BorderSide.none),
-    };
-
-    final disabledFilled =
-        variant == VivButtonVariant.primary || variant == VivButtonVariant.inverse;
-
-    final style = ButtonStyle(
-      minimumSize: WidgetStatePropertyAll(Size(expand ? double.infinity : 0, height)),
-      padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: VivSpace.lg)),
-      backgroundColor: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.disabled) && disabledFilled && !loading) {
-          return c.sunken;
-        }
-        return bg;
-      }),
-      foregroundColor: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.disabled) && !loading) return c.subtle;
-        return fg;
-      }),
-      overlayColor: WidgetStatePropertyAll(fg.withValues(alpha: 0.08)),
-      side: WidgetStatePropertyAll(side),
-      shape: WidgetStatePropertyAll(
-        RoundedRectangleBorder(borderRadius: BorderRadius.circular(VivRadius.md)),
-      ),
-      textStyle: WidgetStatePropertyAll(
-        variant == VivButtonVariant.text
-            ? VivType.bodySmall.copyWith(fontWeight: FontWeight.w500)
-            : VivType.button,
-      ),
-      elevation: const WidgetStatePropertyAll(0),
-    );
-
-    final child = loading
-        ? SizedBox.square(
-            dimension: 20,
-            child: CircularProgressIndicator(strokeWidth: 2, color: fg),
-          )
-        : Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (icon != null) ...[icon!, const SizedBox(width: VivSpace.xs)],
-              Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
-            ],
-          );
-
-    return Semantics(
-      button: true,
-      enabled: enabled,
-      label: loading ? '$label, loading' : null,
-      child: TextButton(
-        style: style,
-        onPressed: enabled ? onPressed : (loading ? () {} : null),
-        child: child,
-      ),
+    final size = height >= VivSize.cta
+        ? PillSize.cta
+        : height >= VivSize.control
+        ? PillSize.control
+        : height >= 50
+        ? PillSize.medium
+        : PillSize.compact;
+    return PillButton(
+      label: label,
+      onPressed: onPressed,
+      busy: loading,
+      icon: icon,
+      expand: expand,
+      size: size,
+      variant: switch (variant) {
+        VivButtonVariant.primary => PillVariant.primary,
+        VivButtonVariant.inverse => PillVariant.inverse,
+        VivButtonVariant.secondary || VivButtonVariant.outline => PillVariant.outline,
+        VivButtonVariant.text => PillVariant.text,
+      },
     );
   }
 }
