@@ -62,6 +62,17 @@ Dio buildDio({required TokenSource tokens, String baseUrl = Env.apiBaseUrl}) {
         logPrint: (o) => debugPrint(o.toString()),
       ),
     );
+    // Error bodies are short plain text ("invalid goal_id"): always print
+    // them, success bodies stay out of the log.
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onError: (e, handler) {
+          final body = e.response?.data;
+          if (body != null) debugPrint('*** Error body *** ${e.requestOptions.path}: $body');
+          handler.next(e);
+        },
+      ),
+    );
   }
   return dio;
 }
