@@ -202,6 +202,7 @@ class OnboardingDraft {
       dailyActivityLevel: activityLevel?.apiValue,
       activities: ids,
       goalId: goal!.id,
+      healthDataConsent: consent,
     );
   }
 

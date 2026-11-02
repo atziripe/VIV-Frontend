@@ -36,6 +36,15 @@ void main() {
     expect(json.containsKey('weight_kg'), isFalse);
   });
 
+  test('sends the consents inside the onboarding body', () {
+    // Without health_data_processing: true the backend 400s with
+    // "consent required: health_data_processing".
+    expect(complete.copyWith(consent: true).toRequest().toJson()['consents'], {
+      'health_data_processing': true,
+      'ai_processing': false,
+    });
+  });
+
   test('"Varies" cycle length lets the backend default', () {
     final json = complete.copyWith(cycleLength: CycleLength.varies).toRequest().toJson();
     expect(json.containsKey('cycle_duration'), isFalse);
