@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/widgets/widgets.dart';
 import '../../data/models/nutrition.dart';
+import 'eat_screen.dart' show proteinOf;
+import 'meal_image.dart';
 import 'nutrition_format.dart';
 import 'nutrition_providers.dart';
 
@@ -51,7 +53,6 @@ class _SwapSheetState extends ConsumerState<_SwapSheet> {
   @override
   Widget build(BuildContext context) {
     final options = widget.slot.options;
-    final protein = widget.slot.macroTargets?.proteinG;
     return VivBottomSheet(
       title: 'Swap ${widget.slot.mealName.toLowerCase()}',
       body: 'Same targets, different food. Pick one and the day still adds up.',
@@ -63,7 +64,17 @@ class _SwapSheetState extends ConsumerState<_SwapSheet> {
               if (i > 0) const SizedBox(height: 8),
               OptionRow(
                 label: options[i].name,
-                hint: protein == null ? null : grams(protein),
+                hint: switch (proteinOf(widget.slot, options[i])) {
+                  final p? => grams(p),
+                  null => null,
+                },
+                leading: MealImage(
+                  url: options[i].imageUrl,
+                  width: 44,
+                  height: 44,
+                  borderRadius: const BorderRadius.all(Radius.circular(14)),
+                  iconSize: 18,
+                ),
                 selected: _choice == i,
                 onTap: () => setState(() => _choice = i),
               ),

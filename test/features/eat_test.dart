@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:viv/data/models/nutrition.dart';
+import 'package:viv/features/nutrition/meal_image.dart';
 import 'package:viv/features/nutrition/eat_screen.dart';
 import 'package:viv/features/nutrition/full_targets_screen.dart';
 import 'package:viv/features/nutrition/meal_detail_screen.dart';
@@ -70,5 +72,74 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('130 g'), findsOneWidget);
     expect(find.text('~2,100 kcal'), findsOneWidget);
+  });
+
+  test('plan parses dish and ingredient images, option macros and selections', () {
+    final plan = NutritionPlan.fromJson({
+      'meal_selections': {
+        'Monday': {'breakfast': 1, 'lunch': 0},
+      },
+      'days': [
+        {
+          'weekday': 'monday',
+          'meals': [
+            {
+              'meal_name': 'Breakfast',
+              'options': [
+                {
+                  'name': 'Asian Bowl',
+                  'macros': {'calories': 450, 'protein_g': 35},
+                  'image_url': 'https://img.example/bowl.jpg',
+                  'ingredients': [
+                    {'name': 'Chicken breast', 'image_url': 'https://img.example/chicken.jpg'},
+                    {'name': 'Avocado'},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    expect(plan.mealSelections, {
+      'monday': {'breakfast': 1, 'lunch': 0},
+    });
+    final option = plan.days.single.meals.single.options.single;
+    expect(option.imageUrl, 'https://img.example/bowl.jpg');
+    expect(option.macros?.proteinG, 35);
+    expect(option.ingredients.first.imageUrl, 'https://img.example/chicken.jpg');
+    expect(option.ingredients.last.imageUrl, isNull);
+  });
+
+  testWidgets('dish photos show on Eat and in the meal detail, with ingredients', (tester) async {
+    await pumpScreen(tester, const EatScreen(), extraRoutes: [_mealRoute]);
+    final rowImage = tester.widget<MealImage>(find.byType(MealImage).first);
+    expect(rowImage.url, 'https://img.example/breakfast_bowl.jpg');
+
+    await tester.tap(find.text('Greek yogurt, apple & peanut butter bowl'));
+    await tester.pumpAndSettle();
+    final urls = tester.widgetList<MealImage>(find.byType(MealImage)).map((m) => m.url).toList();
+    // Hero, then one per ingredient: a missing image keeps the placeholder.
+    expect(urls, [
+      'https://img.example/breakfast_bowl.jpg',
+      'https://img.example/yogurt.jpg',
+      null,
+    ]);
+  });
+
+  testWidgets('the backend\'s meal_selections picks the option shown', (tester) async {
+    final weekday = todayWeekday();
+    final base = fakeNutrition;
+    final plan = NutritionPlan(
+      targets: base.targets,
+      copyEnriched: true,
+      mealSelections: {
+        weekday: {'breakfast': 1},
+      },
+      days: base.days,
+    );
+    await pumpScreen(tester, const EatScreen(), nutrition: plan);
+    expect(find.text('Eggs on toast, twice over'), findsOneWidget);
+    expect(find.text('Greek yogurt, apple & peanut butter bowl'), findsNothing);
   });
 }

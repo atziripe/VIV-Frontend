@@ -11,6 +11,7 @@ class OptionRow extends StatelessWidget {
     required this.selected,
     required this.onTap,
     this.hint,
+    this.leading,
   });
 
   final String label;
@@ -19,6 +20,9 @@ class OptionRow extends StatelessWidget {
   final String? hint;
   final bool selected;
   final VoidCallback? onTap;
+
+  /// Shown before the label: a dish thumbnail in the swap sheet.
+  final Widget? leading;
 
   @override
   Widget build(BuildContext context) {
@@ -42,6 +46,7 @@ class OptionRow extends StatelessWidget {
           ),
           child: Row(
             children: [
+              if (leading != null) ...[leading!, const SizedBox(width: 14)],
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

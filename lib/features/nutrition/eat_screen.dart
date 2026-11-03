@@ -8,6 +8,7 @@ import '../../core/widgets/widgets.dart';
 import '../../data/models/nutrition.dart';
 import '../../data/providers.dart';
 import '../../router/app_router.dart';
+import 'meal_image.dart';
 import 'nutrition_format.dart';
 import 'nutrition_providers.dart';
 import 'swap_meal_sheet.dart';
@@ -87,7 +88,13 @@ class _Today extends ConsumerWidget {
               : 'Rest day. Keep protein steady; the rest can flex.',
         ),
         if (day.macros?.proteinG case final total?) ...[
-          _ProteinField(total: total, day: day, cooked: cooked),
+          _ProteinField(
+            total: total,
+            day: day,
+            cooked: cooked,
+            proteinOf: (slot) =>
+                proteinOf(slot, optionAt(slot, selections.selected(weekday, slot.slotKey))),
+          ),
           const SizedBox(height: 14),
         ],
         if (day.meals.isNotEmpty)
@@ -142,14 +149,24 @@ class _Today extends ConsumerWidget {
 MealOption? optionAt(MealSlot slot, int index) =>
     slot.options.isEmpty ? null : slot.options[index.clamp(0, slot.options.length - 1)];
 
+/// The picked option's own protein, else the slot's target.
+double? proteinOf(MealSlot slot, MealOption? option) =>
+    option?.macros?.proteinG ?? slot.macroTargets?.proteinG;
+
 /// "PROTEIN TODAY · 137 g", the per-meal hint and a bar filled by the meals
 /// marked "Cooked it" on this device.
 class _ProteinField extends StatelessWidget {
-  const _ProteinField({required this.total, required this.day, required this.cooked});
+  const _ProteinField({
+    required this.total,
+    required this.day,
+    required this.cooked,
+    required this.proteinOf,
+  });
 
   final double total;
   final NutritionDay day;
   final Set<String> cooked;
+  final double? Function(MealSlot slot) proteinOf;
 
   @override
   Widget build(BuildContext context) {
@@ -157,7 +174,7 @@ class _ProteinField extends StatelessWidget {
       for (final m in day.meals)
         if (cooked.contains(m.slotKey)) m,
     ];
-    final eaten = done.fold<double>(0, (sum, m) => sum + (m.macroTargets?.proteinG ?? 0));
+    final eaten = done.fold<double>(0, (sum, m) => sum + (proteinOf(m) ?? 0));
     final perMeal = day.meals.isEmpty ? null : total / day.meals.length;
     final fraction = total <= 0 ? 0.0 : (eaten / total).clamp(0.0, 1.0);
     final doneLine = done.isEmpty
@@ -243,7 +260,7 @@ class _MealRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.viv;
-    final protein = slot.macroTargets?.proteinG;
+    final protein = proteinOf(slot, option);
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onOpen,
@@ -251,7 +268,13 @@ class _MealRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 15),
         child: Row(
           children: [
-            MealPhoto(size: 56, done: cooked),
+            MealImage(
+              url: option?.imageUrl,
+              width: 56,
+              height: 56,
+              done: cooked,
+              semanticLabel: option?.name,
+            ),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
@@ -292,30 +315,6 @@ class _MealRow extends StatelessWidget {
               ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// The dish photo slot. No meal images exist yet, so it's the photo tone
-/// with a quiet icon; [done] swaps the icon for a check.
-class MealPhoto extends StatelessWidget {
-  const MealPhoto({super.key, required this.size, this.done = false});
-
-  final double size;
-  final bool done;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.viv;
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(color: c.photo, borderRadius: BorderRadius.circular(18)),
-      child: Icon(
-        done ? Icons.check_rounded : Icons.restaurant_rounded,
-        size: 22,
-        color: done ? c.accent : c.faint,
       ),
     );
   }

@@ -7,6 +7,7 @@ import '../../core/widgets/widgets.dart';
 import '../../data/models/nutrition.dart';
 import '../../data/providers.dart';
 import 'eat_screen.dart';
+import 'meal_image.dart';
 import 'nutrition_format.dart';
 import 'nutrition_providers.dart';
 import 'swap_meal_sheet.dart';
@@ -36,7 +37,8 @@ class MealDetailScreen extends ConsumerWidget {
       slot,
       ref.read(mealSelectionsProvider.notifier).selected(weekday, slot.slotKey),
     )!;
-    final m = slot.macroTargets;
+    // The option's own macros when the plan sends them, else the slot's.
+    final m = option.macros ?? slot.macroTargets;
     final isToday = weekday.toLowerCase() == todayWeekday();
     final isCooked = isToday && cooked.contains(slot.slotKey);
     final canSwap = slot.options.length > 1;
@@ -75,15 +77,12 @@ class MealDetailScreen extends ConsumerWidget {
                   children: [
                     Stack(
                       children: [
-                        Container(
-                          height: 200 + top,
-                          decoration: BoxDecoration(
-                            color: c.photo,
-                            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
-                          ),
-                          alignment: Alignment.center,
-                          padding: EdgeInsets.only(top: top),
-                          child: Icon(Icons.restaurant_rounded, size: 34, color: c.faint),
+                        MealImage(
+                          url: option.imageUrl,
+                          height: 260 + top,
+                          borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
+                          iconSize: 34,
+                          semanticLabel: option.name,
                         ),
                         Positioned(
                           top: top + 4,
@@ -146,6 +145,7 @@ class MealDetailScreen extends ConsumerWidget {
                                 for (final ing in option.ingredients)
                                   _Ingredient(
                                     name: ing.name,
+                                    imageUrl: ing.imageUrl,
                                     amount:
                                         ing.approx ??
                                         (ing.amountG == null ? '' : grams(ing.amountG!)),
@@ -212,18 +212,28 @@ class _Tile extends StatelessWidget {
 }
 
 class _Ingredient extends StatelessWidget {
-  const _Ingredient({required this.name, required this.amount});
+  const _Ingredient({required this.name, required this.amount, this.imageUrl});
 
   final String name;
   final String amount;
+  final String? imageUrl;
 
   @override
   Widget build(BuildContext context) {
     final c = context.viv;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 15),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         children: [
+          MealImage(
+            url: imageUrl,
+            width: 40,
+            height: 40,
+            borderRadius: const BorderRadius.all(Radius.circular(12)),
+            icon: Icons.eco_rounded,
+            iconSize: 16,
+          ),
+          const SizedBox(width: 14),
           Expanded(
             child: Text(
               name,

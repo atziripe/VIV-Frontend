@@ -48,14 +48,21 @@ class Hydration {
 }
 
 class MealIngredient {
-  const MealIngredient({required this.name, this.amountG, this.approx});
+  const MealIngredient({required this.name, this.amountG, this.approx, this.imageUrl});
 
   final String name;
   final double? amountG;
   final String? approx;
 
-  factory MealIngredient.fromJson(Json j) =>
-      MealIngredient(name: j.strOr('name'), amountG: j.number('amount_g'), approx: j.str('approx'));
+  /// Optional photo; not every ingredient has one.
+  final String? imageUrl;
+
+  factory MealIngredient.fromJson(Json j) => MealIngredient(
+    name: j.strOr('name'),
+    amountG: j.number('amount_g'),
+    approx: j.str('approx'),
+    imageUrl: j.str('image_url'),
+  );
 }
 
 class MealOption {
@@ -64,6 +71,8 @@ class MealOption {
     this.summary,
     this.flag,
     this.flagReason,
+    this.macros,
+    this.imageUrl,
     this.ingredients = const [],
   });
 
@@ -71,15 +80,26 @@ class MealOption {
   final String? summary;
   final String? flag;
   final String? flagReason;
+
+  /// This option's own macros; fall back to the slot's targets when absent.
+  final DayMacros? macros;
+
+  /// Dish photo.
+  final String? imageUrl;
   final List<MealIngredient> ingredients;
 
-  factory MealOption.fromJson(Json j) => MealOption(
-    name: j.strOr('name'),
-    summary: j.str('summary'),
-    flag: j.str('flag'),
-    flagReason: j.str('flag_reason'),
-    ingredients: j.list('ingredients', MealIngredient.fromJson),
-  );
+  factory MealOption.fromJson(Json j) {
+    final m = j.obj('macros');
+    return MealOption(
+      name: j.strOr('name'),
+      summary: j.str('summary'),
+      flag: j.str('flag'),
+      flagReason: j.str('flag_reason'),
+      macros: m == null ? null : DayMacros.fromJson(m),
+      imageUrl: j.str('image_url'),
+      ingredients: j.list('ingredients', MealIngredient.fromJson),
+    );
+  }
 }
 
 class MealSlot {
@@ -150,6 +170,7 @@ class NutritionPlan {
     this.targets,
     this.waterBaseLiters,
     this.copyEnriched = false,
+    this.mealSelections = const {},
     this.days = const [],
   });
 
@@ -159,6 +180,10 @@ class NutritionPlan {
 
   /// False until the async copy-polish pass finishes; poll the plan until true.
   final bool copyEnriched;
+
+  /// `weekday → slot key → option index`, as saved by
+  /// `POST /nutrition/meal-selection`. Only slots she changed are present.
+  final Map<String, Map<String, int>> mealSelections;
   final List<NutritionDay> days;
 
   /// Day matching a lowercase English weekday ("monday").
@@ -176,6 +201,14 @@ class NutritionPlan {
       targets: t == null ? null : MacroTargets.fromJson(t),
       waterBaseLiters: j.number('water_base_liters'),
       copyEnriched: j.flag('copy_enriched'),
+      mealSelections: {
+        for (final MapEntry(:key, :value) in (j.obj('meal_selections') ?? const {}).entries)
+          if (value is Map)
+            key.toLowerCase(): {
+              for (final e in value.entries)
+                if (e.value is num) e.key.toString(): (e.value as num).toInt(),
+            },
+      },
       days: j.list('days', NutritionDay.fromJson),
     );
   }

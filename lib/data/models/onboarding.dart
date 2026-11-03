@@ -60,10 +60,7 @@ class OnboardingRequest {
     'daily_activity_level': dailyActivityLevel,
     'activities': activities,
     'goal_id': goalId,
-    'consents': {
-      'health_data_processing': healthDataConsent,
-      'ai_processing': aiProcessingConsent,
-    },
+    'consents': {'health_data_processing': healthDataConsent, 'ai_processing': aiProcessingConsent},
   });
 }
 

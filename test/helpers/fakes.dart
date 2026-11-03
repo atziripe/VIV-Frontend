@@ -125,8 +125,15 @@ final fakeNutrition = NutritionPlan.fromJson({
             'options': [
               {
                 'name': 'Greek yogurt, apple & peanut butter bowl',
+                'image_url': 'https://img.example/breakfast_bowl.jpg',
                 'ingredients': [
-                  {'name': 'Greek yogurt', 'amount_g': 200, 'approx': '1 cup'},
+                  {
+                    'name': 'Greek yogurt',
+                    'amount_g': 200,
+                    'approx': '1 cup',
+                    'image_url': 'https://img.example/yogurt.jpg',
+                  },
+                  {'name': 'Apple', 'amount_g': 150},
                 ],
               },
               {'name': 'Eggs on toast, twice over'},
@@ -318,7 +325,12 @@ final homeMoments = <String, HomeToday>{
 };
 
 /// Signed-in, fully onboarded user with a built week and nutrition plan.
-Future<List<Override>> appOverrides({HomeToday? home, AuthRepository? auth, Me? me}) async {
+Future<List<Override>> appOverrides({
+  HomeToday? home,
+  AuthRepository? auth,
+  Me? me,
+  NutritionPlan? nutrition,
+}) async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
   if (auth == null) {
@@ -335,7 +347,7 @@ Future<List<Override>> appOverrides({HomeToday? home, AuthRepository? auth, Me? 
     currentWeekProvider.overrideWith((_) async => fakeWeek()),
     weeklyNoteProvider.overrideWith((_) async => null),
     dayDetailProvider.overrideWith((_, _) async => fakeDay),
-    nutritionPlanProvider.overrideWith((_) async => fakeNutrition),
+    nutritionPlanProvider.overrideWith((_) async => nutrition ?? fakeNutrition),
     recoveryCardProvider.overrideWith((_, _) async => fakeRecovery),
     homeTodayProvider.overrideWith((_) async => home ?? homeMoments['before check-in']),
   ];
@@ -350,6 +362,7 @@ Future<void> pumpScreen(
   HomeToday? home,
   AuthRepository? auth,
   Me? me,
+  NutritionPlan? nutrition,
   List<Override> extra = const [],
   List<RouteBase> extraRoutes = const [],
 }) async {
@@ -366,7 +379,7 @@ Future<void> pumpScreen(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        ...await appOverrides(home: home, auth: auth, me: me),
+        ...await appOverrides(home: home, auth: auth, me: me, nutrition: nutrition),
         ...extra,
       ],
       child: MaterialApp.router(
