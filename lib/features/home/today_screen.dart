@@ -20,6 +20,7 @@ import '../../router/app_router.dart';
 import '../checkin/checkin_copy.dart';
 import '../checkin/checkin_screen.dart' show showWhyTodaySheet;
 import '../profile/your_info_screen.dart' show WhatChanges, showEditNumberSheet;
+import 'cycle_card.dart';
 import 'home_timeline.dart';
 import 'period_start_sheet.dart';
 
@@ -294,6 +295,13 @@ class _Day extends ConsumerWidget {
                 onTap: _onTap(context, item),
               ),
             ),
+        ],
+        if (CycleEstimate.from(me, home: home) case final cycle?) ...[
+          const SizedBox(height: 20),
+          Enter(
+            delay: const Duration(milliseconds: 420),
+            child: CycleCard(estimate: cycle),
+          ),
         ],
         if (home.weekProgress case final progress? when progress.days.isNotEmpty) ...[
           const SizedBox(height: 20),
