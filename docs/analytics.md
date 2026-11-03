@@ -57,7 +57,7 @@ Use one Amplitude project for development and another for production.
 | `login_completed` | Sign-in to an existing account | `method` |
 | `fit_check_passed` | Fit check continued with a natural cycle | — |
 | `onboarding_step_completed` | Continue on a numbered step | `step` (`about_you`, `training`, `week`, `cycle`) |
-| `consent_given` | "Build my week" tapped | `analytics` (bool) |
+| `consent_given` | "Build my week" tapped | `analytics` (bool), `ai` (bool) |
 | `onboarding_completed` | `POST /onboarding` succeeded | — |
 | `first_week_ready` | First week job finished or gave up | `wait_seconds`, `failed` |
 | `home_viewed` | Today timeline shown | `now_card_kind` (optional), `is_rest_day` |

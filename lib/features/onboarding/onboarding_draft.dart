@@ -182,7 +182,8 @@ class OnboardingDraft {
       lastPeriodExact ??
       (lastPeriod == null ? null : Dates.today().subtract(Duration(days: lastPeriod!.daysAgo)));
 
-  OnboardingRequest toRequest() {
+  /// [aiProcessing] is the optional AI consent from the consent screen.
+  OnboardingRequest toRequest({bool aiProcessing = false}) {
     final ids = <String>[];
     for (final choice in activities) {
       for (final a in choice.activities) {
@@ -203,6 +204,7 @@ class OnboardingDraft {
       activities: ids,
       goalId: goal!.id,
       healthDataConsent: consent,
+      aiProcessingConsent: aiProcessing,
     );
   }
 

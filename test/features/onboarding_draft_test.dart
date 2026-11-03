@@ -43,6 +43,10 @@ void main() {
       'health_data_processing': true,
       'ai_processing': false,
     });
+    expect(complete.copyWith(consent: true).toRequest(aiProcessing: true).toJson()['consents'], {
+      'health_data_processing': true,
+      'ai_processing': true,
+    });
   });
 
   test('"Varies" cycle length lets the backend default', () {

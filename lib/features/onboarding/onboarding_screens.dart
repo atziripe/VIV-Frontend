@@ -566,6 +566,11 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
   /// which also gates product analytics.
   bool _improve = false;
 
+  /// Optional and off by default: `ai_processing`, which lets the backend
+  /// write the weekly note and polish meal names. Sent in the onboarding
+  /// body, where the backend records it.
+  bool _ai = false;
+
   Future<void> _build() async {
     setState(() => _submitting = true);
     try {
@@ -578,8 +583,8 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
       // Releases (or drops) the events held since Welcome.
       analytics.setConsent(_improve ? AnalyticsConsent.granted : AnalyticsConsent.denied);
       ref.invalidate(consentsProvider);
-      analytics.consentGiven(analytics: _improve);
-      final res = await api.completeOnboarding(draft.toRequest());
+      analytics.consentGiven(analytics: _improve, ai: _ai);
+      final res = await api.completeOnboarding(draft.toRequest(aiProcessing: _ai));
       analytics.onboardingCompleted();
       if (!mounted) return;
       context.go(Routes.building, extra: res.weeklyPlanJobId);
@@ -630,6 +635,28 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
                 child: Text(
                   'I agree to VIV processing my cycle and health data to personalise '
                   'my recommendations.',
+                  style: VivType.bodySmall.copyWith(color: c.ink),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: VivSpace.sm),
+        VivCard(
+          tone: _ai ? VivCardTone.highlight : VivCardTone.surface,
+          onTap: () => setState(() => _ai = !_ai),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox.square(
+                dimension: 24,
+                child: Checkbox(value: _ai, onChanged: (v) => setState(() => _ai = v ?? false)),
+              ),
+              const SizedBox(width: VivSpace.sm),
+              Expanded(
+                child: Text(
+                  'Optional: let VIV use an AI model to write your weekly note and meal '
+                  'descriptions.',
                   style: VivType.bodySmall.copyWith(color: c.ink),
                 ),
               ),

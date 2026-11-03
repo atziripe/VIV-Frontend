@@ -135,7 +135,8 @@ class Analytics {
   /// [step] is `about_you`, `training`, `week` or `cycle`.
   void onboardingStepCompleted(String step) => _track('onboarding_step_completed', {'step': step});
 
-  void consentGiven({required bool analytics}) => _track('consent_given', {'analytics': analytics});
+  void consentGiven({required bool analytics, required bool ai}) =>
+      _track('consent_given', {'analytics': analytics, 'ai': ai});
 
   void onboardingCompleted() => _track('onboarding_completed');
 

@@ -152,7 +152,11 @@ void main() {
           onboardingDraftProvider.overrideWith(() => _DraftWith(_completeDraft)),
         ],
       );
-      if (optIn) await tester.tap(find.textContaining('help improve VIV'));
+      if (optIn) {
+        await tester.ensureVisible(find.textContaining('help improve VIV'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.textContaining('help improve VIV'));
+      }
       await tester.pump();
       await tester.tap(find.text('Build my week'));
       await tester.pump(const Duration(milliseconds: 500));
@@ -161,6 +165,34 @@ void main() {
         () => api.setConsent(ConsentPurpose.researchProductImprovement, granted: optIn),
         () => api.completeOnboarding(any()),
       ]);
+    });
+  }
+
+  for (final ai in [true, false]) {
+    testWidgets('Consent sends the optional AI choice in the onboarding body: $ai', (tester) async {
+      when(() => api.completeOnboarding(any())).thenAnswer(
+        (_) async => const OnboardingResponse(onboardingCompleted: true, weeklyPlanJobId: 'job'),
+      );
+      await pumpScreen(
+        tester,
+        const ConsentScreen(),
+        auth: auth,
+        extra: [
+          vivApiProvider.overrideWithValue(api),
+          onboardingDraftProvider.overrideWith(() => _DraftWith(_completeDraft)),
+        ],
+      );
+      if (ai) {
+        await tester.ensureVisible(find.textContaining('AI model'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.textContaining('AI model'));
+      }
+      await tester.pump();
+      await tester.tap(find.text('Build my week'));
+      await tester.pump(const Duration(milliseconds: 500));
+      final req =
+          verify(() => api.completeOnboarding(captureAny())).captured.single as OnboardingRequest;
+      expect(req.toJson()['consents'], {'health_data_processing': true, 'ai_processing': ai});
     });
   }
 }
