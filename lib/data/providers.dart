@@ -56,15 +56,54 @@ final weeklyNoteProvider = FutureProvider<String?>((ref) {
   return ref.watch(vivApiProvider).weeklyNote(Dates.todayYmd());
 });
 
+/// Whether the meal-copy polish will ever run: the backend skips it without
+/// the `ai_processing` consent, and `copy_enriched` then stays false.
+final aiCopyEnabledProvider = FutureProvider<bool>((ref) async {
+  try {
+    final consents = await ref.watch(consentsProvider.future);
+    return consents[ConsentPurpose.aiProcessing]?.granted ?? false;
+  } catch (_) {
+    return false;
+  }
+});
+
+/// Re-fetches of the plan made while waiting for `copy_enriched`.
+class NutritionCopyPolls extends Notifier<int> {
+  /// 3, 6, 12, 24, 48 s apart: about a minute and a half, then stop.
+  static const maxPolls = 5;
+
+  @override
+  int build() => 0;
+
+  void count() => state++;
+  void reset() => state = 0;
+}
+
+final nutritionCopyPollsProvider = NotifierProvider<NutritionCopyPolls, int>(
+  NutritionCopyPolls.new,
+);
+
 /// Null when the user hasn't opted into the nutrition module yet.
+///
 /// While `copy_enriched` is false the meal names are placeholders, so the
-/// plan re-fetches itself until the async copy pass has finished.
+/// plan re-fetches itself until the async copy pass has finished, backing
+/// off and giving up after [NutritionCopyPolls.maxPolls]. It doesn't poll at
+/// all without the AI consent: that pass never runs.
 final nutritionPlanProvider = FutureProvider<NutritionPlan?>((ref) async {
   try {
     final plan = await ref.watch(vivApiProvider).nutritionPlan();
-    if (plan != null && !plan.copyEnriched) {
-      final timer = Timer(const Duration(seconds: 6), ref.invalidateSelf);
-      ref.onDispose(timer.cancel);
+    final polls = ref.read(nutritionCopyPollsProvider.notifier);
+    if (plan == null || plan.copyEnriched) {
+      polls.reset();
+    } else if (await ref.read(aiCopyEnabledProvider.future)) {
+      final done = ref.read(nutritionCopyPollsProvider);
+      if (done < NutritionCopyPolls.maxPolls) {
+        final timer = Timer(Duration(seconds: 3 << done), () {
+          polls.count();
+          ref.invalidateSelf();
+        });
+        ref.onDispose(timer.cancel);
+      }
     }
     return plan;
   } on ApiException catch (e) {

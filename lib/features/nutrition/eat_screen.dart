@@ -135,7 +135,9 @@ class _Today extends ConsumerWidget {
             ),
           ),
         ),
-        if (!plan.copyEnriched)
+        if (!plan.copyEnriched &&
+            ref.watch(aiCopyEnabledProvider).value == true &&
+            ref.watch(nutritionCopyPollsProvider) < NutritionCopyPolls.maxPolls)
           Text(
             'Meal names are still being polished…',
             textAlign: TextAlign.center,

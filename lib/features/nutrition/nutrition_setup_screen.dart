@@ -44,6 +44,7 @@ class _NutritionSetupScreenState extends ConsumerState<NutritionSetupScreen> {
             date: Dates.todayYmd(),
           );
       ref.read(analyticsProvider).nutritionSetupCompleted();
+      ref.read(nutritionCopyPollsProvider.notifier).reset();
       ref.invalidate(nutritionPlanProvider);
       ref.invalidate(meProvider);
       if (mounted) context.pop();
