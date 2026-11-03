@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/theme/viv_theme.dart';
@@ -68,7 +69,10 @@ class MealImage extends StatelessWidget {
                         curve: VivMotion.curve,
                         child: child,
                       ),
-                errorBuilder: (_, _, _) => placeholder,
+                errorBuilder: (_, error, _) {
+                  if (kDebugMode) debugPrint('*** Image failed *** $url\n$error');
+                  return placeholder;
+                },
               ),
             if (done)
               ColoredBox(

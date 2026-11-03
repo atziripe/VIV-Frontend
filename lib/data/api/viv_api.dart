@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/network/api_client.dart';
@@ -176,6 +179,7 @@ class VivApi {
 
   Future<NutritionPlan?> nutritionPlan() async {
     final j = await _http.get('/nutrition/plan');
+    if (kDebugMode) _logNutritionPlan(j);
     return j == null ? null : NutritionPlan.fromJson(j);
   }
 
@@ -217,3 +221,33 @@ class VivApi {
 }
 
 final vivApiProvider = Provider<VivApi>((ref) => VivApi(ref.watch(apiClientProvider)));
+
+/// Debug only: the raw `/nutrition/plan` body, then every image URL in it,
+/// so a missing or wrong `image_url` is easy to spot in the console.
+void _logNutritionPlan(Object? j) {
+  if (j == null) {
+    debugPrint('*** /nutrition/plan *** 204, no plan');
+    return;
+  }
+  debugPrint('*** /nutrition/plan ***\n${const JsonEncoder.withIndent('  ').convert(j)}');
+  final urls = <String>[];
+  void walk(Object? v, String path) {
+    if (v is Map) {
+      for (final e in v.entries) {
+        if (e.key == 'image_url') urls.add('$path → ${e.value}');
+        walk(e.value, '$path.${e.key}');
+      }
+    } else if (v is List) {
+      for (final (i, x) in v.indexed) {
+        walk(x, '$path[$i]');
+      }
+    }
+  }
+
+  walk(j, '');
+  debugPrint(
+    urls.isEmpty
+        ? '*** /nutrition/plan *** no image_url fields in the response'
+        : '*** /nutrition/plan images (${urls.length}) ***\n${urls.join('\n')}',
+  );
+}
