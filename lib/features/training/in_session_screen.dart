@@ -56,6 +56,9 @@ class _SessionState extends ConsumerState<_Session> {
   int _set = 1;
   double _weight = 10;
   int _reps = 10;
+
+  /// Reps in reserve for the set being logged; null = not given (omitted).
+  int? _rir;
   _Phase _phase = _Phase.lifting;
   bool _busy = false;
 
@@ -146,11 +149,14 @@ class _SessionState extends ConsumerState<_Session> {
             setNumber: _set,
             weightKg: _weight,
             reps: _reps,
+            rir: _current.takesRir ? _rir : null,
           );
       HapticFeedback.lightImpact();
       ref.invalidate(dayDetailProvider(widget.day.date));
       setState(() {
         _log = log;
+        _rir = null;
+        // The real Strength path doesn't prescribe rest; 90 s is the default.
         final rest = _current.restSeconds ?? 90;
         if (_set < _current.sets) {
           _set++;
@@ -310,9 +316,15 @@ class _SessionState extends ConsumerState<_Session> {
                     header: true,
                     child: Text(e.name, style: VivType.h1.copyWith(fontSize: 36, color: c.ink)),
                   ),
-                  if ((e.formCue ?? e.loadGuidance) case final cue?) ...[
+                  if ((e.prescriptionText ?? e.formCue ?? e.loadGuidance) case final cue?) ...[
                     const SizedBox(height: 8),
                     Text(cue, style: VivType.lead.copyWith(fontSize: 15.5, color: c.muted)),
+                  ],
+                  // Once, before the very first set of the session.
+                  if (widget.day.strengthRampUpNote case final note?
+                      when _exercise == 0 && _set == 1 && _setsDone == 0) ...[
+                    const SizedBox(height: 14),
+                    VivNote(text: note),
                   ],
                   const SizedBox(height: 22),
                   for (var s = 1; s <= e.sets; s++) ...[
@@ -352,7 +364,11 @@ class _SessionState extends ConsumerState<_Session> {
             const SizedBox(width: 14),
             Expanded(
               child: Text(
-                '${_fmtKg(logged.weightKg ?? 0)} kg · ${logged.reps ?? 0}',
+                [
+                  '${_fmtKg(logged.weightKg ?? 0)} kg',
+                  '${logged.reps ?? 0}',
+                  if (logged.rir != null) 'RIR ${logged.rir}',
+                ].join(' · '),
                 style: VivType.body.copyWith(fontSize: 15.5, color: c.ink2),
               ),
             ),
@@ -406,6 +422,7 @@ class _SessionState extends ConsumerState<_Session> {
               ),
             ],
           ),
+          if (e.takesRir) _RirPicker(value: _rir, onChanged: (v) => setState(() => _rir = v)),
         ],
       );
     }
@@ -424,6 +441,62 @@ class _SessionState extends ConsumerState<_Session> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Optional reps in reserve for this set: 0–4, tap again to clear. Nothing
+/// picked means nothing is sent.
+class _RirPicker extends StatelessWidget {
+  const _RirPicker({required this.value, required this.onChanged});
+
+  final int? value;
+  final ValueChanged<int?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'REPS LEFT IN THE TANK',
+          style: VivType.eyebrow.copyWith(fontSize: 11, color: VivColors.onFieldMuted),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            for (var i = 0; i <= 4; i++) ...[
+              if (i > 0) const SizedBox(width: 6),
+              Expanded(
+                child: Semantics(
+                  button: true,
+                  selected: value == i,
+                  label: 'RIR $i',
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => onChanged(value == i ? null : i),
+                    child: Container(
+                      height: VivSize.minTap,
+                      alignment: Alignment.center,
+                      decoration: ShapeDecoration(
+                        shape: const StadiumBorder(),
+                        color: value == i ? VivColors.onField : VivColors.onFieldFaint,
+                      ),
+                      child: Text(
+                        i == 4 ? '4+' : '$i',
+                        style: VivType.body.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: value == i ? VivColors.onFieldInv : VivColors.onField,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ],
     );
   }
 }

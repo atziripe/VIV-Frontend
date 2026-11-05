@@ -53,6 +53,17 @@ class _Detail extends ConsumerWidget {
       if (day.durationMinutes != null)
         '${day.durationIsEstimated ? '~' : ''}${day.durationMinutes} min',
       if (day.mainExercises.isNotEmpty) '${day.mainExercises.length} moves',
+      if ((day.strengthBlockNumber, day.strengthWeek) case (final b?, final w?))
+        'Block $b · week $w',
+    ];
+    final adjustments = [
+      for (final t in day.strengthTierChanges)
+        if (t.detail != null) t.detail!,
+    ];
+    final traceability = [
+      if (day.strengthConfigStatus case final s?) strengthStatusText(s),
+      if (day.strengthWarmupCooldownStatus case final s?)
+        'Warm-up and cool-down: ${strengthStatusText(s, sentence: false)}.',
     ];
 
     Widget? bottom;
@@ -111,31 +122,20 @@ class _Detail extends ConsumerWidget {
           Text(day.warning!, style: VivType.lead.copyWith(fontSize: 15.5, color: c.ink2)),
         ],
         if (why != null) ...[const SizedBox(height: 4), WhyLink(onTap: why, color: c.ink)],
+        if (adjustments.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          VivNote(eyebrow: 'Adjusted today', text: adjustments.join('\n')),
+        ],
+        // Shown once for the whole session, before the first exercise.
+        if (day.strengthRampUpNote case final note?) ...[
+          const SizedBox(height: 12),
+          VivNote(text: note),
+        ],
         const SizedBox(height: 18),
         SettingsGroup(
           children: [
             if (day.warmup case final w?) _BlockHeader(label: 'Warm-up', block: w),
-            for (final e in day.mainExercises)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        e.name,
-                        style: VivType.rowTitle.copyWith(fontSize: 15.5, color: c.ink),
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Text(
-                      e.prescription,
-                      style: VivType.meta.copyWith(fontWeight: FontWeight.w600, color: c.subtle),
-                    ),
-                  ],
-                ),
-              ),
+            for (final e in day.mainExercises) _ExerciseRow(exercise: e),
             if (day.cooldown case final cd?) _BlockHeader(label: 'Cool-down', block: cd),
           ],
         ),
@@ -146,7 +146,87 @@ class _Detail extends ConsumerWidget {
             style: VivType.meta.copyWith(fontSize: 13.5, height: 1.5, color: c.muted),
           ),
         ],
+        if (traceability.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          Text(traceability.join(' '), style: VivType.legal.copyWith(color: c.subtle)),
+        ],
       ],
+    );
+  }
+}
+
+/// The plan's traceability flag in words: "draft_not_reviewed_by_sport_scientist"
+/// → "Draft program, not yet reviewed by a sport scientist." Unknown flags
+/// are shown with their underscores turned into spaces, never dropped.
+String strengthStatusText(String status, {bool sentence = true}) {
+  final text = switch (status) {
+    'draft_not_reviewed_by_sport_scientist' =>
+      'Draft program, not yet reviewed by a sport scientist',
+    _ => status.replaceAll('_', ' '),
+  };
+  if (!sentence) return text.isEmpty ? text : '${text[0].toLowerCase()}${text.substring(1)}';
+  return '${Dates.capitalize(text)}.';
+}
+
+/// Name, then (on the real Strength path) the verbatim prescription, its
+/// equipment and an Accessory/Optional tag. Older days keep "3 × 8–10" on the
+/// right.
+class _ExerciseRow extends StatelessWidget {
+  const _ExerciseRow({required this.exercise});
+
+  final Exercise exercise;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.viv;
+    final e = exercise;
+    final name = Text(e.name, style: VivType.rowTitle.copyWith(fontSize: 15.5, color: c.ink));
+    if (e.prescriptionText == null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Expanded(child: name),
+            const SizedBox(width: 14),
+            Text(
+              e.prescription,
+              style: VivType.meta.copyWith(fontWeight: FontWeight.w600, color: c.subtle),
+            ),
+          ],
+        ),
+      );
+    }
+    final tag = switch (e.priority) {
+      ExercisePriority.accessory || ExercisePriority.optional => e.priority!.value,
+      _ => null,
+    };
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                name,
+                const SizedBox(height: 3),
+                Text(
+                  e.prescriptionText!,
+                  style: VivType.meta.copyWith(fontWeight: FontWeight.w600, color: c.ink2),
+                ),
+                if (e.equipment.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(e.equipment.join(' · '), style: VivType.meta.copyWith(color: c.subtle)),
+                ],
+              ],
+            ),
+          ),
+          if (tag != null) ...[const SizedBox(width: 12), _Chip(tag)],
+        ],
+      ),
     );
   }
 }

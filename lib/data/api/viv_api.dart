@@ -138,6 +138,8 @@ class VivApi {
     required int setNumber,
     double? weightKg,
     int? reps,
+    // Omitted, never 0, when the day has no RIR target.
+    int? rir,
   }) async => SessionLog.fromJson(
     (await _http.post(
       '/training/weekly-plan/day/log-set',
@@ -147,6 +149,7 @@ class VivApi {
         'set_number': setNumber,
         'weight_kg': ?weightKg,
         'reps': ?reps,
+        'rir': ?rir,
       },
     ))!,
   );
