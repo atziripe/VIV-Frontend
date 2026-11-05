@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'account_actions.dart';
 import '../../core/theme/viv_theme.dart';
 import '../../core/utils/dates.dart';
 import '../../core/widgets/widgets.dart';
 import '../../data/models/catalog.dart';
 import '../../data/providers.dart';
 import '../../router/app_router.dart';
-import '../auth/auth_repository.dart';
 
 /// 08 · Menu. No Notifications or Help yet: neither has a screen or an
 /// endpoint behind it.
@@ -112,10 +112,7 @@ class ProfileScreen extends ConsumerWidget {
             variant: PillVariant.text,
             size: PillSize.compact,
             expand: false,
-            onPressed: () async {
-              await ref.read(todayCheckinProvider.notifier).clear();
-              await ref.read(authRepositoryProvider).signOut();
-            },
+            onPressed: () => signOutLocally(ref),
           ),
         ),
         if (me?.goalId != null)

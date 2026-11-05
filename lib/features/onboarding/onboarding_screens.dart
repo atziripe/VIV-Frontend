@@ -13,7 +13,6 @@ import '../../data/models/onboarding.dart';
 import '../../data/models/weekly_plan.dart';
 import '../../data/providers.dart';
 import '../../router/app_router.dart';
-import '../auth/auth_repository.dart';
 import '../profile/account_actions.dart';
 import 'onboarding_draft.dart';
 
@@ -76,7 +75,7 @@ class FitCheckScreen extends ConsumerWidget {
     return VivPage(
       showBack: true,
       // Signed in but not onboarded: "back" means sign out.
-      onBack: () => ref.read(authRepositoryProvider).signOut(),
+      onBack: () => signOutLocally(ref),
       bottom: VivButton(
         label: 'Continue',
         onPressed: situation == null
