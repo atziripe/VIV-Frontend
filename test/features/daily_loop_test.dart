@@ -76,6 +76,25 @@ void main() {
   );
 
   group('Home', () {
+    testWidgets('no week yet: check in builds it, or build it now', (tester) async {
+      await pumpScreen(
+        tester,
+        const TodayScreen(),
+        noWeek: true,
+        extra: [vivApiProvider.overrideWithValue(api)],
+        extraRoutes: [GoRoute(path: Routes.checkin, builder: (_, _) => const CheckinScreen())],
+      );
+      expect(find.text('Your week isn\'t built yet.'), findsOneWidget);
+      expect(find.text('Build my week'), findsOneWidget);
+      await tester.tap(
+        find.text('Check in →').evaluate().isEmpty
+            ? find.text('Check in')
+            : find.text('Check in →'),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(CheckinScreen), findsOneWidget);
+    });
+
     testWidgets('before check-in: the check-in is the wine field', (tester) async {
       await pumpHome(tester);
       expect(find.text('Hey Atziri'), findsOneWidget);

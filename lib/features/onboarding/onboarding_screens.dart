@@ -383,11 +383,8 @@ class TrainingPrefsScreen extends ConsumerWidget {
 class YourWeekScreen extends ConsumerWidget {
   const YourWeekScreen({super.key});
 
-  static const _dayLetters = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.viv;
     final draft = ref.watch(onboardingDraftProvider);
     final notifier = ref.read(onboardingDraftProvider.notifier);
 
@@ -407,24 +404,6 @@ class YourWeekScreen extends ConsumerWidget {
                 onTap: () => notifier.update((x) => x.copyWith(daysPerWeek: d)),
               ),
           ],
-        ),
-        const SizedBox(height: VivSpace.xl),
-        const FieldLabel('Which days usually fall apart?'),
-        PillRow(
-          gap: 6,
-          children: [
-            for (var i = 0; i < 7; i++)
-              ChoicePill(
-                label: _dayLetters[i],
-                selected: draft.hardDays.contains(i + 1),
-                onTap: () => notifier.toggleHardDay(i + 1),
-              ),
-          ],
-        ),
-        const SizedBox(height: VivSpace.xs),
-        Text(
-          'VIV keeps those days light.',
-          style: VivType.meta.copyWith(fontSize: 13.5, color: c.muted),
         ),
         const SizedBox(height: VivSpace.xl),
         const FieldLabel('Outside training, you\'re mostly'),
@@ -712,21 +691,7 @@ class BuildingWeekScreen extends ConsumerStatefulWidget {
   ConsumerState<BuildingWeekScreen> createState() => _BuildingWeekScreenState();
 }
 
-const _weekdayNames = [
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-  'Sunday',
-];
 const _numberWords = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven'];
-
-/// "Tuesday and Thursday", "Monday, Wednesday and Friday".
-String _joinDays(List<String> days) => days.length <= 1
-    ? days.join()
-    : '${days.sublist(0, days.length - 1).join(', ')} and ${days.last}';
 
 class _BuildingWeekScreenState extends ConsumerState<BuildingWeekScreen> {
   WeeklyPlan? _week;
@@ -795,15 +760,10 @@ class _FirstWeek extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.viv;
-    final hardDays = ref.watch(onboardingDraftProvider).hardDays.toList()..sort();
     final sessions = week.days.where((d) => !d.isRestDay).toList();
     final count = sessions.length < _numberWords.length
         ? _numberWords[sessions.length]
         : '${sessions.length}';
-    final hardNames = [
-      for (final d in hardDays)
-        if (d >= 1 && d <= 7) _weekdayNames[d - 1],
-    ];
 
     final first = sessions.firstOrNull;
     final rest = sessions.skip(1).take(3).toList();
@@ -816,13 +776,8 @@ class _FirstWeek extends ConsumerWidget {
         Enter(
           child: PageHeader(
             eyebrow: Text('YOUR FIRST WEEK', style: VivType.eyebrow.copyWith(color: c.tintInk)),
-            title: hardNames.isEmpty
-                ? '$count sessions this week.'
-                : '$count sessions, built around ${_joinDays(hardNames)}.',
-            subtitle: hardNames.isEmpty
-                ? 'Everything moves if your week does.'
-                : 'Those are the days you said fall apart, so they stay light. '
-                      'Everything moves if your week does.',
+            title: '$count sessions this week.',
+            subtitle: 'Everything moves if your week does.',
           ),
         ),
         if (first != null)

@@ -330,6 +330,7 @@ Future<List<Override>> appOverrides({
   AuthRepository? auth,
   Me? me,
   NutritionPlan? nutrition,
+  bool noWeek = false,
 }) async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
@@ -349,7 +350,9 @@ Future<List<Override>> appOverrides({
     dayDetailProvider.overrideWith((_, _) async => fakeDay),
     nutritionPlanProvider.overrideWith((_) async => nutrition ?? fakeNutrition),
     recoveryCardProvider.overrideWith((_, _) async => fakeRecovery),
-    homeTodayProvider.overrideWith((_) async => home ?? homeMoments['before check-in']),
+    homeTodayProvider.overrideWith(
+      (_) async => noWeek ? null : home ?? homeMoments['before check-in'],
+    ),
   ];
 }
 
@@ -363,6 +366,7 @@ Future<void> pumpScreen(
   AuthRepository? auth,
   Me? me,
   NutritionPlan? nutrition,
+  bool noWeek = false,
   List<Override> extra = const [],
   List<RouteBase> extraRoutes = const [],
 }) async {
@@ -379,7 +383,7 @@ Future<void> pumpScreen(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        ...await appOverrides(home: home, auth: auth, me: me, nutrition: nutrition),
+        ...await appOverrides(home: home, auth: auth, me: me, nutrition: nutrition, noWeek: noWeek),
         ...extra,
       ],
       child: MaterialApp.router(

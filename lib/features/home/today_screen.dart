@@ -802,8 +802,22 @@ class _NoWeekState extends ConsumerState<_NoWeek> {
       pillar: 'This week',
       title: 'Your week isn\'t built yet.',
       body: 'Check in to build it around today, or build it now.',
-      primaryLabel: 'Build my week',
-      onPrimary: _generate,
+      children: [
+        // POST /checkin builds the week when none covers today.
+        PillButton(
+          label: 'Check in',
+          variant: PillVariant.onField,
+          size: PillSize.control,
+          arrow: true,
+          onPressed: () => context.push(Routes.checkin),
+        ),
+        PillButton(
+          label: 'Build my week',
+          variant: PillVariant.onFieldFaint,
+          size: PillSize.control,
+          onPressed: _generate,
+        ),
+      ],
     );
   }
 }

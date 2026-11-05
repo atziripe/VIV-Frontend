@@ -62,6 +62,21 @@ void main() {
     }
   }
 
+  for (final MapEntry(key: sizeName, value: size) in sizes.entries) {
+    for (final brightness in Brightness.values) {
+      testWidgets('Today renders with no week yet ($sizeName, ${brightness.name})', (tester) async {
+        await pumpScreen(
+          tester,
+          const TodayScreen(),
+          size: size,
+          brightness: brightness,
+          noWeek: true,
+        );
+        expect(tester.takeException(), isNull);
+      });
+    }
+  }
+
   for (final MapEntry(key: moment, value: home) in homeMoments.entries) {
     for (final MapEntry(key: sizeName, value: size) in sizes.entries) {
       testWidgets('Today renders "$moment" ($sizeName)', (tester) async {

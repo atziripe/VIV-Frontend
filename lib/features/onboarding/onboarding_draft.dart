@@ -139,7 +139,6 @@ class OnboardingDraft {
     this.activities = const [],
     this.goal,
     this.daysPerWeek,
-    this.hardDays = const {},
     this.activityLevel,
     this.lastPeriod,
     this.lastPeriodExact,
@@ -159,10 +158,6 @@ class OnboardingDraft {
   final Goal? goal;
   final DaysPerWeek? daysPerWeek;
 
-  /// Days that usually fall apart (1 = Monday … 7 = Sunday); VIV puts the
-  /// lightest sessions there.
-  // TODO(api): no backend field for this yet, so it is not sent.
-  final Set<int> hardDays;
   final ActivityLevel? activityLevel;
   final LastPeriod? lastPeriod;
   final DateTime? lastPeriodExact;
@@ -217,7 +212,6 @@ class OnboardingDraft {
     List<ActivityChoice>? activities,
     Goal? goal,
     DaysPerWeek? daysPerWeek,
-    Set<int>? hardDays,
     ActivityLevel? activityLevel,
     LastPeriod? lastPeriod,
     DateTime? lastPeriodExact,
@@ -236,7 +230,6 @@ class OnboardingDraft {
       activities: activities ?? this.activities,
       goal: goal ?? this.goal,
       daysPerWeek: daysPerWeek ?? this.daysPerWeek,
-      hardDays: hardDays ?? this.hardDays,
       activityLevel: activityLevel ?? this.activityLevel,
       lastPeriod: clearLastPeriod ? null : (lastPeriod ?? this.lastPeriod),
       lastPeriodExact: clearLastPeriodExact ? null : (lastPeriodExact ?? this.lastPeriodExact),
@@ -261,12 +254,6 @@ class OnboardingDraftNotifier extends Notifier<OnboardingDraft> {
     final list = [...state.activities];
     list.contains(choice) ? list.remove(choice) : list.add(choice);
     state = state.copyWith(activities: list);
-  }
-
-  void toggleHardDay(int weekday) {
-    final days = {...state.hardDays};
-    days.contains(weekday) ? days.remove(weekday) : days.add(weekday);
-    state = state.copyWith(hardDays: days);
   }
 }
 
