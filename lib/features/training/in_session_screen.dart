@@ -156,7 +156,7 @@ class _SessionState extends ConsumerState<_Session> {
       setState(() {
         _log = log;
         _rir = null;
-        // The real Strength path doesn't prescribe rest; 90 s is the default.
+        // The plan's rest when it sends one, else 90 s.
         final rest = _current.restSeconds ?? 90;
         if (_set < _current.sets) {
           _set++;

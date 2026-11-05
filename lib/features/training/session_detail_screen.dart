@@ -64,6 +64,8 @@ class _Detail extends ConsumerWidget {
       if (day.strengthConfigStatus case final s?) strengthStatusText(s),
       if (day.strengthWarmupCooldownStatus case final s?)
         'Warm-up and cool-down: ${strengthStatusText(s, sentence: false)}.',
+      if (day.strengthRestSecondsStatus case final s?)
+        'Rest times: ${strengthStatusText(s, sentence: false)}.',
     ];
 
     Widget? bottom;

@@ -24,6 +24,7 @@ DayDetail _realStrengthDay({String? session}) => DayDetail.fromJson({
   'strength_week': 3,
   'strength_config_status': 'draft_not_reviewed_by_sport_scientist',
   'strength_warmup_cooldown_status': 'draft_not_reviewed_by_sport_scientist',
+  'strength_rest_seconds_status': 'draft_not_reviewed_by_sport_scientist',
   'strength_tier_changes': [
     {'lever': 'load_reduced', 'detail': 'Lighter loads today after a short night.'},
   ],
@@ -34,7 +35,7 @@ DayDetail _realStrengthDay({String? session}) => DayDetail.fromJson({
       'name': 'Back squat',
       'sets': 2,
       'reps': '',
-      'rest_seconds': 0,
+      'rest_seconds': 120,
       'slot': 'Squat',
       'priority': 'Main',
       'equipment': ['Barbell', 'Rack'],
@@ -45,6 +46,7 @@ DayDetail _realStrengthDay({String? session}) => DayDetail.fromJson({
       'name': 'Calf raise',
       'sets': 1,
       'priority': 'Optional',
+      'rest_seconds': 0,
       'prescription_text': '1 × 15 @ RIR 2',
     },
   ],
@@ -52,13 +54,16 @@ DayDetail _realStrengthDay({String? session}) => DayDetail.fromJson({
 });
 
 void main() {
-  test('real Strength path fields parse; rest 0 means "not prescribed"', () {
+  test('real Strength path fields parse; rest comes from the plan', () {
     final d = _realStrengthDay();
     expect(d.strengthBlockNumber, 2);
     expect(d.strengthWeek, 3);
     expect(d.strengthTierChanges.single.lever, 'load_reduced');
+    expect(d.strengthRestSecondsStatus, 'draft_not_reviewed_by_sport_scientist');
     final e = d.mainExercises.first;
-    expect(e.restSeconds, isNull);
+    expect(e.restSeconds, 120);
+    // 0 is never valid rest: read as "not given".
+    expect(d.mainExercises.last.restSeconds, isNull);
     expect(e.reps, isNull);
     expect(e.priority, ExercisePriority.main);
     expect(e.equipment, ['Barbell', 'Rack']);
@@ -91,6 +96,7 @@ void main() {
     expect(find.text('Barbell · Rack'), findsOneWidget);
     expect(find.text('Optional'), findsOneWidget);
     expect(find.textContaining('not yet reviewed by a sport scientist'), findsOneWidget);
+    expect(find.textContaining('Rest times: draft program'), findsOneWidget);
   });
 
   group('live session', () {
@@ -144,8 +150,8 @@ void main() {
         ),
       ).called(1);
 
-      // Rest isn't prescribed on this path: the 90 s default runs.
-      expect(find.text('1:30'), findsOneWidget);
+      // The plan's own rest for this exercise.
+      expect(find.text('2:00'), findsOneWidget);
       await tester.tap(find.text('Skip rest'));
       await tester.pumpAndSettle();
 

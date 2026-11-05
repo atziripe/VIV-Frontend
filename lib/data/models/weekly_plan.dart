@@ -158,7 +158,8 @@ class Exercise {
   /// e.g. "8-10" or "8-10 / leg". Empty on the real Strength path.
   final String? reps;
 
-  /// Null when the plan doesn't say (the real Strength path sends 0).
+  /// Rest after each set. The real Strength path sends it from the
+  /// training config (always positive); 0 or absent reads as "not given".
   final int? restSeconds;
   final String? loadGuidance;
   final String? formCue;
@@ -237,6 +238,7 @@ class DayDetail {
     this.strengthTierChanges = const [],
     this.strengthRampUpNote,
     this.strengthWarmupCooldownStatus,
+    this.strengthRestSecondsStatus,
   });
 
   final String date;
@@ -283,6 +285,9 @@ class DayDetail {
   /// Traceability flag for the warm-up and cool-down content.
   final String? strengthWarmupCooldownStatus;
 
+  /// Traceability flag for each exercise's `rest_seconds`.
+  final String? strengthRestSecondsStatus;
+
   String get displayTitle => sessionTitle(
     activityType: activityType,
     muscleGroup: muscleGroup,
@@ -320,6 +325,7 @@ class DayDetail {
       strengthTierChanges: j.list('strength_tier_changes', TierChange.fromJson),
       strengthRampUpNote: j.str('strength_ramp_up_note'),
       strengthWarmupCooldownStatus: j.str('strength_warmup_cooldown_status'),
+      strengthRestSecondsStatus: j.str('strength_rest_seconds_status'),
     );
   }
 }
