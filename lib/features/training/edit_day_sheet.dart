@@ -32,29 +32,21 @@ class _EditDaySheet extends ConsumerStatefulWidget {
 class _EditDaySheetState extends ConsumerState<_EditDaySheet> {
   /// Null = rest day.
   late Activity? _activity = widget.day.isRestDay ? null : Activity.fromId(widget.day.activityType);
-  late Intensity _intensity = Intensity.values.firstWhere(
-    (i) => i.code == widget.day.intensity,
-    orElse: () => Intensity.moderate,
-  );
-  late MuscleGroup _group = MuscleGroup.values.firstWhere(
-    (m) => m.id == widget.day.muscleGroup,
-    orElse: () => MuscleGroup.fullBody,
-  );
+  late String _intensity = widget.day.intensity ?? 'M';
   bool _saving = false;
 
   Future<void> _save() async {
     setState(() => _saving = true);
     try {
-      await ref
-          .read(vivApiProvider)
-          .editDay(
-            DaySlotEdit(
-              date: widget.day.date,
-              activityType: _activity?.id,
-              intensity: _activity == null ? null : _intensity.code,
-              muscleGroup: _activity == Activity.strength ? _group.id : null,
-            ),
-          );
+      await ref.read(vivApiProvider).editDay(switch (_activity) {
+        null => DaySlotEdit(date: widget.day.date),
+        final a => DaySlotEdit.forActivity(
+          date: widget.day.date,
+          activity: a,
+          intensity: _intensity,
+          impact: widget.day.activityType == a.id ? widget.day.impact : null,
+        ),
+      });
       ref.read(analyticsProvider).weekDayEdited(toRest: _activity == null);
       ref.invalidate(currentWeekProvider);
       ref.invalidate(homeTodayProvider);
@@ -104,32 +96,21 @@ class _EditDaySheetState extends ConsumerState<_EditDaySheet> {
                 ),
             ],
           ),
-          if (_activity != null) ...[
+          // Only the intensities this activity takes; none to pick when
+          // there's just one (HIIT is always high). No muscle-group picker:
+          // the backend only accepts each activity's default for now.
+          if (_activity case final a? when a.intensities.length > 1) ...[
             const SizedBox(height: VivSpace.lg),
             const FieldLabel('Intensity'),
             Wrap(
               spacing: VivSpace.xs,
               runSpacing: VivSpace.xs,
               children: [
-                for (final i in Intensity.values)
+                for (final code in a.intensities)
                   ChoicePill(
-                    label: i.label,
-                    selected: _intensity == i,
-                    onTap: () => setState(() => _intensity = i),
-                  ),
-              ],
-            ),
-          ],
-          if (_activity == Activity.strength) ...[
-            const SizedBox(height: VivSpace.lg),
-            const FieldLabel('Focus'),
-            PillRow(
-              children: [
-                for (final m in MuscleGroup.values)
-                  ChoicePill(
-                    label: m.label,
-                    selected: _group == m,
-                    onTap: () => setState(() => _group = m),
+                    label: Intensity.labelFor(code),
+                    selected: a.intensityFor(_intensity) == code,
+                    onTap: () => setState(() => _intensity = code),
                   ),
               ],
             ),

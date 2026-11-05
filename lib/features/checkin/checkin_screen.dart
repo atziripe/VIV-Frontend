@@ -498,8 +498,8 @@ class _ProposalViewState extends ConsumerState<_ProposalView> {
       await ref
           .read(vivApiProvider)
           .editDay(
-            DaySlotEdit(
-              date: date,
+            DaySlotEdit.fromSuggestion(
+              date,
               activityType: a.activityType,
               intensity: a.intensity,
               impact: a.impact,

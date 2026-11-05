@@ -571,8 +571,8 @@ class _ProposalFieldState extends ConsumerState<_ProposalField> {
       await ref
           .read(vivApiProvider)
           .editDay(
-            DaySlotEdit(
-              date: widget.result.date,
+            DaySlotEdit.fromSuggestion(
+              widget.result.date,
               activityType: a.activityType,
               intensity: a.intensity,
               impact: a.impact,

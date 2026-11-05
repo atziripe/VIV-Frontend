@@ -332,6 +332,46 @@ class DayDetail {
 
 /// `PATCH /training/weekly-plan/day` body. Null [activityType] = rest day.
 class DaySlotEdit {
+  /// A slot the backend will accept for [activity]: intensity and impact
+  /// moved to the nearest value it takes, muscle group its default.
+  factory DaySlotEdit.forActivity({
+    required String date,
+    required Activity activity,
+    String? intensity,
+    String? impact,
+  }) => DaySlotEdit(
+    date: date,
+    activityType: activity.id,
+    intensity: activity.intensityFor(intensity),
+    impact: activity.impactFor(impact),
+    muscleGroup: activity.defaultMuscleGroup,
+  );
+
+  /// Applies a check-in suggestion. An activity id the app doesn't know is
+  /// sent as is, for the backend to judge.
+  factory DaySlotEdit.fromSuggestion(
+    String date, {
+    String? activityType,
+    String? intensity,
+    String? impact,
+  }) {
+    final activity = Activity.fromId(activityType);
+    if (activity == null) {
+      return DaySlotEdit(
+        date: date,
+        activityType: activityType,
+        intensity: intensity,
+        impact: impact,
+      );
+    }
+    return DaySlotEdit.forActivity(
+      date: date,
+      activity: activity,
+      intensity: intensity,
+      impact: impact,
+    );
+  }
+
   const DaySlotEdit({
     required this.date,
     this.activityType,

@@ -7,7 +7,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 /// [message] is the raw body string when there is one. The two JSON-error
 /// endpoints keep their decoded body in [body].
 class ApiException implements Exception {
-  const ApiException({required this.message, this.statusCode, this.body, this.isNetwork = false});
+  const ApiException({
+    required this.message,
+    this.statusCode,
+    this.body,
+    this.isNetwork = false,
+    this.retryAfter,
+  });
 
   final int? statusCode;
   final String message;
@@ -16,10 +22,17 @@ class ApiException implements Exception {
   /// No response at all (offline, DNS, timeout).
   final bool isNetwork;
 
+  /// From `Retry-After` on a 429: how long to wait before trying again.
+  final Duration? retryAfter;
+
   bool get isUnauthorized => statusCode == 401;
   bool get isNotFound => statusCode == 404;
   bool get isBadRequest => statusCode == 400;
   bool get isServerError => (statusCode ?? 0) >= 500;
+
+  /// Per-user rate limit. Never retried automatically: generation endpoints
+  /// in particular must not be retried in a loop.
+  bool get isRateLimited => statusCode == 429;
 
   factory ApiException.fromDio(DioException e) {
     final res = e.response;
@@ -40,7 +53,13 @@ class ApiException implements Exception {
       Map m when m['error'] is String => m['error'] as String,
       _ => res.statusMessage ?? 'Request failed',
     };
-    return ApiException(statusCode: res.statusCode, message: text, body: data);
+    final seconds = int.tryParse(res.headers.value('retry-after') ?? '');
+    return ApiException(
+      statusCode: res.statusCode,
+      message: text,
+      body: data,
+      retryAfter: seconds == null ? null : Duration(seconds: seconds),
+    );
   }
 
   @override
@@ -52,6 +71,13 @@ String userMessageFor(Object error) {
   if (error is ApiException) {
     if (error.isNetwork) return error.message;
     if (error.isUnauthorized) return 'Your session expired. Please log in again.';
+    if (error.isRateLimited) {
+      final wait = error.retryAfter;
+      if (wait == null || wait.inSeconds <= 0) return 'Too many tries in a row. Give it a minute.';
+      if (wait.inSeconds < 60) return 'Too many tries in a row. Try again in ${wait.inSeconds} seconds.';
+      final minutes = (wait.inSeconds / 60).ceil();
+      return 'Too many tries in a row. Try again in $minutes minute${minutes == 1 ? '' : 's'}.';
+    }
     if (error.isServerError) return 'VIV hit a snag on our side. Try again in a moment.';
     return error.message;
   }

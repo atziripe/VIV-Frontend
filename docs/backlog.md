@@ -48,6 +48,12 @@ confirmed.
 Bars instead of day circles (see the cycle-card sketch, Nov 2026).
 - **Frontend only:** `WeekCard` in `core/widgets/week_card.dart`.
 
+### Choosing a muscle group (Strength, HIIT, Functional)
+`PATCH /training/weekly-plan/day` only accepts each activity's default muscle
+group today, so the Edit day sheet has no Focus picker.
+- **Backend:** relax the check once there's session content per group.
+- **Frontend:** bring the Focus picker back for those activities.
+
 ### Move sessions (drag and drop)
 Blocked on the backend.
 - **Backend:** `POST /training/weekly-plan/rearrange {week_start, dry_run,
