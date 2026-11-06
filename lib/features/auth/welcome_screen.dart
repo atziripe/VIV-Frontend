@@ -77,7 +77,7 @@ class WelcomeScreen extends StatelessWidget {
       Enter(
         delay: const Duration(milliseconds: 60),
         child: Text(
-          'VIV builds a week around the energy you actually have, and '
+          'VIV builds a week around your energy, and '
           'rebuilds it the moment the week changes.',
           style: VivType.lead.copyWith(fontSize: 15.5, color: c.muted),
         ),
@@ -102,9 +102,6 @@ class WelcomeScreen extends StatelessWidget {
   }
 }
 
-/// Placeholder for the hero photo: "a real woman mid-week, ordinary setting,
-/// face visible". Swap for `Image.asset` once the photo exists.
-/// Where the Welcome hero video lives. Missing file → the photo slot.
 const welcomeVideoAsset = 'assets/video/welcome.mp4';
 
 /// The hero: the welcome video, muted and looping, over the photo tone.
@@ -188,6 +185,7 @@ class _HeroPhotoState extends State<_HeroPhoto> {
                   curve: VivMotion.curve,
                   child: FittedBox(
                     fit: BoxFit.cover,
+                    alignment: const Alignment(0, -0.4), 
                     clipBehavior: Clip.hardEdge,
                     child: SizedBox(
                       width: video.value.size.width,
@@ -214,24 +212,6 @@ class _HeroPhotoState extends State<_HeroPhoto> {
                   ),
                 ),
               ),
-            SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
-                child: Align(
-                  alignment: Alignment.topLeft,
-                  child: Text(
-                    'VIV',
-                    semanticsLabel: 'VIV',
-                    style: VivType.h3.copyWith(
-                      fontSize: 22,
-                      letterSpacing: 3.5,
-                      color: playing ? VivColors.onField : c.ink,
-                    ),
-                  ),
-                ),
-              ),
-            ),
           ],
         ),
       ),

@@ -20,7 +20,6 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
     expect(tester.takeException(), isNull);
-    expect(find.text('VIV'), findsOneWidget);
     expect(find.text('Get started'), findsOneWidget);
   });
 
