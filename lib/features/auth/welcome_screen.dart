@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:video_player/video_player.dart';
 
 import '../../core/analytics/track_on_mount.dart';
 import '../../core/layout/responsive.dart';
@@ -103,12 +104,70 @@ class WelcomeScreen extends StatelessWidget {
 
 /// Placeholder for the hero photo: "a real woman mid-week, ordinary setting,
 /// face visible". Swap for `Image.asset` once the photo exists.
-class _HeroPhoto extends StatelessWidget {
+/// Where the Welcome hero video lives. Missing file → the photo slot.
+const welcomeVideoAsset = 'assets/video/welcome.mp4';
+
+/// The hero: the welcome video, muted and looping, over the photo tone.
+///
+/// While it loads, if the file is missing, or with Reduce Motion on, it's
+/// the still photo slot with the glow. Muted and mixed with other audio, so
+/// it never stops her music.
+class _HeroPhoto extends StatefulWidget {
   const _HeroPhoto();
+
+  @override
+  State<_HeroPhoto> createState() => _HeroPhotoState();
+}
+
+class _HeroPhotoState extends State<_HeroPhoto> {
+  VideoPlayerController? _video;
+  bool _ready = false;
+  bool _started = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_started || VivMotion.reduced(context)) return;
+    _started = true;
+    _load();
+  }
+
+  Future<void> _load() async {
+    final video = VideoPlayerController.asset(
+      welcomeVideoAsset,
+      videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+    );
+    try {
+      await video.initialize();
+      await video.setVolume(0);
+      await video.setLooping(true);
+      await video.play();
+    } catch (_) {
+      // No file yet, or the platform can't play it: keep the photo slot.
+      await video.dispose();
+      return;
+    }
+    if (!mounted) {
+      await video.dispose();
+      return;
+    }
+    setState(() {
+      _video = video;
+      _ready = true;
+    });
+  }
+
+  @override
+  void dispose() {
+    _video?.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final c = context.viv;
+    final video = _video;
+    final playing = _ready && video != null;
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(bottom: Radius.circular(36)),
       child: ColoredBox(
@@ -121,6 +180,40 @@ class _HeroPhoto extends StatelessWidget {
               left: -80,
               child: FieldGlow(size: 300, blur: 70, opacity: 0.35, period: Duration(seconds: 12)),
             ),
+            if (video != null)
+              ExcludeSemantics(
+                child: AnimatedOpacity(
+                  opacity: playing ? 1 : 0,
+                  duration: const Duration(milliseconds: 600),
+                  curve: VivMotion.curve,
+                  child: FittedBox(
+                    fit: BoxFit.cover,
+                    clipBehavior: Clip.hardEdge,
+                    child: SizedBox(
+                      width: video.value.size.width,
+                      height: video.value.size.height,
+                      child: VideoPlayer(video),
+                    ),
+                  ),
+                ),
+              ),
+            // Keeps the wordmark readable over any frame of the video.
+            if (playing)
+              const Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 140,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0x59000000), Color(0x00000000)],
+                    ),
+                  ),
+                ),
+              ),
             SafeArea(
               bottom: false,
               child: Padding(
@@ -130,7 +223,11 @@ class _HeroPhoto extends StatelessWidget {
                   child: Text(
                     'VIV',
                     semanticsLabel: 'VIV',
-                    style: VivType.h3.copyWith(fontSize: 22, letterSpacing: 3.5, color: c.ink),
+                    style: VivType.h3.copyWith(
+                      fontSize: 22,
+                      letterSpacing: 3.5,
+                      color: playing ? VivColors.onField : c.ink,
+                    ),
                   ),
                 ),
               ),
