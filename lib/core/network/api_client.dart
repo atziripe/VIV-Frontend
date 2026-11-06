@@ -41,10 +41,29 @@ final dioProvider = Provider<Dio>((ref) {
   return buildDio(tokens: ref.watch(tokenSourceProvider));
 });
 
+/// The backend URL to talk to: [url] as configured, except that any host
+/// other than this machine (localhost, 127.0.0.1, the Android emulator's
+/// 10.0.2.2) always goes over https.
+///
+/// Why: a deployed backend answers `http://` with a redirect to `https://`,
+/// and Dart drops the `Authorization` header when following a redirect to
+/// another origin (a different scheme counts). Every request would then
+/// reach the backend without its Firebase token and come back 401.
+String secureBaseUrl(String url) {
+  final uri = Uri.tryParse(url.trim());
+  if (uri == null || uri.scheme != 'http') return url.trim();
+  const local = {'localhost', '127.0.0.1', '10.0.2.2', '::1'};
+  if (local.contains(uri.host) || uri.host.endsWith('.local')) return url.trim();
+  debugPrint('API_BASE_URL is http:// for ${uri.host}; using https:// instead.');
+  return uri
+      .replace(scheme: 'https', port: uri.hasPort && uri.port != 80 ? uri.port : null)
+      .toString();
+}
+
 Dio buildDio({required TokenSource tokens, String baseUrl = Env.apiBaseUrl}) {
   final dio = Dio(
     BaseOptions(
-      baseUrl: baseUrl,
+      baseUrl: secureBaseUrl(baseUrl),
       connectTimeout: const Duration(seconds: 15),
       receiveTimeout: const Duration(seconds: 30),
       contentType: Headers.jsonContentType,

@@ -83,6 +83,26 @@ void main() {
     expect(adapter.seen, isEmpty);
   });
 
+  test('a deployed backend is always reached over https', () {
+    expect(
+      secureBaseUrl('http://viv-backend-production.up.railway.app'),
+      'https://viv-backend-production.up.railway.app',
+    );
+    expect(
+      secureBaseUrl('https://viv-backend-production.up.railway.app/'),
+      'https://viv-backend-production.up.railway.app/',
+    );
+    // Local development stays as configured.
+    expect(secureBaseUrl('http://localhost:8080'), 'http://localhost:8080');
+    expect(secureBaseUrl('http://10.0.2.2:8080'), 'http://10.0.2.2:8080');
+    expect(secureBaseUrl('http://192.168.1.20.local:8080'), 'http://192.168.1.20.local:8080');
+  });
+
+  test('buildDio uses the https URL', () {
+    final dio = buildDio(tokens: _FakeTokens(), baseUrl: 'http://api.example.com');
+    expect(dio.options.baseUrl, 'https://api.example.com');
+  });
+
   test('204 No Content becomes null', () async {
     final (api, _) = build((_) => ResponseBody.fromString('', 204));
     expect(await api.get('/training/weekly-plan/current', query: {'date': '2026-09-23'}), isNull);
