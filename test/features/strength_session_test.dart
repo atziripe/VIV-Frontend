@@ -73,14 +73,6 @@ void main() {
     expect(fakeDay.mainExercises.first.takesRir, isFalse);
   });
 
-  test('traceability flags read as words, never dropped', () {
-    expect(
-      strengthStatusText('draft_not_reviewed_by_sport_scientist'),
-      'Draft program, not yet reviewed by a sport scientist.',
-    );
-    expect(strengthStatusText('something_new'), 'Something new.');
-  });
-
   testWidgets('session detail shows the real Strength path', (tester) async {
     final day = _realStrengthDay();
     await pumpScreen(
@@ -95,8 +87,8 @@ void main() {
     expect(find.text('2 × 8–10 @ RIR 3'), findsOneWidget);
     expect(find.text('Barbell · Rack'), findsOneWidget);
     expect(find.text('Optional'), findsOneWidget);
-    expect(find.textContaining('not yet reviewed by a sport scientist'), findsOneWidget);
-    expect(find.textContaining('Rest times: draft program'), findsOneWidget);
+    // The draft-program footer is hidden for launch.
+    expect(find.textContaining('sport scientist'), findsNothing);
   });
 
   group('live session', () {

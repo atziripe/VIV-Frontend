@@ -60,13 +60,6 @@ class _Detail extends ConsumerWidget {
       for (final t in day.strengthTierChanges)
         if (t.detail != null) t.detail!,
     ];
-    final traceability = [
-      if (day.strengthConfigStatus case final s?) strengthStatusText(s),
-      if (day.strengthWarmupCooldownStatus case final s?)
-        'Warm-up and cool-down: ${strengthStatusText(s, sentence: false)}.',
-      if (day.strengthRestSecondsStatus case final s?)
-        'Rest times: ${strengthStatusText(s, sentence: false)}.',
-    ];
 
     Widget? bottom;
     if (day.loggable && isToday) {
@@ -148,26 +141,9 @@ class _Detail extends ConsumerWidget {
             style: VivType.meta.copyWith(fontSize: 13.5, height: 1.5, color: c.muted),
           ),
         ],
-        if (traceability.isNotEmpty) ...[
-          const SizedBox(height: 14),
-          Text(traceability.join(' '), style: VivType.legal.copyWith(color: c.subtle)),
-        ],
       ],
     );
   }
-}
-
-/// The plan's traceability flag in words: "draft_not_reviewed_by_sport_scientist"
-/// → "Draft program, not yet reviewed by a sport scientist." Unknown flags
-/// are shown with their underscores turned into spaces, never dropped.
-String strengthStatusText(String status, {bool sentence = true}) {
-  final text = switch (status) {
-    'draft_not_reviewed_by_sport_scientist' =>
-      'Draft program, not yet reviewed by a sport scientist',
-    _ => status.replaceAll('_', ' '),
-  };
-  if (!sentence) return text.isEmpty ? text : '${text[0].toLowerCase()}${text.substring(1)}';
-  return '${Dates.capitalize(text)}.';
 }
 
 /// Name, then (on the real Strength path) the verbatim prescription, its
