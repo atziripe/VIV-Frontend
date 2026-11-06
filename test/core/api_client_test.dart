@@ -9,9 +9,11 @@ import 'package:viv/data/api/viv_api.dart';
 
 class _FakeTokens implements TokenSource {
   int refreshes = 0;
+  bool signedIn = true;
 
   @override
   Future<String?> idToken({bool forceRefresh = false}) async {
+    if (!signedIn) return null;
     if (forceRefresh) refreshes++;
     return refreshes == 0 ? 'stale' : 'fresh';
   }
@@ -69,6 +71,16 @@ void main() {
     await api.get('/me');
     expect(adapter.seen.single.headers['Authorization'], 'Bearer stale');
     expect(adapter.seen.single.headers['X-Firebase-AppCheck'], 'app-check');
+  });
+
+  test('signed out: the request never leaves the phone', () async {
+    final (api, adapter) = build((_) => _json(200, {'ok': true}));
+    tokens.signedIn = false;
+    await expectLater(
+      api.get('/me/consents'),
+      throwsA(isA<ApiException>().having((e) => e.isUnauthorized, 'isUnauthorized', isTrue)),
+    );
+    expect(adapter.seen, isEmpty);
   });
 
   test('204 No Content becomes null', () async {

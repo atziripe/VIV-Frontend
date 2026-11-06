@@ -91,7 +91,19 @@ class _AuthInterceptor extends Interceptor {
   @override
   Future<void> onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
     final token = await _tokens.idToken();
-    if (token != null) options.headers['Authorization'] = 'Bearer $token';
+    if (token == null) {
+      // Every VIV endpoint needs a signed-in user. Without one (signing out,
+      // or the account just deleted) the request would only earn a 401, so
+      // it never leaves the phone.
+      return handler.reject(
+        DioException(
+          requestOptions: options,
+          type: DioExceptionType.cancel,
+          error: const NotSignedIn(),
+        ),
+      );
+    }
+    options.headers['Authorization'] = 'Bearer $token';
     final appCheck = await _tokens.appCheckToken();
     if (appCheck != null) options.headers['X-Firebase-AppCheck'] = appCheck;
     handler.next(options);
@@ -128,7 +140,8 @@ class ApiClient {
   final void Function(String path, int? status)? onError;
 
   ApiException _fail(DioException e) {
-    onError?.call(e.requestOptions.path, e.response?.statusCode);
+    // Stopped on the phone for want of a session: not an API error.
+    if (e.error is! NotSignedIn) onError?.call(e.requestOptions.path, e.response?.statusCode);
     return ApiException.fromDio(e);
   }
 

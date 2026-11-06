@@ -1,6 +1,14 @@
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+/// A request stopped on the phone because nobody is signed in.
+class NotSignedIn implements Exception {
+  const NotSignedIn();
+
+  @override
+  String toString() => 'NotSignedIn';
+}
+
 /// A failed call to the VIV backend.
 ///
 /// Most VIV error bodies are **plain text** (Go's `http.Error`), not JSON, so
@@ -36,6 +44,9 @@ class ApiException implements Exception {
 
   factory ApiException.fromDio(DioException e) {
     final res = e.response;
+    if (e.error is NotSignedIn) {
+      return const ApiException(statusCode: 401, message: 'Not signed in.');
+    }
     if (res == null) {
       return ApiException(
         message: switch (e.type) {
