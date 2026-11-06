@@ -14,6 +14,7 @@ import '../../data/api/viv_api.dart';
 import '../../data/models/account.dart';
 import '../../data/providers.dart';
 import 'account_actions.dart';
+import '../../core/utils/legal_links.dart';
 
 /// 04 · Privacy & data: optional consents (`/me/consents`), data export
 /// (`GET /me/export`), and the two ways out:
@@ -195,8 +196,14 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
                       },
               ),
             ),
-            // TODO(product): link the privacy policy URL.
-            const MenuRow(title: 'Privacy policy'),
+            MenuRow(
+              title: 'Privacy policy',
+              onTap: () => openLegalPage(context, LegalPage.privacy),
+            ),
+            MenuRow(
+              title: 'Terms and conditions',
+              onTap: () => openLegalPage(context, LegalPage.terms),
+            ),
           ],
         ),
         const SizedBox(height: 22),

@@ -185,7 +185,7 @@ class _HeroPhotoState extends State<_HeroPhoto> {
                   curve: VivMotion.curve,
                   child: FittedBox(
                     fit: BoxFit.cover,
-                    alignment: const Alignment(0, -0.4), 
+                    alignment: const Alignment(0, -0.4),
                     clipBehavior: Clip.hardEdge,
                     child: SizedBox(
                       width: video.value.size.width,

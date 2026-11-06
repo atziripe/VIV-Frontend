@@ -15,6 +15,7 @@ import '../../data/providers.dart';
 import '../../router/app_router.dart';
 import '../profile/account_actions.dart';
 import 'onboarding_draft.dart';
+import '../../core/utils/legal_links.dart';
 
 /// Total numbered steps after the fit check.
 // NOTE: Figma shows 3 steps; "About you" (name + date of birth, both required
@@ -669,10 +670,22 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
         const SizedBox(height: VivSpace.md),
         Align(
           alignment: Alignment.centerLeft,
-          child: Text(
-            // TODO(product): link to the data policy.
-            'Read the full data policy',
-            style: VivType.caption.copyWith(color: c.accent, fontWeight: FontWeight.w600),
+          child: Semantics(
+            link: true,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => openLegalPage(context, LegalPage.privacy),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: VivSize.minTap),
+                child: Center(
+                  widthFactor: 1,
+                  child: Text(
+                    'Read the full data policy',
+                    style: VivType.caption.copyWith(color: c.accent, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ],
