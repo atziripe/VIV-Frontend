@@ -20,61 +20,84 @@ class WelcomeScreen extends StatelessWidget {
       child: Scaffold(
         backgroundColor: c.page,
         body: ResponsiveCenter(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Expanded(child: _HeroPhoto()),
-              SafeArea(
+          child: LayoutBuilder(
+            builder: (context, box) {
+              final bottom = SafeArea(
                 top: false,
                 minimum: const EdgeInsets.only(bottom: 18),
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(22, 28, 22, 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Enter(
-                        child: Semantics(
-                          header: true,
-                          child: Text(
-                            'Some weeks you train. Most weeks, life wins.',
-                            style: VivType.h1.copyWith(fontSize: 36, color: c.ink),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      Enter(
-                        delay: const Duration(milliseconds: 60),
-                        child: Text(
-                          'VIV builds a week around the energy you actually have, and '
-                          'rebuilds it the moment the week changes.',
-                          style: VivType.lead.copyWith(fontSize: 15.5, color: c.muted),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      PillButton(
-                        label: 'Get started',
-                        arrow: true,
-                        size: PillSize.cta,
-                        onPressed: () => context.push(Routes.signUp),
-                      ),
-                      const SizedBox(height: 8),
-                      PillButton(
-                        label: 'I already have an account',
-                        variant: PillVariant.text,
-                        size: PillSize.compact,
-                        onPressed: () => context.push(Routes.logIn),
-                      ),
-                      const SizedBox(height: 8),
-                      const LegalFooter(prefix: 'By continuing you agree to the'),
-                    ],
+                    children: _intro(context),
                   ),
                 ),
-              ),
-            ],
+              );
+              // Large text (Dynamic Type) can make the intro taller than
+              // the screen: the hero keeps a fixed height and it scrolls.
+              if (MediaQuery.textScalerOf(context).scale(1) > 1.15) {
+                return SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SizedBox(height: box.maxHeight * 0.42, child: const _HeroPhoto()),
+                      bottom,
+                    ],
+                  ),
+                );
+              }
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Expanded(child: _HeroPhoto()),
+                  bottom,
+                ],
+              );
+            },
           ),
         ),
       ),
     );
+  }
+
+  List<Widget> _intro(BuildContext context) {
+    final c = context.viv;
+    return [
+      Enter(
+        child: Semantics(
+          header: true,
+          child: Text(
+            'Some weeks you train. Most weeks, life wins.',
+            style: VivType.h1.copyWith(fontSize: 36, color: c.ink),
+          ),
+        ),
+      ),
+      const SizedBox(height: 14),
+      Enter(
+        delay: const Duration(milliseconds: 60),
+        child: Text(
+          'VIV builds a week around the energy you actually have, and '
+          'rebuilds it the moment the week changes.',
+          style: VivType.lead.copyWith(fontSize: 15.5, color: c.muted),
+        ),
+      ),
+      const SizedBox(height: 20),
+      PillButton(
+        label: 'Get started',
+        arrow: true,
+        size: PillSize.cta,
+        onPressed: () => context.push(Routes.signUp),
+      ),
+      const SizedBox(height: 8),
+      PillButton(
+        label: 'I already have an account',
+        variant: PillVariant.text,
+        size: PillSize.compact,
+        onPressed: () => context.push(Routes.logIn),
+      ),
+      const SizedBox(height: 8),
+      const LegalFooter(prefix: 'By continuing you agree to the'),
+    ];
   }
 }
 

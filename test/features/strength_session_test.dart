@@ -130,6 +130,15 @@ void main() {
       );
     }
 
+    testWidgets('back mid-workout asks before leaving', (tester) async {
+      await pumpLive(tester);
+      final popped = await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(popped, isTrue); // handled by the session, not the system
+      expect(find.text('End session?'), findsOneWidget);
+      expect(find.text('Keep going'), findsOneWidget);
+    });
+
     testWidgets('ramp-up note before the first set; RIR sent only when picked', (tester) async {
       await pumpLive(tester);
       expect(find.text('2 × 8–10 @ RIR 3'), findsOneWidget);

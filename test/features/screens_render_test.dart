@@ -62,6 +62,23 @@ void main() {
     }
   }
 
+  // iOS Dynamic Type / Android font size: large text must not break layout.
+  for (final MapEntry(key: name, value: build) in screens.entries) {
+    testWidgets('$name renders with large text (x1.6)', (tester) async {
+      await pumpScreen(
+        tester,
+        Builder(
+          builder: (context) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(textScaler: const TextScaler.linear(1.6)),
+            child: build(),
+          ),
+        ),
+        size: const Size(375, 812),
+      );
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   for (final MapEntry(key: sizeName, value: size) in sizes.entries) {
     for (final brightness in Brightness.values) {
       testWidgets('Today renders with no week yet ($sizeName, ${brightness.name})', (tester) async {

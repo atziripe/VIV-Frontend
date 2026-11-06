@@ -74,7 +74,9 @@ String userMessageFor(Object error) {
     if (error.isRateLimited) {
       final wait = error.retryAfter;
       if (wait == null || wait.inSeconds <= 0) return 'Too many tries in a row. Give it a minute.';
-      if (wait.inSeconds < 60) return 'Too many tries in a row. Try again in ${wait.inSeconds} seconds.';
+      if (wait.inSeconds < 60) {
+        return 'Too many tries in a row. Try again in ${wait.inSeconds} seconds.';
+      }
       final minutes = (wait.inSeconds / 60).ceil();
       return 'Too many tries in a row. Try again in $minutes minute${minutes == 1 ? '' : 's'}.';
     }

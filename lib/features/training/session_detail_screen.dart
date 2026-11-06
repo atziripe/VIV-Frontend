@@ -190,11 +190,15 @@ class _ExerciseRow extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.baseline,
           textBaseline: TextBaseline.alphabetic,
           children: [
-            Expanded(child: name),
+            Expanded(flex: 3, child: name),
             const SizedBox(width: 14),
-            Text(
-              e.prescription,
-              style: VivType.meta.copyWith(fontWeight: FontWeight.w600, color: c.subtle),
+            Flexible(
+              flex: 2,
+              child: Text(
+                e.prescription,
+                textAlign: TextAlign.end,
+                style: VivType.meta.copyWith(fontWeight: FontWeight.w600, color: c.subtle),
+              ),
             ),
           ],
         ),

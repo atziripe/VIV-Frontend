@@ -65,12 +65,16 @@ class WeekCard extends StatelessWidget {
               Expanded(
                 child: Text(title.toUpperCase(), style: VivType.eyebrow.copyWith(color: c.subtle)),
               ),
-              Text(
-                '$completed of $total sessions',
-                style: VivType.rowTitle.copyWith(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: c.ink,
+              const SizedBox(width: 10),
+              Flexible(
+                child: Text(
+                  '$completed of $total sessions',
+                  textAlign: TextAlign.end,
+                  style: VivType.rowTitle.copyWith(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: c.ink,
+                  ),
                 ),
               ),
             ],

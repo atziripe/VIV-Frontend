@@ -64,6 +64,10 @@ class _SessionState extends ConsumerState<_Session> {
 
   Timer? _ticker;
   int _restLeft = 0;
+
+  /// When the rest ends. Counted from the clock, not from ticks, so a locked
+  /// phone (where timers pause) still comes back to the right time.
+  DateTime? _restEndsAt;
   int _restTotal = 1;
 
   List<Exercise> get _exercises => widget.day.mainExercises;
@@ -128,8 +132,9 @@ class _SessionState extends ConsumerState<_Session> {
   void _tick() {
     if (!mounted) return;
     setState(() {
-      if (_phase == _Phase.resting) {
-        _restLeft--;
+      if (_phase == _Phase.resting && _restEndsAt != null) {
+        final ms = _restEndsAt!.difference(DateTime.now()).inMilliseconds;
+        _restLeft = ms <= 0 ? 0 : (ms / 1000).ceil();
         if (_restLeft <= 0) {
           HapticFeedback.mediumImpact();
           _phase = _Phase.lifting;
@@ -170,6 +175,7 @@ class _SessionState extends ConsumerState<_Session> {
         _prefill();
         _restLeft = rest;
         _restTotal = rest;
+        _restEndsAt = DateTime.now().add(Duration(seconds: rest));
         _phase = _Phase.resting;
       });
     } catch (e) {
@@ -214,7 +220,7 @@ class _SessionState extends ConsumerState<_Session> {
 
   @override
   Widget build(BuildContext context) {
-    return switch (_phase) {
+    final view = switch (_phase) {
       _Phase.done => _DoneView(
         day: widget.day,
         setsDone: _setsDone,
@@ -229,10 +235,20 @@ class _SessionState extends ConsumerState<_Session> {
         onAdd: () => setState(() {
           _restLeft += 30;
           _restTotal += 30;
+          _restEndsAt = _restEndsAt?.add(const Duration(seconds: 30));
         }),
       ),
       _Phase.lifting => _liftingView(context),
     };
+    // Back (swipe or Android button) mid-workout asks first, the same as
+    // "End": an accidental swipe shouldn't drop her out of a session.
+    return PopScope(
+      canPop: _phase == _Phase.done,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _confirmEnd();
+      },
+      child: view,
+    );
   }
 
   Widget _liftingView(BuildContext context) {
