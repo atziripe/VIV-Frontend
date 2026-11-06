@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../analytics/analytics.dart';
 import '../config/env.dart';
 import 'api_exception.dart';
 
@@ -61,6 +62,17 @@ Dio buildDio({required TokenSource tokens, String baseUrl = Env.apiBaseUrl}) {
         logPrint: (o) => debugPrint(o.toString()),
       ),
     );
+    // Error bodies are short plain text ("invalid goal_id"): always print
+    // them, success bodies stay out of the log.
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onError: (e, handler) {
+          final body = e.response?.data;
+          if (body != null) debugPrint('*** Error body *** ${e.requestOptions.path}: $body');
+          handler.next(e);
+        },
+      ),
+    );
   }
   return dio;
 }
@@ -108,12 +120,37 @@ class _AuthInterceptor extends Interceptor {
 /// Thin typed wrapper over [Dio] that converts failures to [ApiException]
 /// and treats `204 No Content` as `null`.
 class ApiClient {
-  ApiClient(this._dio);
+  ApiClient(this._dio, {this.onError});
 
   final Dio _dio;
 
+  /// Told about every failed request: route and status only.
+  final void Function(String path, int? status)? onError;
+
+  ApiException _fail(DioException e) {
+    onError?.call(e.requestOptions.path, e.response?.statusCode);
+    return ApiException.fromDio(e);
+  }
+
   Future<Map<String, dynamic>?> get(String path, {Map<String, dynamic>? query}) =>
       _send(() => _dio.get<dynamic>(path, queryParameters: query));
+
+  /// For endpoints whose body is a top-level JSON array.
+  Future<List<dynamic>> getList(String path, {Map<String, dynamic>? query}) async {
+    try {
+      final res = await _dio.get<dynamic>(path, queryParameters: query);
+      final data = res.data;
+      if (data is List) return data;
+      if (res.statusCode == 204 || data == null || (data is String && data.isEmpty)) return [];
+      throw ApiException(
+        statusCode: res.statusCode,
+        message: 'Unexpected response from server.',
+        body: data,
+      );
+    } on DioException catch (e) {
+      throw _fail(e);
+    }
+  }
 
   Future<Map<String, dynamic>?> post(String path, {Object? body, Map<String, dynamic>? query}) =>
       _send(() => _dio.post<dynamic>(path, data: body, queryParameters: query));
@@ -136,9 +173,14 @@ class ApiClient {
         body: data,
       );
     } on DioException catch (e) {
-      throw ApiException.fromDio(e);
+      throw _fail(e);
     }
   }
 }
 
-final apiClientProvider = Provider<ApiClient>((ref) => ApiClient(ref.watch(dioProvider)));
+final apiClientProvider = Provider<ApiClient>(
+  (ref) => ApiClient(
+    ref.watch(dioProvider),
+    onError: (path, status) => ref.read(analyticsProvider).apiError(endpoint: path, status: status),
+  ),
+);

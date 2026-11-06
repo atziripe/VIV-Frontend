@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+@keyframes vUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }
+@keyframes vScale { from { opacity:0; transform:scale(0.94); } to { opacity:1; transform:none; } }
+@keyframes vRise { from { transform:translateY(100%); } to { transform:none; } }
+@keyframes vIn { from { opacity:0; transform:translateX(36px); } to { opacity:1; transform:none; } }
+@keyframes vFade { from { opacity:0; } to { opacity:1; } }
+@keyframes vPulse { 0% { transform:scale(1); opacity:0.7; } 100% { transform:scale(2.6); opacity:0; } }
+@keyframes vDraw { from { transform:scaleX(0); } to { transform:scaleX(1); } }
+@keyframes vPop { 0% { transform:scale(0.6); opacity:0; } 60% { transform:scale(1.06); opacity:1; } 100% { transform:scale(1); opacity:1; } }
+@keyframes vBlob { 0%,100% { transform:translate(0,0) scale(1); } 50% { transform:translate(-26px,18px) scale(1.15); } }
+@media (prefers-reduced-motion: reduce) { * { animation-duration:1ms !important; animation-delay:0ms !important; transition-duration:1ms !important; } }
+.vp-scroll { scrollbar-width:none; } .vp-scroll::-webkit-scrollbar { display:none; }
+</style>
+</helmet>
+
+<div style="display:flex; flex-direction:column; gap:16px; align-items:flex-start; font-family:'Schibsted Grotesk', system-ui, sans-serif">
+  <div style="font-family:'JetBrains Mono', monospace; font-size:12px; letter-spacing:0.08em; text-transform:uppercase; color:{{ labelColor }}">{{ label }}</div>
+
+  <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" dark="{{ statusDark }}" hint-size="402px,874px">
+    <div style="width:100%; height:100%; position:relative; overflow:hidden; background:{{ c.bg }}; font-family:'Schibsted Grotesk', system-ui, sans-serif; -webkit-font-smoothing:antialiased">
+
+      <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+        <div style="position:absolute; inset:0; display:flex; flex-direction:column; padding-top:60px">
+          <div class="vp-scroll" style="flex:1; min-height:0; overflow:auto; padding:0 20px; display:flex; flex-direction:column">
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; animation:vUp 520ms cubic-bezier(.2,.8,.2,1) both">
+              <div style="display:flex; flex-direction:column; gap:6px">
+                <span style="font-size:12px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:{{ c.muted }}">Thursday · 10 Sep</span>
+                <h2 style="margin:0; font-size:34px; line-height:1.05; font-weight:800; letter-spacing:-0.035em; color:{{ c.ink }}">Hey Atziri</h2>
+              </div>
+              <div style="width:42px; height:42px; border-radius:999px; background:{{ c.sunken }}; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; color:{{ c.ink2 }}">A</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; margin:10px 0 18px; animation:vUp 520ms 60ms cubic-bezier(.2,.8,.2,1) both">
+              <div style="width:8px; height:8px; border-radius:999px; background:#978642"></div>
+              <span style="font-size:13.5px; color:{{ c.muted }}">Energy usually climbs this week</span>
+            </div>
+
+            <div style="position:relative; overflow:hidden; flex-shrink:0; background:{{ c.field }}; border-radius:30px; padding:22px 22px 20px; display:flex; flex-direction:column; gap:14px; animation:vScale 620ms 120ms cubic-bezier(.2,.8,.2,1) both">
+              <div style="position:absolute; width:240px; height:240px; border-radius:999px; background:{{ c.glow }}; filter:blur(46px); opacity:0.75; top:-90px; right:-70px; animation:vBlob 9s ease-in-out infinite"></div>
+              <div style="position:absolute; width:160px; height:160px; border-radius:999px; background:{{ c.glow2 }}; filter:blur(40px); opacity:0.35; bottom:-70px; left:-40px; animation:vBlob 12s ease-in-out infinite reverse"></div>
+              <div style="position:relative; display:flex; align-items:center; justify-content:space-between; gap:10px">
+                <div style="display:flex; align-items:center; gap:9px">
+                  <div style="position:relative; width:8px; height:8px">
+                    <div style="position:absolute; inset:0; border-radius:999px; background:{{ c.onField }}; animation:vPulse 1.8s ease-out infinite"></div>
+                    <div style="position:absolute; inset:0; border-radius:999px; background:{{ c.onField }}"></div>
+                  </div>
+                  <span style="font-size:12px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:{{ c.onField }}">{{ hero.when }}</span>
+                </div>
+                <span style="font-size:12px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:{{ c.onFieldMuted }}">{{ hero.pillar }}</span>
+              </div>
+              <sc-if value="{{ hero.hasTag }}" hint-placeholder-val="{{ false }}">
+                <span style="position:relative; align-self:flex-start; height:26px; padding:0 11px; border-radius:999px; background:{{ c.onField }}; color:{{ c.onFieldInv }}; display:inline-flex; align-items:center; font-size:11px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase">{{ hero.tag }}</span>
+              </sc-if>
+              <h3 style="position:relative; margin:0; font-size:34px; line-height:1.04; font-weight:800; letter-spacing:-0.035em; color:{{ c.onField }}; text-wrap:balance">{{ hero.title }}</h3>
+              <p style="position:relative; margin:0; font-size:15.5px; line-height:1.45; color:{{ c.onFieldSoft }}; text-wrap:pretty">{{ hero.body }}</p>
+              <div style="position:relative; display:flex; gap:9px; margin-top:4px">
+                <div onClick="{{ hero.go }}" style="flex:1; height:54px; border-radius:999px; background:{{ c.onField }}; color:{{ c.onFieldInv }}; display:flex; align-items:center; justify-content:center; gap:8px; font-size:16.5px; font-weight:700; cursor:pointer; transition:transform 140ms ease" style-active="transform:scale(0.97)">{{ hero.cta }} <span style="font-size:18px">→</span></div>
+                <sc-if value="{{ hero.hasAlt }}" hint-placeholder-val="{{ true }}">
+                  <div onClick="{{ hero.alt }}" style="height:54px; padding:0 20px; border-radius:999px; background:{{ c.onFieldFaint }}; color:{{ c.onField }}; display:flex; align-items:center; justify-content:center; font-size:15.5px; font-weight:600; cursor:pointer">{{ hero.altLabel }}</div>
+                </sc-if>
+              </div>
+            </div>
+
+            <div style="font-size:12px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:{{ c.muted }}; margin:24px 0 6px; animation:vUp 520ms 220ms cubic-bezier(.2,.8,.2,1) both">Rest of today</div>
+            <sc-for list="{{ rows }}" as="r" hint-placeholder-count="4">
+              <div style="min-height:52px; display:flex; align-items:center; gap:13px; border-bottom:1px solid {{ c.line }}; animation:vUp 480ms {{ r.delay }} cubic-bezier(.2,.8,.2,1) both">
+                <span style="width:40px; flex-shrink:0; font-size:12.5px; font-weight:600; color:{{ c.muted }}; font-variant-numeric:tabular-nums">{{ r.t }}</span>
+                <div style="width:22px; height:22px; box-sizing:border-box; border-radius:999px; flex-shrink:0; background:{{ r.markBg }}; border:{{ r.markBorder }}; color:{{ c.ink2 }}; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700">{{ r.mark }}</div>
+                <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; padding:8px 0">
+                  <span style="font-size:15.5px; font-weight:500; color:{{ r.titleColor }}">{{ r.title }}</span>
+                  <span style="font-size:13px; color:{{ c.muted }}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ r.meta }}</span>
+                </div>
+              </div>
+            </sc-for>
+
+            <div style="margin:20px 0 18px; background:{{ c.surface }}; border-radius:24px; padding:16px 18px; display:flex; flex-direction:column; gap:14px; animation:vUp 520ms 480ms cubic-bezier(.2,.8,.2,1) both">
+              <div style="display:flex; align-items:baseline; justify-content:space-between">
+                <span style="font-size:12px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:{{ c.muted }}">This week</span>
+                <span style="font-size:14px; font-weight:700; color:{{ c.ink }}">{{ weekDone }} of 3 sessions</span>
+              </div>
+              <div style="display:flex; gap:8px">
+                <sc-for list="{{ bars }}" as="b" hint-placeholder-count="3">
+                  <div style="flex:1; display:flex; flex-direction:column; gap:7px">
+                    <div style="height:10px; border-radius:999px; background:{{ c.sunken }}; overflow:hidden">
+                      <div style="height:100%; border-radius:999px; background:{{ b.fill }}; width:{{ b.w }}; transition:width 900ms cubic-bezier(.2,.8,.2,1) {{ b.delay }}"></div>
+                    </div>
+                    <span style="font-size:12px; font-weight:600; color:{{ b.labelColor }}">{{ b.day }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+
+          <div style="flex-shrink:0; display:flex; padding:10px 4px 30px; border-top:1px solid {{ c.line }}; background:{{ c.bg }}">
+            <sc-for list="{{ tabs }}" as="tb" hint-placeholder-count="4">
+              <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px">
+                <div style="width:5px; height:5px; border-radius:999px; background:{{ tb.dot }}"></div>
+                <span style="font-size:12px; font-weight:{{ tb.weight }}; color:{{ tb.color }}">{{ tb.label }}</span>
+              </div>
+            </sc-for>
+          </div>
+
+          <sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute; left:20px; right:20px; bottom:96px; display:flex; justify-content:center; pointer-events:none">
+              <div style="padding:14px 20px; border-radius:999px; background:{{ c.toastBg }}; color:{{ c.toastFg }}; font-size:14.5px; font-weight:600; box-shadow:0 12px 30px rgba(0,0,0,0.22); animation:vUp 360ms cubic-bezier(.2,.8,.2,1) both">{{ toast }}</div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isCheckin }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute; inset:0; background:{{ c.field }}; padding:60px 22px 34px; box-sizing:border-box; display:flex; flex-direction:column; overflow:hidden; animation:vRise 460ms cubic-bezier(.2,.8,.2,1) both">
+          <div style="position:absolute; width:320px; height:320px; border-radius:999px; background:{{ c.glow }}; filter:blur(60px); opacity:0.6; top:-120px; right:-120px; animation:vBlob 10s ease-in-out infinite"></div>
+          <div style="position:relative; height:44px; display:flex; align-items:center; justify-content:space-between; gap:16px">
+            <div style="display:flex; gap:6px; flex:1; max-width:180px">
+              <sc-for list="{{ segs }}" as="sg" hint-placeholder-count="4">
+                <div style="flex:1; height:5px; border-radius:999px; background:{{ c.onFieldFaint }}; overflow:hidden">
+                  <div style="height:100%; background:{{ c.onField }}; transform-origin:left; transform:{{ sg.tf }}; transition:transform 420ms cubic-bezier(.2,.8,.2,1)"></div>
+                </div>
+              </sc-for>
+            </div>
+            <span onClick="{{ skipCheckin }}" style="font-size:15px; font-weight:600; color:{{ c.onField }}; cursor:pointer">Skip today</span>
+          </div>
+          <div style="position:relative; margin-top:18px; display:flex; flex-wrap:wrap; gap:7px; min-height:34px">
+            <sc-for list="{{ chips }}" as="ch" hint-placeholder-count="0">
+              <span style="height:32px; padding:0 13px; border-radius:999px; background:{{ c.onField }}; color:{{ c.onFieldInv }}; display:inline-flex; align-items:center; gap:6px; font-size:13.5px; font-weight:600; animation:vPop 380ms cubic-bezier(.2,.8,.2,1) both">✓ {{ ch.label }}</span>
+            </sc-for>
+          </div>
+          <div style="position:relative; flex:1; display:flex; flex-direction:column; justify-content:center">
+            <sc-for list="{{ questions }}" as="q" hint-placeholder-count="1">
+              <sc-if value="{{ q.active }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex; flex-direction:column; gap:22px; animation:vIn 420ms cubic-bezier(.2,.8,.2,1) both">
+                  <div style="display:flex; flex-direction:column; gap:10px">
+                    <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:{{ c.onFieldMuted }}">{{ q.n }}</span>
+                    <h2 style="margin:0; font-size:36px; line-height:1.06; font-weight:800; letter-spacing:-0.035em; color:{{ c.onField }}; text-wrap:balance">{{ q.text }}</h2>
+                  </div>
+                  <div style="display:flex; flex-direction:column; gap:9px">
+                    <sc-for list="{{ q.options }}" as="o" hint-placeholder-count="4">
+                      <div onClick="{{ o.pick }}" style="min-height:60px; border-radius:20px; background:{{ o.bg }}; color:{{ o.fg }}; display:flex; align-items:center; justify-content:space-between; padding:0 20px; font-size:18px; font-weight:600; letter-spacing:-0.01em; cursor:pointer; transform:{{ o.tf }}; transition:background 180ms ease, color 180ms ease, transform 180ms cubic-bezier(.2,.8,.2,1); animation:vUp 380ms {{ o.delay }} cubic-bezier(.2,.8,.2,1) both">
+                        <span>{{ o.label }}</span>
+                        <span style="font-size:15px; opacity:{{ o.checkOpacity }}">✓</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
+            </sc-for>
+          </div>
+          <span style="position:relative; font-size:14px; font-weight:600; color:{{ c.onFieldMuted }}">Four taps. Then your plan.</span>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isProposal }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute; inset:0; background:{{ c.bg }}; display:flex; flex-direction:column; padding:60px 22px 32px; box-sizing:border-box; animation:vFade 360ms ease both">
+          <div class="vp-scroll" style="flex:1; min-height:0; overflow:auto; display:flex; flex-direction:column; gap:14px; padding-top:24px">
+            <span style="font-size:12px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:{{ c.accentText }}; animation:vUp 480ms cubic-bezier(.2,.8,.2,1) both">{{ prop.eyebrow }}</span>
+            <h2 style="margin:0; font-size:40px; line-height:1.02; font-weight:800; letter-spacing:-0.04em; color:{{ c.ink }}; text-wrap:balance; animation:vUp 560ms 80ms cubic-bezier(.2,.8,.2,1) both">{{ prop.headline }}</h2>
+            <p style="margin:0; font-size:16px; line-height:1.5; color:{{ c.ink2 }}; text-wrap:pretty; animation:vUp 560ms 180ms cubic-bezier(.2,.8,.2,1) both">{{ prop.body }}</p>
+
+            <sc-if value="{{ prop.adjusted }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex; flex-direction:column; gap:10px; margin-top:8px">
+                <div style="background:{{ c.surface }}; border-radius:22px; padding:16px 18px; display:flex; flex-direction:column; gap:6px; animation:vUp 520ms 300ms cubic-bezier(.2,.8,.2,1) both">
+                  <span style="font-size:11.5px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:{{ c.muted }}">Planned</span>
+                  <span style="position:relative; align-self:flex-start; font-size:17px; font-weight:600; color:{{ c.muted }}">Lower strength · 60 min<span style="position:absolute; left:-2px; right:-2px; top:52%; height:2px; border-radius:2px; background:{{ c.muted }}; transform-origin:left; animation:vDraw 520ms 820ms cubic-bezier(.6,0,.2,1) both"></span></span>
+                </div>
+                <div style="position:relative; overflow:hidden; background:{{ c.field }}; border-radius:26px; padding:20px; display:flex; flex-direction:column; gap:10px; animation:vScale 620ms 1150ms cubic-bezier(.2,.8,.2,1) both">
+                  <div style="position:absolute; width:200px; height:200px; border-radius:999px; background:{{ c.glow }}; filter:blur(44px); opacity:0.7; top:-80px; right:-60px; animation:vBlob 9s ease-in-out infinite"></div>
+                  <span style="position:relative; align-self:flex-start; height:26px; padding:0 11px; border-radius:999px; background:{{ c.onField }}; color:{{ c.onFieldInv }}; display:inline-flex; align-items:center; font-size:11px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase">Proposed</span>
+                  <h3 style="position:relative; margin:0; font-size:28px; line-height:1.08; font-weight:800; letter-spacing:-0.03em; color:{{ c.onField }}">Steady full-body · 30 min</h3>
+                  <p style="position:relative; margin:0; font-size:15px; line-height:1.45; color:{{ c.onFieldSoft }}">Moderate pace, no max efforts. The heavy session moves to Saturday.</p>
+                  <span onClick="{{ openWhy }}" style="position:relative; font-size:14.5px; font-weight:700; color:{{ c.onField }}; cursor:pointer">Why today ›</span>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ prop.asPlanned }}" hint-placeholder-val="{{ false }}">
+              <div style="position:relative; overflow:hidden; margin-top:8px; background:{{ c.field }}; border-radius:26px; padding:20px; display:flex; flex-direction:column; gap:10px; animation:vScale 620ms 320ms cubic-bezier(.2,.8,.2,1) both">
+                <div style="position:absolute; width:200px; height:200px; border-radius:999px; background:{{ c.glow }}; filter:blur(44px); opacity:0.7; top:-80px; right:-60px; animation:vBlob 9s ease-in-out infinite"></div>
+                <span style="position:relative; align-self:flex-start; height:26px; padding:0 11px; border-radius:999px; background:{{ c.onField }}; color:{{ c.onFieldInv }}; display:inline-flex; align-items:center; font-size:11px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase">As planned</span>
+                <h3 style="position:relative; margin:0; font-size:28px; line-height:1.08; font-weight:800; letter-spacing:-0.03em; color:{{ c.onField }}">Lower strength · 60 min</h3>
+                <p style="position:relative; margin:0; font-size:15px; line-height:1.45; color:{{ c.onFieldSoft }}">{{ prop.planNote }}</p>
+                <span onClick="{{ openWhy }}" style="position:relative; font-size:14.5px; font-weight:700; color:{{ c.onField }}; cursor:pointer">Why today ›</span>
+              </div>
+            </sc-if>
+          </div>
+          <div style="flex-shrink:0; display:flex; flex-direction:column; gap:8px; padding-top:12px; animation:vUp 520ms 1300ms cubic-bezier(.2,.8,.2,1) both">
+            <div onClick="{{ accept }}" style="height:58px; border-radius:999px; background:{{ c.btnBg }}; color:{{ c.btnFg }}; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:700; cursor:pointer" style-active="transform:scale(0.97)">{{ prop.cta }}</div>
+            <sc-if value="{{ prop.adjusted }}" hint-placeholder-val="{{ true }}">
+              <div onClick="{{ keep }}" style="height:50px; border-radius:999px; background:{{ c.surface }}; color:{{ c.ink }}; display:flex; align-items:center; justify-content:center; font-size:15.5px; font-weight:600; cursor:pointer">Keep the original</div>
+            </sc-if>
+          </div>
+
+          <sc-if value="{{ whyOpen }}" hint-placeholder-val="{{ false }}">
+            <div onClick="{{ closeWhy }}" style="position:absolute; inset:0; background:{{ c.scrim }}; animation:vFade 240ms ease both"></div>
+            <div style="position:absolute; left:0; right:0; bottom:0; background:{{ c.surface }}; border-radius:30px 30px 0 0; padding:12px 22px 34px; display:flex; flex-direction:column; gap:18px; animation:vRise 380ms cubic-bezier(.2,.8,.2,1) both">
+              <div style="width:38px; height:5px; border-radius:3px; background:{{ c.line }}; margin:0 auto"></div>
+              <div style="display:flex; flex-direction:column; gap:6px">
+                <span style="font-size:12px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:{{ c.accentText }}">Why today</span>
+                <h3 style="margin:0; font-size:26px; font-weight:800; letter-spacing:-0.03em; color:{{ c.ink }}">What VIV weighed</h3>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:14px">
+                <sc-for list="{{ reasons }}" as="rs" hint-placeholder-count="3">
+                  <div style="display:flex; gap:13px; animation:vUp 420ms {{ rs.delay }} cubic-bezier(.2,.8,.2,1) both">
+                    <div style="width:28px; height:28px; border-radius:999px; background:{{ c.field }}; color:{{ c.onField }}; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; flex-shrink:0">{{ rs.n }}</div>
+                    <div style="display:flex; flex-direction:column; gap:3px">
+                      <span style="font-size:16px; font-weight:700; color:{{ c.ink }}">{{ rs.title }}</span>
+                      <span style="font-size:14px; line-height:1.45; color:{{ c.muted }}">{{ rs.body }}</span>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+              <span style="font-size:12.5px; color:{{ c.muted }}">VIV plans training. It doesn't diagnose anything.</span>
+              <div onClick="{{ closeWhy }}" style="height:54px; border-radius:999px; background:{{ c.btnBg }}; color:{{ c.btnFg }}; display:flex; align-items:center; justify-content:center; font-size:16.5px; font-weight:700; cursor:pointer">Got it</div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isDone }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute; inset:0; background:{{ c.doneBg }}; display:flex; flex-direction:column; padding:60px 22px 32px; box-sizing:border-box; overflow:hidden; animation:vFade 420ms ease both">
+          <div style="position:absolute; width:360px; height:360px; border-radius:999px; background:{{ c.field }}; filter:blur(90px); opacity:0.45; top:60px; left:20px; animation:vBlob 11s ease-in-out infinite"></div>
+          <div style="position:relative; flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:26px">
+            <div style="position:relative; width:220px; height:220px; animation:vScale 700ms 120ms cubic-bezier(.2,.8,.2,1) both">
+              <svg width="220" height="220" viewBox="0 0 220 220" style="transform:rotate(-90deg)">
+                <circle cx="110" cy="110" r="92" style="fill:none; stroke:{{ c.track }}; stroke-width:14"></circle>
+                <circle cx="110" cy="110" r="92" style="fill:none; stroke:{{ c.ring }}; stroke-width:14; stroke-linecap:round; stroke-dasharray:578; stroke-dashoffset:{{ ringOffset }}; transition:stroke-dashoffset 1400ms cubic-bezier(.2,.8,.2,1) 300ms"></circle>
+              </svg>
+              <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px">
+                <span style="font-size:62px; line-height:1; font-weight:800; letter-spacing:-0.05em; color:{{ c.doneInk }}; font-variant-numeric:tabular-nums">{{ ringCount }}<span style="font-size:30px; color:{{ c.doneMuted }}">/3</span></span>
+                <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:{{ c.doneMuted }}">this week</span>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:10px; text-align:center; animation:vUp 560ms 900ms cubic-bezier(.2,.8,.2,1) both">
+              <h2 style="margin:0; font-size:32px; line-height:1.06; font-weight:800; letter-spacing:-0.035em; color:{{ c.doneInk }}; text-wrap:balance">{{ doneHeadline }}</h2>
+              <p style="margin:0; font-size:15.5px; line-height:1.5; color:{{ c.doneMuted }}; text-wrap:pretty">{{ doneBody }}</p>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:10px; width:100%; animation:vUp 520ms 1100ms cubic-bezier(.2,.8,.2,1) both">
+              <span style="font-size:14px; font-weight:600; color:{{ c.doneMuted }}; text-align:center">How did that feel?</span>
+              <div style="display:flex; gap:8px">
+                <sc-for list="{{ feels }}" as="fl" hint-placeholder-count="3">
+                  <div onClick="{{ fl.pick }}" style="flex:1; height:48px; border-radius:999px; background:{{ fl.bg }}; color:{{ fl.fg }}; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:600; cursor:pointer; transition:background 180ms ease, color 180ms ease">{{ fl.label }}</div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+          <div onClick="{{ backHome }}" style="position:relative; height:58px; border-radius:999px; background:{{ c.ring }}; color:{{ c.ringInk }}; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:700; cursor:pointer; animation:vUp 520ms 1250ms cubic-bezier(.2,.8,.2,1) both">Back to today</div>
+        </div>
+      </sc-if>
+
+    </div>
+  </x-import>
+
+  <div style="display:flex; gap:8px; flex-wrap:wrap; max-width:402px">
+    <sc-for list="{{ jumps }}" as="j" hint-placeholder-count="5">
+      <div onClick="{{ j.go }}" style="height:36px; padding:0 14px; border-radius:999px; background:{{ j.bg }}; color:{{ j.fg }}; border:1px solid {{ j.border }}; display:flex; align-items:center; font-size:13px; font-weight:600; cursor:pointer; font-family:'Schibsted Grotesk', system-ui, sans-serif">{{ j.label }}</div>
+    </sc-for>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:440,&quot;height&quot;:960},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;'light' | 'dark'&quot;},&quot;label&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Light · live&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+const Q = [
+  ['How did you sleep last night?', ['Deep and restful', 'Normal', 'Restless', 'Barely slept']],
+  ['How does your body feel?', ['Strong & responsive', 'Normal', 'Heavier than usual', 'Sensitive or reactive']],
+  ['How demanding is today?', ['Light & open', 'Normal', 'Packed', 'Unpredictable']],
+  ["What do you need from today's session?", ['Push me', "Meet me where I'm at", 'Let me reset']],
+];
+const SHORT = [['Deep', 'Normal sleep', 'Restless', 'Barely slept'], ['Strong', 'Normal', 'Heavier', 'Sensitive'], ['Light day', 'Normal day', 'Packed', 'Unpredictable'], ['Push me', 'Meet me', 'Reset']];
+const FIELD = { onField: '#FFF8F6', onFieldSoft: 'rgba(255,248,246,0.88)', onFieldMuted: 'rgba(255,248,246,0.8)', onFieldFaint: 'rgba(255,248,246,0.16)', onFieldInv: '#5E2C38', glow: '#C97F8D', glow2: '#E7B3BC' };
+const PAL = {
+  light: { ...FIELD, bg: '#FBF7F5', surface: '#FFFFFF', sunken: '#F3EDEA', line: '#E4DAD6', ink: '#1A1310', ink2: '#4A403D', muted: '#6E6260', field: '#8A4A57', accentText: '#8A4A57', btnBg: '#8A4A57', btnFg: '#FFFFFF', doneBg: '#1A1310', doneInk: '#F5EFEC', doneMuted: '#B9ABA6', ring: '#C97F8D', ringInk: '#1A1210', track: 'rgba(245,239,236,0.12)', scrim: 'rgba(26,19,16,0.45)', label: '#6E6260', toastBg: '#1A1310', toastFg: '#F5EFEC' },
+  dark: { ...FIELD, bg: '#16110F', surface: '#211A17', sunken: '#2A221F', line: '#352C28', ink: '#F5EFEC', ink2: '#D8CCC7', muted: '#A2938E', field: '#8E4D5B', accentText: '#C97F8D', btnBg: '#C97F8D', btnFg: '#1A1210', doneBg: '#211A17', doneInk: '#F5EFEC', doneMuted: '#A2938E', ring: '#C97F8D', ringInk: '#1A1210', track: 'rgba(245,239,236,0.10)', scrim: 'rgba(0,0,0,0.6)', label: '#A2938E', toastBg: '#F5EFEC', toastFg: '#1A1310' },
+};
+const INIT = { screen: 'home', day: 'morning', step: 0, answers: [], adjusted: false, kept: false, skipped: false, whyOpen: false, toast: null, ring: false, feel: 1, weekDone: 1, bars: false };
+
+class Component extends DCLogic {
+  state = { ...INIT };
+  componentDidMount() { this.tb = setTimeout(() => this.setState({ bars: true }), 450); }
+  componentWillUnmount() { [this.tb, this.tt, this.tp, this.tr].forEach(clearTimeout); }
+  flash(msg) { clearTimeout(this.tt); this.setState({ toast: msg }); this.tt = setTimeout(() => this.setState({ toast: null }), 2600); }
+  isAdj(a) { return a[0] >= 2 || a[1] >= 2 || a[2] >= 2 || a[3] === 2; }
+  pick(i, k) {
+    if (this.busy) return;
+    this.busy = true;
+    const answers = [...this.state.answers]; answers[i] = k;
+    this.setState({ answers });
+    this.tp = setTimeout(() => {
+      this.busy = false;
+      if (i < 3) this.setState({ step: i + 1 });
+      else this.setState({ screen: 'proposal', adjusted: this.isAdj(answers), whyOpen: false });
+    }, 300);
+  }
+  startCheckin = () => this.setState({ screen: 'checkin', step: 0, answers: [] });
+  skipCheckin = () => { this.setState({ screen: 'home', day: 'planned', adjusted: false, kept: false, skipped: true, bars: true }); this.flash("No problem. You're on your usual plan."); };
+  accept = () => { const adj = this.state.adjusted; this.setState({ screen: 'home', day: 'planned', kept: false, skipped: false, bars: true }); this.flash(adj ? 'Swapped. Saturday has the heavy one.' : 'Locked in. See you at 18:00.'); };
+  keep = () => { this.setState({ screen: 'home', day: 'planned', kept: true, skipped: false, bars: true }); this.flash('Kept the original. Your call.'); };
+  finish = () => { this.setState({ screen: 'done', ring: false }); clearTimeout(this.tr); this.tr = setTimeout(() => this.setState({ ring: true }), 120); };
+  backHome = () => this.setState({ screen: 'home', day: 'evening', weekDone: 2, bars: true });
+  reset = () => { [this.tt, this.tp, this.tr].forEach(clearTimeout); this.busy = false; this.setState({ ...INIT, bars: true }); };
+
+  renderVals() {
+    const isDark = (this.props.theme ?? 'light') === 'dark';
+    const c = PAL[isDark ? 'dark' : 'light'];
+    const s = this.state, a = s.answers;
+    const swapped = s.adjusted && !s.kept;
+    const session = swapped
+      ? { title: 'Steady full-body · 30 min', body: 'Adjusted this morning. Moderate pace, no max efforts.' }
+      : { title: 'Lower strength · 60 min', body: s.skipped ? 'Your usual plan. Check in any time and VIV fits it to today.' : a[3] === 0 ? 'You asked to be pushed. Add a little load on the split squats.' : 'Heaviest session this week. Controlled tempo.' };
+
+    let hero;
+    if (s.day === 'morning') hero = { when: 'Now · 07:40', pillar: 'Check-in', title: 'How are you today?', body: 'Four taps and today fits the day you actually have.', cta: 'Check in', go: this.startCheckin, hasAlt: true, altLabel: 'Skip', alt: this.skipCheckin, hasTag: false };
+    else if (s.day === 'planned') hero = { when: 'Next · 18:00', pillar: 'Train', title: session.title, body: session.body, cta: 'Start', go: this.finish, hasAlt: true, altLabel: 'Not today', alt: () => this.flash('Moved to Saturday. Nothing to make up.'), hasTag: swapped || s.kept, tag: swapped ? 'Adjusted · your call' : 'Kept · your call' };
+    else hero = { when: 'Tonight · 21:10', pillar: 'Recover', title: 'Lights out by 23:00', body: "Tonight is when today's session turns into fitness. Tomorrow's a rest day.", cta: 'Remind me 22:30', go: () => this.flash('Done. Nudge at 22:30.'), hasAlt: false, hasTag: false };
+
+    const summary = a.length === 4 ? a.map((k, i) => SHORT[i][k]).join(' · ') : 'skipped · usual plan';
+    const feelW = ['easy', 'about right', 'too much'][s.feel];
+    const raw = s.day === 'morning'
+      ? [['08:00', 'Breakfast', 'Yogurt bowl · 35 g protein'], ['16:00', 'Eat before training', 'two hours out is the window'], ['18:00', 'Lower strength · 60 min', 'before you check in'], ['23:00', 'Lights out', 'where training turns into fitness']]
+      : s.day === 'planned'
+        ? [['07:40', s.skipped ? 'Check-in skipped' : 'Checked in', summary, 1], ['08:00', 'Breakfast', '35 g protein', 1], ['20:00', 'Protein within two hours', 'Eggs, beans & peppers · 38 g'], ['23:00', 'Lights out', '']]
+        : [['07:40', 'Checked in', summary, 1], ['18:00', (swapped ? 'Steady full-body' : 'Lower strength') + ' · done', 'felt ' + feelW, 1], ['Fri', 'Rest · walk 20 min', 'nothing to log'], ['Sat', swapped ? 'Lower strength · 60 min' : 'Upper strength · 45 min', swapped ? 'moved from today' : '']];
+    const rows = raw.map(([t, title, meta, done], i) => ({ t, title, meta, delay: (280 + i * 70) + 'ms', mark: done ? '✓' : '', markBg: done ? c.sunken : 'transparent', markBorder: done ? 'none' : '1.5px solid ' + c.line, titleColor: done ? c.muted : c.ink }));
+
+    const filled = s.bars ? s.weekDone : 0;
+    const bars = ['Mon', 'Thu', 'Sat'].map((day, i) => ({ day, w: i < filled ? '100%' : '0%', fill: i === 1 && s.weekDone < 2 ? c.field : c.ink, delay: (i * 140) + 'ms', labelColor: i === 1 ? c.ink : c.muted }));
+    bars[1].w = s.bars ? (s.weekDone >= 2 ? '100%' : '18%') : '0%';
+
+    const tabs = ['Today', 'Train', 'Eat', 'Recover'].map((label, i) => ({ label, dot: i === 0 ? c.accentText : 'transparent', weight: i === 0 ? 700 : 500, color: i === 0 ? c.ink : c.muted }));
+
+    const segs = [0, 1, 2, 3].map(i => ({ tf: (i < s.step || a[i] != null) ? 'scaleX(1)' : 'scaleX(0)' }));
+    const chips = a.slice(0, s.step).map((k, i) => ({ label: SHORT[i][k] }));
+    const questions = Q.map(([text, opts], i) => ({
+      n: (i + 1) + ' of 4', text, active: s.screen === 'checkin' && i === s.step,
+      options: opts.map((label, k) => { const sel = a[i] === k; return { label, pick: () => this.pick(i, k), bg: sel ? c.onField : 'rgba(255,248,246,0.13)', fg: sel ? c.onFieldInv : c.onField, tf: sel ? 'scale(1.02)' : 'none', checkOpacity: sel ? 1 : 0, delay: (120 + k * 55) + 'ms' }; }),
+    }));
+
+    const sleepW = ['A deep night', 'A normal night', 'Rough night', 'Barely any sleep'];
+    const dayW = ['an open day', 'a normal day', 'a packed day', 'an unpredictable day'];
+    const prop = {
+      eyebrow: 'Thursday · your call',
+      headline: a.length === 4 ? `${sleepW[a[0]]} and ${dayW[a[2]]}.` : '',
+      body: s.adjusted ? "We'd swap today's lower strength for a 30-min steady session. Same week, nothing to make up." : 'Today stays as planned. You look ready for it.',
+      adjusted: s.adjusted, asPlanned: !s.adjusted,
+      planNote: a[3] === 0 ? 'You asked to be pushed. Add a little load on the split squats.' : 'Heaviest session this week. Controlled tempo, full range.',
+      cta: s.adjusted ? 'Sounds good' : "Let's go",
+    };
+    const R = [];
+    if (a[0] >= 2) R.push(['Restless sleep', 'Heavy loading on poor sleep feels harder and recovers slower.']);
+    if (a[1] >= 2) R.push(['Body feels heavier', 'A moderate day now keeps Saturday strong.']);
+    if (a[2] >= 2) R.push(['Packed day', 'A 60-min session is the first thing that gets cut. 30 actually happens.']);
+    if (a[3] === 2) R.push(['You asked to reset', 'So today is about moving, not about load.']);
+    if (s.adjusted) R.push(['Saturday is open', 'The heavy work lands there, two good nights later.']);
+    else { R.push(['You checked in ready', 'Sleep, body and day all point the same way.']); R.push(['Energy usually climbs this week', "It's a good window for your heaviest session."]); }
+    const reasons = R.slice(0, 3).map(([title, body], i) => ({ n: i + 1, title, body, delay: (120 + i * 90) + 'ms' }));
+
+    const count = s.ring ? 2 : 1;
+    const feels = ['Easy', 'About right', 'Too much'].map((label, i) => ({ label, pick: () => this.setState({ feel: i }), bg: s.feel === i ? c.ring : 'rgba(255,255,255,0.08)', fg: s.feel === i ? c.ringInk : c.doneInk }));
+
+    const jumps = [['Restart', this.reset], ['Check-in', this.startCheckin], ['Proposal', () => this.setState({ screen: 'proposal', answers: [2, 2, 2, 1], step: 3, adjusted: true, whyOpen: false })], ['Done', this.finish], ['Evening', this.backHome]].map(([label, go], i) => ({ label, go, bg: i === 0 ? c.btnBg : 'transparent', fg: i === 0 ? c.btnFg : c.ink, border: i === 0 ? c.btnBg : c.line }));
+
+    return {
+      isDark, statusDark: s.screen === 'done' || s.screen === 'checkin' || isDark, c, label: this.props.label ?? (isDark ? 'Dark · live' : 'Light · live'), labelColor: c.label,
+      isHome: s.screen === 'home', isCheckin: s.screen === 'checkin', isProposal: s.screen === 'proposal', isDone: s.screen === 'done',
+      hero, rows, bars, weekDone: s.weekDone, tabs, hasToast: !!s.toast, toast: s.toast,
+      segs, chips, questions, skipCheckin: this.skipCheckin,
+      prop, accept: this.accept, keep: this.keep, whyOpen: s.whyOpen, openWhy: () => this.setState({ whyOpen: true }), closeWhy: () => this.setState({ whyOpen: false }), reasons,
+      ringOffset: 578 * (1 - count / 3), ringCount: count, doneHeadline: swapped ? 'On a rough day, you still showed up.' : "That's the heavy one done.", doneBody: swapped ? "That's the whole game. Saturday's the heavier one." : 'Two of three this week. Saturday is lighter.', feels, backHome: this.backHome,
+      jumps,
+    };
+  }
+}
+
+</script>
+</body>
+</html>

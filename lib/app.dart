@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/analytics/analytics_binding.dart';
 import 'core/theme/viv_theme.dart';
 import 'router/app_router.dart';
 
@@ -9,6 +10,7 @@ class VivApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(analyticsBindingProvider);
     return MaterialApp.router(
       title: 'VIV',
       debugShowCheckedModeBanner: false,

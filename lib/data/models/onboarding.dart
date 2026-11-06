@@ -16,6 +16,8 @@ class OnboardingRequest {
     this.periodDuration,
     this.trainingOften,
     this.dailyActivityLevel,
+    this.healthDataConsent = false,
+    this.aiProcessingConsent = false,
   });
 
   final String name;
@@ -37,6 +39,14 @@ class OnboardingRequest {
   final String? trainingOften;
   final String? dailyActivityLevel;
 
+  /// Sent inside the onboarding body: the backend rejects onboarding with
+  /// "consent required: health_data_processing" unless this is true.
+  final bool healthDataConsent;
+
+  /// Optional (weekly note and meal-copy polish). Recorded as sent, so
+  /// false is an explicit "no".
+  final bool aiProcessingConsent;
+
   Json toJson() => compact({
     'name': name,
     'dob': dob,
@@ -50,6 +60,7 @@ class OnboardingRequest {
     'daily_activity_level': dailyActivityLevel,
     'activities': activities,
     'goal_id': goalId,
+    'consents': {'health_data_processing': healthDataConsent, 'ai_processing': aiProcessingConsent},
   });
 }
 

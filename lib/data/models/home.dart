@@ -91,6 +91,14 @@ class NowCard extends TimelineItem {
 
 enum DayDotStatus { done, pending, rest }
 
+/// The backend has sent both `done` and `completed`; anything unrecognised is
+/// a planned day not done yet, never silently a rest day.
+DayDotStatus _dayDotStatus(String? v) => switch (v) {
+  'done' || 'completed' => DayDotStatus.done,
+  'rest' => DayDotStatus.rest,
+  _ => DayDotStatus.pending,
+};
+
 class DayDot {
   const DayDot({required this.weekday, required this.status, this.isToday = false});
 
@@ -103,7 +111,7 @@ class DayDot {
 
   factory DayDot.fromJson(Json j) => DayDot(
     weekday: j.strOr('weekday'),
-    status: DayDotStatus.values.asNameMap()[j.str('status')] ?? DayDotStatus.rest,
+    status: _dayDotStatus(j.str('status')),
     isToday: j.flag('is_today'),
   );
 }
@@ -152,6 +160,9 @@ class HomeToday {
   final List<TimelineItem> timeline;
   final WeekProgress? weekProgress;
 
+  /// Greeting status line: "Follicular phase · Ovulatory in 3 days".
+  String? get phaseCountdown => phaseCountdownText(currentPhase, nextPhase, daysUntilNextPhase);
+
   bool get isRestDay {
     for (final d in weekProgress?.days ?? const <DayDot>[]) {
       if (d.isToday) return d.status == DayDotStatus.rest;
@@ -174,6 +185,19 @@ class HomeToday {
       weekProgress: progress == null ? null : WeekProgress.fromJson(progress),
     );
   }
+}
+
+/// "Follicular phase · Ovulatory in 3 days". Degrades to whatever parts the
+/// backend sent (all three are optional); null when there's no phase at all.
+String? phaseCountdownText(CyclePhase? current, CyclePhase? next, int? days) {
+  final countdown = switch (days) {
+    null || < 0 => null,
+    0 => '${next?.displayName ?? 'Next phase'} starts today',
+    1 => '${next?.displayName ?? 'Next phase'} tomorrow',
+    _ => '${next?.displayName ?? 'Next phase'} in $days days',
+  };
+  final parts = [?current == null ? null : '${current.displayName} phase', ?countdown];
+  return parts.isEmpty ? null : parts.join(' · ');
 }
 
 /// A Home row: either a plain timeline item or the now card in its slot.

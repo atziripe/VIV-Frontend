@@ -2,15 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'account_actions.dart';
 import '../../core/theme/viv_theme.dart';
 import '../../core/utils/dates.dart';
 import '../../core/widgets/widgets.dart';
 import '../../data/models/catalog.dart';
 import '../../data/providers.dart';
 import '../../router/app_router.dart';
-import '../auth/auth_repository.dart';
 
-/// 01 · Menu
+/// 08 · Menu. No Notifications or Help yet: neither has a screen or an
+/// endpoint behind it.
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
@@ -29,128 +30,97 @@ class ProfileScreen extends ConsumerWidget {
     return VivPage(
       showBack: true,
       children: [
-        const SizedBox(height: VivSpace.md),
-        Row(
+        WineField(
+          compact: true,
+          pulse: false,
           children: [
-            CircleAvatar(
-              radius: 24,
-              backgroundColor: c.primarySoft,
-              child: Text(
-                name.isEmpty ? '' : name[0].toUpperCase(),
-                style: VivType.cardTitle.copyWith(color: c.primary),
-              ),
-            ),
-            const SizedBox(width: VivSpace.sm),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            Row(
               children: [
-                Text(name, style: VivType.cardTitle.copyWith(color: c.textPrimary)),
-                if (me?.weekWithViv != null)
-                  Text(
-                    'Week ${me!.weekWithViv} with VIV',
-                    style: VivType.caption.copyWith(color: c.textTertiary),
+                Container(
+                  width: 48,
+                  height: 48,
+                  alignment: Alignment.center,
+                  decoration: const BoxDecoration(color: VivColors.onField, shape: BoxShape.circle),
+                  child: Text(
+                    name.isEmpty ? '' : name[0].toUpperCase(),
+                    style: VivType.rowTitle.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: VivColors.onFieldInv,
+                    ),
                   ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        style: VivType.h3.copyWith(fontSize: 24, color: VivColors.onField),
+                      ),
+                      if (me?.weekWithViv != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          'Week ${me!.weekWithViv} with VIV',
+                          style: VivType.meta.copyWith(
+                            fontSize: 13.5,
+                            color: VivColors.onFieldSoft,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
               ],
             ),
           ],
         ),
-        const SizedBox(height: VivSpace.xl),
-        const Eyebrow('Your plan'),
-        _MenuRow(
-          title: 'Your info',
-          subtitle: 'Weight, training days, preferences',
-          onTap: () => context.push(Routes.yourInfo),
+        const SettingsLabel('Your plan'),
+        SettingsGroup(
+          children: [
+            MenuRow(
+              title: 'Your info',
+              value: 'Weight, training days, preferences',
+              onTap: () => context.push(Routes.yourInfo),
+            ),
+            MenuRow(
+              title: 'Training days',
+              value: split ?? 'Not built yet',
+              onTap: () => context.go(Routes.train),
+            ),
+            MenuRow(
+              title: 'Food preferences',
+              value: me?.hasNutritionPreferences == true
+                  ? [
+                      me!.dietProteinResources,
+                      me.dietRestrictions,
+                    ].whereType<String>().where((s) => s.isNotEmpty && s != 'None').join(' · ')
+                  : 'Not set up',
+              onTap: () => context.push(Routes.nutritionSetup),
+            ),
+          ],
         ),
-        _MenuRow(
-          title: 'Training split',
-          subtitle: split ?? 'Not built yet',
-          onTap: () => context.go(Routes.train),
+        const SettingsLabel('VIV'),
+        SettingsGroup(
+          children: [MenuRow(title: 'Privacy & data', onTap: () => context.push(Routes.privacy))],
         ),
-        _MenuRow(
-          title: 'Food preferences',
-          subtitle: me?.hasNutritionPreferences == true
-              ? [
-                  me!.dietProteinResources,
-                  me.dietRestrictions,
-                ].whereType<String>().where((s) => s.isNotEmpty && s != 'None').join(' · ')
-              : 'Not set up',
-          onTap: () => context.push(Routes.nutritionSetup),
-        ),
-        const SizedBox(height: VivSpace.lg),
-        const Eyebrow('VIV'),
-        // TODO(design+api): Notifications and Help screens.
-        const _MenuRow(title: 'Notifications', subtitle: 'Coming soon'),
-        _MenuRow(
-          title: 'Privacy & data',
-          subtitle: 'Delete your account and data',
-          onTap: () => context.push(Routes.privacy),
-        ),
-        const _MenuRow(title: 'Help'),
-        const SizedBox(height: VivSpace.md),
+        const SizedBox(height: 14),
         Align(
           alignment: Alignment.centerLeft,
-          child: VivButton.text(
+          child: PillButton(
             label: 'Sign out',
-            onPressed: () async {
-              await ref.read(todayCheckinProvider.notifier).clear();
-              await ref.read(authRepositoryProvider).signOut();
-            },
+            variant: PillVariant.text,
+            size: PillSize.compact,
+            expand: false,
+            onPressed: () => signOutLocally(ref),
           ),
         ),
         if (me?.goalId != null)
           Text(
             'Optimising for ${Goal.values.firstWhere((g) => g.id == me!.goalId, orElse: () => Goal.consistencyWellbeing).label.toLowerCase()}',
-            style: VivType.caption.copyWith(color: c.textTertiary),
+            style: VivType.meta.copyWith(color: c.subtle),
           ),
       ],
-    );
-  }
-}
-
-class _MenuRow extends StatelessWidget {
-  const _MenuRow({required this.title, this.subtitle, this.onTap});
-
-  final String title;
-  final String? subtitle;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.viv;
-    return InkWell(
-      onTap: onTap,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: c.border)),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: VivSpace.sm + 2),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: VivType.bodySmall.copyWith(
-                        color: onTap == null ? c.textTertiary : c.textPrimary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    if (subtitle != null && subtitle!.isNotEmpty)
-                      Text(
-                        subtitle!,
-                        style: VivType.caption.copyWith(color: c.textTertiary, fontSize: 12),
-                      ),
-                  ],
-                ),
-              ),
-              if (onTap != null) Icon(Icons.chevron_right_rounded, size: 20, color: c.textTertiary),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

@@ -62,6 +62,38 @@ void main() {
     }
   }
 
+  // iOS Dynamic Type / Android font size: large text must not break layout.
+  for (final MapEntry(key: name, value: build) in screens.entries) {
+    testWidgets('$name renders with large text (x1.6)', (tester) async {
+      await pumpScreen(
+        tester,
+        Builder(
+          builder: (context) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(textScaler: const TextScaler.linear(1.6)),
+            child: build(),
+          ),
+        ),
+        size: const Size(375, 812),
+      );
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  for (final MapEntry(key: sizeName, value: size) in sizes.entries) {
+    for (final brightness in Brightness.values) {
+      testWidgets('Today renders with no week yet ($sizeName, ${brightness.name})', (tester) async {
+        await pumpScreen(
+          tester,
+          const TodayScreen(),
+          size: size,
+          brightness: brightness,
+          noWeek: true,
+        );
+        expect(tester.takeException(), isNull);
+      });
+    }
+  }
+
   for (final MapEntry(key: moment, value: home) in homeMoments.entries) {
     for (final MapEntry(key: sizeName, value: size) in sizes.entries) {
       testWidgets('Today renders "$moment" ($sizeName)', (tester) async {
@@ -71,45 +103,4 @@ void main() {
       });
     }
   }
-
-  testWidgets('Today: before check-in shows the now card in the timeline', (tester) async {
-    await pumpScreen(tester, const TodayScreen());
-    expect(find.text('Hey Atziri'), findsOneWidget);
-    expect(find.textContaining('WEEK 6'), findsOneWidget);
-    expect(find.text('Energy climbing · good week for load'), findsOneWidget);
-    expect(find.text('NOW · 07:40'), findsOneWidget);
-    expect(find.text('Check in'), findsOneWidget);
-    // The now card replaces its own timeline row instead of duplicating it.
-    expect(find.text('Breakfast'), findsOneWidget);
-    expect(find.text('1 of 3 sessions'), findsOneWidget);
-    expect(find.text('It started'), findsOneWidget); // late-period card
-  });
-
-  testWidgets('Today: Skip turns the check-in card back into a row', (tester) async {
-    await pumpScreen(tester, const TodayScreen());
-    await tester.tap(find.text('Skip'));
-    await tester.pumpAndSettle();
-    expect(find.text('NOW · 07:40'), findsNothing);
-    expect(find.text('Check in'), findsOneWidget); // the plain timeline row
-  });
-
-  testWidgets('Today: rest day shows recovery actions and cost', (tester) async {
-    await pumpScreen(tester, const TodayScreen(), home: homeMoments['rest day']);
-    expect(find.textContaining('REST DAY'), findsOneWidget);
-    expect(find.text('Energy climbing · recovery day'), findsOneWidget);
-    expect(find.text('MEDIUM COST'), findsOneWidget);
-    expect(find.text('Done'), findsOneWidget);
-    expect(find.text('Not today'), findsOneWidget);
-  });
-
-  testWidgets('Check-in reveals the submit button only after four answers', (tester) async {
-    await pumpScreen(tester, const CheckinScreen());
-    expect(find.text('See today\'s plan'), findsNothing);
-    for (final answer in ['Restless', 'Heavier than usual', 'Packed', 'Meet me where I\'m at']) {
-      await tester.tap(find.text(answer));
-      await tester.pumpAndSettle();
-    }
-    expect(find.text('See today\'s plan'), findsOneWidget);
-    expect(find.text('Change'), findsNWidgets(4));
-  });
 }

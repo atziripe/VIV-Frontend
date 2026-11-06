@@ -1,18 +1,28 @@
 import 'json.dart';
 
 class SetLog {
-  const SetLog({required this.exerciseId, required this.setNumber, this.weightKg, this.reps});
+  const SetLog({
+    required this.exerciseId,
+    required this.setNumber,
+    this.weightKg,
+    this.reps,
+    this.rir,
+  });
 
   final String exerciseId;
   final int setNumber;
   final double? weightKg;
   final int? reps;
 
+  /// Reps in reserve, only on sets logged with one.
+  final int? rir;
+
   factory SetLog.fromJson(Json j) => SetLog(
     exerciseId: j.strOr('exercise_id'),
     setNumber: j.integer('set_number') ?? 0,
     weightKg: j.number('weight_kg'),
     reps: j.integer('reps'),
+    rir: j.integer('rir'),
   );
 }
 
@@ -20,7 +30,7 @@ enum SessionStatus { inProgress, completed }
 
 enum SessionFeedback {
   easy('easy', 'Easy'),
-  right('right', 'Right'),
+  right('right', 'About right'),
   tooMuch('too_much', 'Too much');
 
   const SessionFeedback(this.value, this.label);

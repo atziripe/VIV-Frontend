@@ -57,9 +57,34 @@ void main() {
     expect(h.timeline.single.status, TimelineStatus.upcoming);
   });
 
+  test('day dots accept done or completed, and never guess rest', () {
+    DayDotStatus status(String? s) => DayDot.fromJson({'weekday': 'monday', 'status': s}).status;
+    expect(status('done'), DayDotStatus.done);
+    expect(status('completed'), DayDotStatus.done);
+    expect(status('rest'), DayDotStatus.rest);
+    expect(status('pending'), DayDotStatus.pending);
+    expect(status('skipped'), DayDotStatus.pending);
+    expect(status(null), DayDotStatus.pending);
+  });
+
   test('TODAY / TONIGHT labels carry no clock time', () {
     final card = NowCard.fromJson({'kind': 'lights_out', 'label': 'TONIGHT', 'time': '23:00'});
     expect(card.showsTime, isFalse);
+  });
+
+  test('phaseCountdownText uses McNulty names', () {
+    const f = CyclePhase.follicular, o = CyclePhase.ovulatory;
+    expect(phaseCountdownText(f, o, 3), 'Late follicular phase · Ovulatory in 3 days');
+    expect(phaseCountdownText(f, o, 1), 'Late follicular phase · Ovulatory tomorrow');
+    expect(phaseCountdownText(f, o, 0), 'Late follicular phase · Ovulatory starts today');
+    expect(phaseCountdownText(f, null, 5), 'Late follicular phase · Next phase in 5 days');
+    expect(phaseCountdownText(f, o, null), 'Late follicular phase');
+    expect(phaseCountdownText(null, null, null), isNull);
+    // No "menstrual" phase: menstruation sits inside early follicular.
+    expect(
+      phaseCountdownText(CyclePhase.menstrual, f, 4),
+      'Early follicular phase · Late follicular in 4 days',
+    );
   });
 
   group('composeHomeEntries', () {

@@ -10,23 +10,31 @@ import '../../data/providers.dart';
 import '../home/period_start_sheet.dart';
 import '../onboarding/onboarding_draft.dart';
 
-/// 02 · Your info — tap a row to edit it (03 · Edit a field).
+/// "What changes" under each edit sheet: fixed per field.
+abstract final class WhatChanges {
+  static const weight = 'Your protein and energy targets are worked out from it.';
+  static const height = 'Your energy targets are worked out from it.';
+  static const daysPerWeek = 'This week\'s plan is rebuilt from tomorrow. Today\'s is untouched.';
+  static const activity = 'Your energy targets take it into account.';
+  static const cycleLength = 'Your next period estimate moves with it.';
+}
+
+/// 08 · Your info: grouped fields with their values; an empty one reads
+/// "+ Add". Tap a field to edit it in a sheet. No equipment or contraception
+/// fields: the API doesn't store them.
 class YourInfoScreen extends ConsumerWidget {
   const YourInfoScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.viv;
     final me = ref.watch(meProvider).value;
     if (me == null) return const Scaffold(body: LoadingView());
 
-    String num(double? v) => v == null ? 'Add' : v.toStringAsFixed(v % 1 == 0 ? 0 : 1);
-
-    void edit(Widget sheet) => showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (_) => sheet,
-    );
+    String? num(double? v) => v?.toStringAsFixed(v % 1 == 0 ? 0 : 1);
+    final lastPeriod = me.cycleDay == null
+        ? null
+        : Dates.today().subtract(Duration(days: me.cycleDay! - 1));
 
     return VivPage(
       showBack: true,
@@ -35,181 +43,204 @@ class YourInfoScreen extends ConsumerWidget {
           title: 'Your info',
           subtitle: 'Tap anything to change it. Your plan updates from the next session on.',
         ),
-        const Eyebrow('Body'),
-        _InfoRow(
-          label: 'Weight',
-          value: num(me.weightKg),
-          unit: me.weightKg == null ? null : 'kg',
-          onTap: () => edit(
-            _NumberSheet(
-              title: 'Weight',
+        const SettingsLabel('Body', first: true),
+        SettingsGroup(
+          children: [
+            SettingsRow(
+              label: 'Weight',
+              value: num(me.weightKg),
               unit: 'kg',
-              initial: me.weightKg ?? 60,
-              step: 0.5,
-              build: (v) => ProfileUpdate(weightKg: v),
+              onTap: () => showEditNumberSheet(
+                context,
+                title: 'Weight',
+                unit: 'kg',
+                initial: me.weightKg ?? 60,
+                step: 0.5,
+                min: 30,
+                max: 250,
+                whatChanges: WhatChanges.weight,
+                build: (v) => ProfileUpdate(weightKg: v),
+              ),
             ),
-          ),
-        ),
-        _InfoRow(
-          label: 'Height',
-          value: num(me.heightCm),
-          unit: me.heightCm == null ? null : 'cm',
-          onTap: () => edit(
-            _NumberSheet(
-              title: 'Height',
+            SettingsRow(
+              label: 'Height',
+              value: num(me.heightCm),
               unit: 'cm',
-              initial: me.heightCm ?? 165,
-              step: 1,
-              build: (v) => ProfileUpdate(heightCm: v),
+              onTap: () => showEditNumberSheet(
+                context,
+                title: 'Height',
+                unit: 'cm',
+                initial: me.heightCm ?? 165,
+                step: 1,
+                min: 120,
+                max: 220,
+                whatChanges: WhatChanges.height,
+                build: (v) => ProfileUpdate(heightCm: v),
+              ),
             ),
-          ),
+            SettingsRow(label: 'Age', value: me.age?.toString()),
+          ],
         ),
-        _InfoRow(label: 'Age', value: me.age?.toString() ?? '—'),
-        const SizedBox(height: VivSpace.lg),
-        const Eyebrow('Training'),
-        _InfoRow(
-          label: 'Days per week',
-          value: _daysLabel(me.trainingOften),
-          onTap: () => edit(
-            _ChoiceSheet(
-              title: 'Days per week',
-              subtitle: 'How many sessions you can realistically protect — not the ideal number.',
-              note: 'This week\'s plan is rebuilt from tomorrow — today\'s is untouched.',
-              options: {for (final d in DaysPerWeek.values) d.apiValue: d.label},
-              selected: me.trainingOften,
-              build: (v) => ProfileUpdate(trainingOften: v),
+        const SettingsLabel('Training'),
+        SettingsGroup(
+          children: [
+            SettingsRow(
+              label: 'Days per week',
+              value: _label(
+                DaysPerWeek.values,
+                me.trainingOften,
+                (d) => d.apiValue,
+                (d) => d.label,
+              ),
+              onTap: () => showEditChoiceSheet(
+                context,
+                title: 'Days per week',
+                body: 'How many sessions you can realistically protect.',
+                options: {for (final d in DaysPerWeek.values) d.apiValue: d.label},
+                selected: me.trainingOften,
+                whatChanges: WhatChanges.daysPerWeek,
+                build: (v) => ProfileUpdate(trainingOften: v),
+              ),
             ),
-          ),
-        ),
-        _InfoRow(
-          label: 'Outside training',
-          value: me.dailyActivityLevel ?? 'Add',
-          onTap: () => edit(
-            _ChoiceSheet(
-              title: 'Outside training',
-              subtitle: 'Your days are mostly…',
-              options: {for (final l in ActivityLevel.values) l.label: l.label},
-              selected: me.dailyActivityLevel,
-              build: (v) => ProfileUpdate(dailyActivityLevel: v),
+            SettingsRow(
+              label: 'Outside training',
+              value: _label(
+                ActivityLevel.values,
+                me.dailyActivityLevel,
+                (l) => l.apiValue,
+                (l) => l.label,
+              ),
+              onTap: () => showEditChoiceSheet(
+                context,
+                title: 'Outside training',
+                body: 'Your days are mostly…',
+                options: {for (final l in ActivityLevel.values) l.apiValue: l.label},
+                selected: me.dailyActivityLevel,
+                whatChanges: WhatChanges.activity,
+                build: (v) => ProfileUpdate(dailyActivityLevel: v),
+              ),
             ),
-          ),
+          ],
         ),
-        const SizedBox(height: VivSpace.lg),
-        const Eyebrow('Cycle'),
-        _InfoRow(
-          label: 'Typical cycle length',
-          value: me.cycleDuration ?? 'Add',
-          unit: me.cycleDuration == null ? null : 'days',
-          onTap: () => edit(
-            _NumberSheet(
-              title: 'Typical cycle length',
+        const SettingsLabel('Cycle'),
+        SettingsGroup(
+          children: [
+            SettingsRow(
+              label: 'Typical length',
+              value: me.cycleDuration,
               unit: 'days',
-              initial: double.tryParse(me.cycleDuration ?? '') ?? 28,
-              step: 1,
-              min: 15,
-              max: 60,
-              build: (v) => ProfileUpdate(cycleDuration: v.round().toString()),
+              onTap: () => showEditNumberSheet(
+                context,
+                title: 'Typical cycle length',
+                unit: 'days',
+                initial: double.tryParse(me.cycleDuration ?? '') ?? 28,
+                step: 1,
+                min: 15,
+                max: 60,
+                whatChanges: WhatChanges.cycleLength,
+                build: (v) => ProfileUpdate(cycleDuration: v.round().toString()),
+              ),
             ),
-          ),
-        ),
-        _InfoRow(
-          label: 'Period started',
-          value: 'Log it',
-          accent: true,
-          onTap: () => showPeriodStartSheet(context),
-        ),
-        _InfoRow(
-          label: 'Cycle estimates',
-          value: me.cycleEstimationDisabled ? 'Off' : 'On',
-          onTap: () async {
-            try {
-              await ref
-                  .read(vivApiProvider)
-                  .updateMe(ProfileUpdate(cycleEstimationDisabled: !me.cycleEstimationDisabled));
-              ref.invalidate(meProvider);
-            } catch (e) {
-              if (context.mounted) showErrorSnack(context, e);
-            }
-          },
+            SettingsRow(
+              label: 'Last period',
+              value: lastPeriod == null ? null : Dates.dayMonth(lastPeriod),
+              onTap: () => showPeriodStartSheet(context),
+            ),
+            SettingsRow(
+              label: 'Cycle estimates',
+              value: me.cycleEstimationDisabled ? 'Off' : 'On',
+              onTap: () async {
+                try {
+                  await ref
+                      .read(vivApiProvider)
+                      .updateMe(
+                        ProfileUpdate(cycleEstimationDisabled: !me.cycleEstimationDisabled),
+                      );
+                  ref.invalidate(meProvider);
+                } catch (e) {
+                  if (context.mounted) showErrorSnack(context, e);
+                }
+              },
+            ),
+          ],
         ),
         if (me.expectedPeriodDate != null && !me.cycleEstimationDisabled)
           Padding(
-            padding: const EdgeInsets.only(top: VivSpace.xs),
+            padding: const EdgeInsets.fromLTRB(4, 10, 4, 0),
             child: Text(
               'Next period expected around '
               '${Dates.dayMonth(Dates.parseYmd(me.expectedPeriodDate!))}.',
-              style: VivType.caption.copyWith(color: context.viv.textTertiary),
+              style: VivType.meta.copyWith(color: c.subtle),
             ),
           ),
-        const SizedBox(height: VivSpace.lg),
+        const SizedBox(height: 22),
         const VivNote(
           text:
-              'Nothing here is required. Anything you leave out, VIV estimates — and gets '
+              'Nothing here is required. Anything you leave out, VIV estimates and gets '
               'better at estimating as you go.',
-          highlight: true,
         ),
       ],
     );
   }
 
-  static String _daysLabel(String? apiValue) {
-    for (final d in DaysPerWeek.values) {
-      if (d.apiValue == apiValue) return d.label;
+  static String? _label<T>(
+    List<T> values,
+    String? apiValue,
+    String Function(T) api,
+    String Function(T) label,
+  ) {
+    for (final v in values) {
+      if (api(v) == apiValue) return label(v);
     }
-    return apiValue ?? 'Add';
+    return apiValue;
   }
 }
 
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({
-    required this.label,
-    required this.value,
-    this.unit,
-    this.onTap,
-    this.accent = false,
-  });
+/// 08 · Edit a field, number version: a big stepper, "What changes", Save.
+Future<void> showEditNumberSheet(
+  BuildContext context, {
+  required String title,
+  required String unit,
+  required double initial,
+  required double step,
+  required ProfileUpdate Function(double value) build,
+  double min = 0,
+  double max = 400,
+  String? whatChanges,
+}) => showVivSheet<void>(
+  context,
+  builder: (_) => _NumberSheet(
+    title: title,
+    unit: unit,
+    initial: initial,
+    step: step,
+    min: min,
+    max: max,
+    whatChanges: whatChanges,
+    build: build,
+  ),
+);
 
-  final String label;
-  final String value;
-  final String? unit;
-  final VoidCallback? onTap;
-  final bool accent;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.viv;
-    final isAdd = value == 'Add';
-    return InkWell(
-      onTap: onTap,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: c.border)),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: VivSpace.sm + 2),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(label, style: VivType.bodySmall.copyWith(color: c.textPrimary)),
-              ),
-              Text(
-                value,
-                style: VivType.bodySmall.copyWith(
-                  color: isAdd || accent ? c.primary : c.textPrimary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              if (unit != null) ...[
-                const SizedBox(width: 4),
-                Text(unit!, style: VivType.caption.copyWith(color: c.textTertiary)),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
+/// 08 · Edit a field, choice version: pills, "What changes", Save.
+Future<void> showEditChoiceSheet(
+  BuildContext context, {
+  required String title,
+  required Map<String, String> options,
+  required ProfileUpdate Function(String value) build,
+  String? body,
+  String? selected,
+  String? whatChanges,
+}) => showVivSheet<void>(
+  context,
+  builder: (_) => _ChoiceSheet(
+    title: title,
+    body: body,
+    options: options,
+    selected: selected,
+    whatChanges: whatChanges,
+    build: build,
+  ),
+);
 
 /// Shared save logic for profile edit sheets.
 mixin _SaveProfile<T extends ConsumerStatefulWidget> on ConsumerState<T> {
@@ -230,15 +261,25 @@ mixin _SaveProfile<T extends ConsumerStatefulWidget> on ConsumerState<T> {
   }
 }
 
+class _WhatChanges extends StatelessWidget {
+  const _WhatChanges(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => VivNote(eyebrow: 'What changes', text: text);
+}
+
 class _NumberSheet extends ConsumerStatefulWidget {
   const _NumberSheet({
     required this.title,
     required this.unit,
     required this.initial,
     required this.step,
+    required this.min,
+    required this.max,
     required this.build,
-    this.min = 0,
-    this.max = 400,
+    this.whatChanges,
   });
 
   final String title;
@@ -247,6 +288,7 @@ class _NumberSheet extends ConsumerStatefulWidget {
   final double step;
   final double min;
   final double max;
+  final String? whatChanges;
   final ProfileUpdate Function(double value) build;
 
   @override
@@ -256,46 +298,79 @@ class _NumberSheet extends ConsumerStatefulWidget {
 class _NumberSheetState extends ConsumerState<_NumberSheet> with _SaveProfile {
   late double _value = widget.initial.clamp(widget.min, widget.max);
 
+  void _nudge(double by) => setState(() => _value = (_value + by).clamp(widget.min, widget.max));
+
   @override
   Widget build(BuildContext context) {
     final c = context.viv;
-    final display = _value.toStringAsFixed(widget.step < 1 ? 1 : 0);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(VivSpace.gutter, 0, VivSpace.gutter, VivSpace.lg),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(widget.title, style: VivType.headline.copyWith(color: c.textPrimary)),
-          const SizedBox(height: VivSpace.xl),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              IconButton.outlined(
-                tooltip: 'Decrease',
-                onPressed: () =>
-                    setState(() => _value = (_value - widget.step).clamp(widget.min, widget.max)),
-                icon: const Icon(Icons.remove),
-              ),
-              SizedBox(
-                width: 140,
-                child: Text(
-                  '$display ${widget.unit}',
-                  textAlign: TextAlign.center,
-                  style: VivType.headline.copyWith(color: c.textPrimary),
+    final display = _value.toStringAsFixed(widget.step < 1 && _value % 1 != 0 ? 1 : 0);
+    return VivBottomSheet(
+      title: widget.title,
+      actions: [
+        PillButton(label: 'Save', busy: saving, onPressed: () => save(widget.build(_value))),
+      ],
+      children: [
+        Row(
+          children: [
+            _RoundButton(
+              icon: Icons.remove_rounded,
+              label: 'Decrease',
+              onTap: _value <= widget.min ? null : () => _nudge(-widget.step),
+            ),
+            Expanded(
+              child: Text.rich(
+                TextSpan(
+                  text: display,
+                  children: [
+                    TextSpan(
+                      text: ' ${widget.unit}',
+                      style: VivType.body.copyWith(fontWeight: FontWeight.w500, color: c.subtle),
+                    ),
+                  ],
                 ),
+                textAlign: TextAlign.center,
+                style: VivType.number.copyWith(fontSize: 44, color: c.ink),
               ),
-              IconButton.outlined(
-                tooltip: 'Increase',
-                onPressed: () =>
-                    setState(() => _value = (_value + widget.step).clamp(widget.min, widget.max)),
-                icon: const Icon(Icons.add),
-              ),
-            ],
+            ),
+            _RoundButton(
+              icon: Icons.add_rounded,
+              label: 'Increase',
+              onTap: _value >= widget.max ? null : () => _nudge(widget.step),
+            ),
+          ],
+        ),
+        if (widget.whatChanges != null) _WhatChanges(widget.whatChanges!),
+      ],
+    );
+  }
+}
+
+class _RoundButton extends StatelessWidget {
+  const _RoundButton({required this.icon, required this.label, required this.onTap});
+
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.viv;
+    return Semantics(
+      button: true,
+      label: label,
+      enabled: onTap != null,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: VivSize.control,
+          height: VivSize.control,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: c.raised,
+            border: Border.all(color: c.line),
           ),
-          const SizedBox(height: VivSpace.xl),
-          VivButton(label: 'Save', loading: saving, onPressed: () => save(widget.build(_value))),
-        ],
+          child: Icon(icon, color: onTap == null ? c.faint : c.ink),
+        ),
       ),
     );
   }
@@ -306,14 +381,14 @@ class _ChoiceSheet extends ConsumerStatefulWidget {
     required this.title,
     required this.options,
     required this.build,
-    this.subtitle,
-    this.note,
+    this.body,
     this.selected,
+    this.whatChanges,
   });
 
   final String title;
-  final String? subtitle;
-  final String? note;
+  final String? body;
+  final String? whatChanges;
 
   /// API value → label.
   final Map<String, String> options;
@@ -329,46 +404,34 @@ class _ChoiceSheetState extends ConsumerState<_ChoiceSheet> with _SaveProfile {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.viv;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(VivSpace.gutter, 0, VivSpace.gutter, VivSpace.lg),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(widget.title, style: VivType.headline.copyWith(color: c.textPrimary)),
-          if (widget.subtitle != null) ...[
-            const SizedBox(height: VivSpace.xxs),
-            Text(widget.subtitle!, style: VivType.bodySmall.copyWith(color: c.textSecondary)),
+    return VivBottomSheet(
+      title: widget.title,
+      body: widget.body,
+      actions: [
+        PillButton(
+          label: 'Save',
+          busy: saving,
+          onPressed: _value == null || _value == widget.selected
+              ? null
+              : () => save(widget.build(_value!)),
+        ),
+      ],
+      children: [
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final e in widget.options.entries)
+              ChoicePill(
+                label: e.value,
+                minWidth: 64,
+                selected: _value == e.key,
+                onTap: () => setState(() => _value = e.key),
+              ),
           ],
-          const SizedBox(height: VivSpace.lg),
-          Wrap(
-            spacing: VivSpace.xs,
-            runSpacing: VivSpace.xs,
-            children: [
-              for (final e in widget.options.entries)
-                ChoicePill(
-                  label: e.value,
-                  minWidth: 64,
-                  selected: _value == e.key,
-                  onTap: () => setState(() => _value = e.key),
-                ),
-            ],
-          ),
-          if (widget.note != null) ...[
-            const SizedBox(height: VivSpace.md),
-            VivNote(eyebrow: 'What changes', text: widget.note!, highlight: true),
-          ],
-          const SizedBox(height: VivSpace.lg),
-          VivButton(
-            label: 'Save',
-            loading: saving,
-            onPressed: _value == null || _value == widget.selected
-                ? null
-                : () => save(widget.build(_value!)),
-          ),
-        ],
-      ),
+        ),
+        if (widget.whatChanges != null) _WhatChanges(widget.whatChanges!),
+      ],
     );
   }
 }

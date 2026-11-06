@@ -29,6 +29,7 @@ class Me {
     this.hasActiveInjury = false,
     this.trainingPaused = false,
     this.createdAt,
+    this.pendingDeletionAt,
   });
 
   final String id;
@@ -58,6 +59,10 @@ class Me {
   final bool hasActiveInjury;
   final bool trainingPaused;
   final DateTime? createdAt;
+
+  /// Set while an account deletion is pending — requested via `DELETE /me` or
+  /// triggered by inactivity. Cancellable until then (`POST /me/cancel-deletion`).
+  final DateTime? pendingDeletionAt;
 
   String get firstName => name.trim().split(RegExp(r'\s+')).first;
 
@@ -108,6 +113,7 @@ class Me {
     hasActiveInjury: j.flag('has_active_injury'),
     trainingPaused: j.flag('training_paused'),
     createdAt: DateTime.tryParse(j.strOr('created_at')),
+    pendingDeletionAt: DateTime.tryParse(j.strOr('pending_deletion_at'))?.toLocal(),
   );
 }
 

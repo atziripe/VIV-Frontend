@@ -2,20 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/analytics/analytics.dart';
 import '../../core/theme/viv_theme.dart';
 import '../../core/utils/dates.dart';
 import '../../core/widgets/widgets.dart';
 import '../../data/api/viv_api.dart';
+import '../../data/models/account.dart';
 import '../../data/models/catalog.dart';
+import '../../data/models/onboarding.dart';
+import '../../data/models/weekly_plan.dart';
 import '../../data/providers.dart';
 import '../../router/app_router.dart';
-import '../auth/auth_repository.dart';
+import '../profile/account_actions.dart';
 import 'onboarding_draft.dart';
+import '../../core/utils/legal_links.dart';
 
 /// Total numbered steps after the fit check.
 // NOTE: Figma shows 3 steps; "About you" (name + date of birth, both required
 // by POST /onboarding) is an added step pending a design.
 const _totalSteps = 4;
+
+/// Moves to the next numbered step, recording that [step] was completed.
+void _next(WidgetRef ref, BuildContext context, String step, String route) {
+  ref.read(analyticsProvider).onboardingStepCompleted(step);
+  context.push(route);
+}
 
 /// Shared frame for numbered onboarding steps: back · "Step n of 4" ·
 /// progress bar · content · Continue.
@@ -36,18 +47,14 @@ class _StepPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.viv;
     return VivPage(
       showBack: true,
-      topCenter: Text(
-        'Step $step of $_totalSteps',
-        style: VivType.caption.copyWith(color: c.textSecondary, fontSize: 13),
-      ),
+      topTrailing: StepProgress(current: step, total: _totalSteps),
       bottom: VivButton(label: 'Continue', onPressed: onContinue),
       children: [
-        const SizedBox(height: VivSpace.xs),
-        StepProgress(current: step, total: _totalSteps),
-        PageHeader(title: title, subtitle: subtitle),
+        Enter.fromRight(
+          child: PageHeader(title: title, subtitle: subtitle),
+        ),
         ...children,
       ],
     );
@@ -69,61 +76,54 @@ class FitCheckScreen extends ConsumerWidget {
     return VivPage(
       showBack: true,
       // Signed in but not onboarded: "back" means sign out.
-      onBack: () => ref.read(authRepositoryProvider).signOut(),
+      onBack: () => signOutLocally(ref),
       bottom: VivButton(
         label: 'Continue',
         onPressed: situation == null
             ? null
-            : () => context.push(situation.isFit ? Routes.aboutYou : Routes.notAFit),
+            : () {
+                if (situation.isFit) ref.read(analyticsProvider).fitCheckPassed();
+                context.push(situation.isFit ? Routes.aboutYou : Routes.notAFit);
+              },
       ),
       children: [
         const PageHeader(
           title: 'First, so we don\'t hand you the wrong plan',
           subtitle:
-              'VIV\'s guidance is calibrated to a natural menstrual cycle. '
-              'If that isn\'t you right now, we\'d rather say so than guess.',
+              'VIV\'s timing is built on a natural cycle. If that isn\'t you right now, '
+              'we\'d rather say so than guess.',
         ),
-        const FieldLabel('Which describes you right now?'),
         for (final s in CycleSituation.values) ...[
-          OptionTile(
-            title: s.label,
-            subtitle: s.hint,
+          OptionRow(
+            label: s.label,
+            hint: s.hint,
             selected: situation == s,
             onTap: () => notifier.update((d) => d.copyWith(situation: s)),
           ),
-          const SizedBox(height: VivSpace.xs),
+          const SizedBox(height: 9),
         ],
-        const SizedBox(height: VivSpace.sm),
-        _WhyWeAsk(color: c.textSecondary),
+        const SizedBox(height: 4),
+        WhyLink(label: 'Why we ask', color: c.accent, onTap: () => _showWhyWeAsk(context)),
       ],
     );
   }
 }
 
-class _WhyWeAsk extends StatelessWidget {
-  const _WhyWeAsk({required this.color});
-
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Theme(
-      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-      child: ExpansionTile(
-        tilePadding: EdgeInsets.zero,
-        childrenPadding: const EdgeInsets.only(bottom: VivSpace.sm),
-        title: Text('Why we ask', style: VivType.caption.copyWith(color: color, fontSize: 13)),
-        children: [
-          Text(
-            'Hormonal contraception, pregnancy and menopause change how energy moves '
-            'through the month. Our model isn\'t built for those yet, and a confident '
-            'wrong plan is worse than no plan.',
-            style: VivType.caption.copyWith(color: color),
-          ),
-        ],
-      ),
-    );
-  }
+void _showWhyWeAsk(BuildContext context) {
+  showVivSheet<void>(
+    context,
+    builder: (sheet) => VivBottomSheet(
+      eyebrow: 'Why we ask',
+      title: 'A plan built for your physiology',
+      body:
+          'Hormonal contraception, pregnancy and menopause change how energy moves '
+          'through the month. Our model isn\'t built for those yet, and a confident '
+          'wrong plan is worse than no plan.',
+      actions: [
+        PillButton(label: 'Got it', size: PillSize.control, onPressed: () => Navigator.pop(sheet)),
+      ],
+    ),
+  );
 }
 
 // ── 00b · Not a fit yet ─────────────────────────────────────────────────────
@@ -136,62 +136,53 @@ class NotAFitScreen extends ConsumerStatefulWidget {
 }
 
 class _NotAFitScreenState extends ConsumerState<NotAFitScreen> {
-  late final _email = TextEditingController(text: ref.read(authStateProvider).value?.email ?? '');
+  bool _closing = false;
 
-  @override
-  void dispose() {
-    _email.dispose();
-    super.dispose();
+  /// `POST /onboarding/ineligibility` records the reason anonymously and
+  /// deletes the account right away, so nothing about this person is kept.
+  Future<void> _close(IneligibilityReason reason) async {
+    setState(() => _closing = true);
+    try {
+      await ref.read(vivApiProvider).reportIneligibility(reason);
+      await endSessionLocally(ref);
+    } catch (e) {
+      if (mounted) {
+        showErrorSnack(context, e);
+        setState(() => _closing = false);
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final c = context.viv;
+    final situation = ref.watch(onboardingDraftProvider).situation ?? CycleSituation.notSure;
+    final reason = situation.ineligibilityReason ?? IneligibilityReason.notSure;
     return VivPage(
       showBack: true,
+      bottom: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          VivButton(
+            label: 'Close my account',
+            loading: _closing,
+            onPressed: _closing ? null : () => _close(reason),
+          ),
+          const SizedBox(height: VivSpace.xs),
+          VivButton.text(
+            label: 'Change my answer',
+            onPressed: _closing ? null : () => context.pop(),
+          ),
+        ],
+      ),
       children: [
-        const PageHeader(
-          title: 'VIV isn\'t built for you yet',
-          subtitle:
-              'Our guidance is tuned to a natural cycle. On hormonal contraception '
-              'that timing doesn\'t apply — and a plan built on physiology that isn\'t '
-              'yours is worse than no plan.\n\n'
-              'Contraception support is the version we\'re building next.',
-        ),
-        const SizedBox(height: VivSpace.xxl),
-        VivCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Want a nudge when it\'s ready?',
-                style: VivType.label.copyWith(color: c.textPrimary, fontSize: 14),
-              ),
-              const SizedBox(height: VivSpace.sm),
-              TextField(
-                controller: _email,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(hintText: 'you@example.com'),
-              ),
-              const SizedBox(height: VivSpace.sm),
-              VivButton(
-                label: 'Email me when it launches',
-                // TODO(api): no waitlist endpoint yet.
-                onPressed: () {
-                  ScaffoldMessenger.of(context)
-                      .showSnackBar(const SnackBar(content: Text('Thanks — we\'ll let you know.')));
-                  ref.read(authRepositoryProvider).signOut();
-                },
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: VivSpace.sm),
-        Center(
-          child: VivButton.text(
-            label: 'No thanks',
-            onPressed: () => ref.read(authRepositoryProvider).signOut(),
-          ),
+        PageHeader(title: 'VIV isn\'t built for you yet', subtitle: situation.notAFitReason),
+        const SizedBox(height: VivSpace.lg),
+        const VivNote(
+          text:
+              'We don\'t keep anything. Closing deletes your account straight away. We '
+              'only count, anonymously, that this answer came up, so we know what to build '
+              'next.',
         ),
       ],
     );
@@ -242,7 +233,9 @@ class _AboutYouScreenState extends ConsumerState<AboutYouScreen> {
       step: 1,
       title: 'A little about you',
       subtitle: 'Used to size your training and nutrition. Only you see this.',
-      onContinue: draft.aboutYouComplete ? () => context.push(Routes.training) : null,
+      onContinue: draft.aboutYouComplete
+          ? () => _next(ref, context, 'about_you', Routes.training)
+          : null,
       children: [
         VivTextField(
           label: 'What should we call you?',
@@ -264,12 +257,10 @@ class _AboutYouScreenState extends ConsumerState<AboutYouScreen> {
                   draft.dob == null
                       ? 'Pick a date'
                       : '${Dates.dayMonth(draft.dob!)} ${draft.dob!.year}',
-                  style: VivType.body.copyWith(
-                    color: draft.dob == null ? c.textTertiary : c.textPrimary,
-                  ),
+                  style: VivType.body.copyWith(color: draft.dob == null ? c.subtle : c.ink),
                 ),
               ),
-              Icon(Icons.calendar_today_outlined, size: 18, color: c.textSecondary),
+              Icon(Icons.calendar_today_outlined, size: 18, color: c.muted),
             ],
           ),
         ),
@@ -326,7 +317,7 @@ class _NumberField extends StatelessWidget {
           onChanged: (v) => onChanged(double.tryParse(v.replaceAll(',', '.'))),
           decoration: InputDecoration(
             suffixText: suffix,
-            suffixStyle: VivType.caption.copyWith(color: c.textTertiary),
+            suffixStyle: VivType.caption.copyWith(color: c.subtle),
           ),
         ),
       ],
@@ -347,9 +338,11 @@ class TrainingPrefsScreen extends ConsumerWidget {
     return _StepPage(
       step: 2,
       title: 'How do you like to train?',
-      onContinue: draft.trainingComplete ? () => context.push(Routes.yourWeek) : null,
+      subtitle: 'Pick any. You can change this later.',
+      onContinue: draft.trainingComplete
+          ? () => _next(ref, context, 'training', Routes.yourWeek)
+          : null,
       children: [
-        const FieldLabel('Pick any that apply'),
         Wrap(
           spacing: VivSpace.xs,
           runSpacing: VivSpace.xs,
@@ -363,15 +356,23 @@ class TrainingPrefsScreen extends ConsumerWidget {
               ),
           ],
         ),
-        const SizedBox(height: VivSpace.xl),
-        const FieldLabel('What should VIV optimise for?'),
+        const SizedBox(height: 28),
+        Text(
+          'What matters most right now?',
+          style: VivType.rowTitle.copyWith(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+            color: context.viv.ink,
+          ),
+        ),
+        const SizedBox(height: 10),
         for (final g in Goal.values) ...[
-          OptionTile(
-            title: g.label,
+          OptionRow(
+            label: g.label,
             selected: draft.goal == g,
             onTap: () => notifier.update((d) => d.copyWith(goal: g)),
           ),
-          const SizedBox(height: VivSpace.xs),
+          const SizedBox(height: 9),
         ],
       ],
     );
@@ -383,11 +384,8 @@ class TrainingPrefsScreen extends ConsumerWidget {
 class YourWeekScreen extends ConsumerWidget {
   const YourWeekScreen({super.key});
 
-  static const _dayLetters = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.viv;
     final draft = ref.watch(onboardingDraftProvider);
     final notifier = ref.read(onboardingDraftProvider.notifier);
 
@@ -395,7 +393,7 @@ class YourWeekScreen extends ConsumerWidget {
       step: 3,
       title: 'Your actual week',
       subtitle: 'Not the ideal one. The one you\'re really in.',
-      onContinue: draft.weekComplete ? () => context.push(Routes.cycle) : null,
+      onContinue: draft.weekComplete ? () => _next(ref, context, 'week', Routes.cycle) : null,
       children: [
         const FieldLabel('Days you can realistically train'),
         PillRow(
@@ -409,28 +407,8 @@ class YourWeekScreen extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: VivSpace.xl),
-        const FieldLabel('Which days usually fall apart?'),
+        const FieldLabel('Outside training, you\'re mostly'),
         PillRow(
-          gap: 6,
-          children: [
-            for (var i = 0; i < 7; i++)
-              ChoicePill(
-                label: _dayLetters[i],
-                selected: draft.hardDays.contains(i + 1),
-                onTap: () => notifier.toggleHardDay(i + 1),
-              ),
-          ],
-        ),
-        const SizedBox(height: VivSpace.xs),
-        Text(
-          'VIV puts the lightest sessions here.',
-          style: VivType.caption.copyWith(color: c.textTertiary),
-        ),
-        const SizedBox(height: VivSpace.xl),
-        const FieldLabel('Outside training, your days are mostly'),
-        Wrap(
-          spacing: VivSpace.xs,
-          runSpacing: VivSpace.xs,
           children: [
             for (final l in ActivityLevel.values)
               ChoicePill(
@@ -475,9 +453,9 @@ class CycleScreen extends ConsumerWidget {
       step: 4,
       title: 'Last piece: your cycle',
       subtitle:
-          'This is what lets VIV time your week instead of guessing at it. '
-          'Rough answers are fine — check-ins sharpen them.',
-      onContinue: draft.cycleComplete ? () => context.push(Routes.consent) : null,
+          'This lets VIV time your week instead of guessing. Rough answers are fine; '
+          'check-ins sharpen them.',
+      onContinue: draft.cycleComplete ? () => _next(ref, context, 'cycle', Routes.consent) : null,
       children: [
         const FieldLabel('Your last period started'),
         Wrap(
@@ -494,22 +472,27 @@ class CycleScreen extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: VivSpace.xs),
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                lastDate == null ? ' ' : 'Using ${Dates.dayMonth(lastDate)}',
-                style: VivType.caption.copyWith(color: c.textTertiary),
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: pickExact,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: VivSize.minTap),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text.rich(
+                TextSpan(
+                  text: lastDate == null ? '' : 'Using ${Dates.dayMonth(lastDate)} · ',
+                  children: [
+                    TextSpan(
+                      text: 'pick exact date',
+                      style: TextStyle(fontWeight: FontWeight.w700, color: c.accent),
+                    ),
+                  ],
+                ),
+                style: VivType.meta.copyWith(fontSize: 13.5, color: c.muted),
               ),
             ),
-            GestureDetector(
-              onTap: pickExact,
-              child: Text(
-                'Pick exact date',
-                style: VivType.caption.copyWith(color: c.primary, fontWeight: FontWeight.w600),
-              ),
-            ),
-          ],
+          ),
         ),
         const SizedBox(height: VivSpace.xl),
         const FieldLabel('Typical cycle length'),
@@ -539,7 +522,7 @@ class CycleScreen extends ConsumerWidget {
         const SizedBox(height: VivSpace.xs),
         Text(
           'Daily check-ins correct this as VIV learns you.',
-          style: VivType.caption.copyWith(color: c.textTertiary),
+          style: VivType.meta.copyWith(fontSize: 13.5, color: c.muted),
         ),
       ],
     );
@@ -558,11 +541,30 @@ class ConsentScreen extends ConsumerStatefulWidget {
 class _ConsentScreenState extends ConsumerState<ConsentScreen> {
   bool _submitting = false;
 
+  /// Optional and off by default (GDPR opt-in): `research_product_improvement`,
+  /// which also gates product analytics.
+  bool _improve = false;
+
+  /// Optional and off by default: `ai_processing`, which lets the backend
+  /// write the weekly note and polish meal names. Sent in the onboarding
+  /// body, where the backend records it.
+  bool _ai = false;
+
   Future<void> _build() async {
     setState(() => _submitting = true);
     try {
       final draft = ref.read(onboardingDraftProvider);
-      final res = await ref.read(vivApiProvider).completeOnboarding(draft.toRequest());
+      final api = ref.read(vivApiProvider);
+      final analytics = ref.read(analyticsProvider);
+      // Record the consent server-side before any health data is processed.
+      await api.setConsent(ConsentPurpose.healthDataProcessing, granted: true);
+      await api.setConsent(ConsentPurpose.researchProductImprovement, granted: _improve);
+      // Releases (or drops) the events held since Welcome.
+      analytics.setConsent(_improve ? AnalyticsConsent.granted : AnalyticsConsent.denied);
+      ref.invalidate(consentsProvider);
+      analytics.consentGiven(analytics: _improve, ai: _ai);
+      final res = await api.completeOnboarding(draft.toRequest(aiProcessing: _ai));
+      analytics.onboardingCompleted();
       if (!mounted) return;
       context.go(Routes.building, extra: res.weeklyPlanJobId);
     } catch (e) {
@@ -588,8 +590,7 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
           title: 'One thing before we build it',
           subtitle:
               'To personalise your week, VIV needs to process your cycle and health '
-              'data. It stays yours — never sold, never shared — and you can withdraw '
-              'consent in Settings at any time.',
+              'data. It stays yours and you can withdraw consent in Settings at any time.',
         ),
         VivCard(
           tone: draft.consent ? VivCardTone.highlight : VivCardTone.surface,
@@ -613,7 +614,54 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
                 child: Text(
                   'I agree to VIV processing my cycle and health data to personalise '
                   'my recommendations.',
-                  style: VivType.bodySmall.copyWith(color: c.textPrimary),
+                  style: VivType.bodySmall.copyWith(color: c.ink),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: VivSpace.sm),
+        VivCard(
+          tone: _ai ? VivCardTone.highlight : VivCardTone.surface,
+          onTap: () => setState(() => _ai = !_ai),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox.square(
+                dimension: 24,
+                child: Checkbox(value: _ai, onChanged: (v) => setState(() => _ai = v ?? false)),
+              ),
+              const SizedBox(width: VivSpace.sm),
+              Expanded(
+                child: Text(
+                  'Optional: let VIV use an AI model to write your weekly note and meal '
+                  'descriptions.',
+                  style: VivType.bodySmall.copyWith(color: c.ink),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: VivSpace.sm),
+        VivCard(
+          tone: _improve ? VivCardTone.highlight : VivCardTone.surface,
+          onTap: () => setState(() => _improve = !_improve),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox.square(
+                dimension: 24,
+                child: Checkbox(
+                  value: _improve,
+                  onChanged: (v) => setState(() => _improve = v ?? false),
+                ),
+              ),
+              const SizedBox(width: VivSpace.sm),
+              Expanded(
+                child: Text(
+                  'Optional: help improve VIV with usage data, like which screens I use. '
+                  'Never my cycle or health answers.',
+                  style: VivType.bodySmall.copyWith(color: c.ink),
                 ),
               ),
             ],
@@ -622,10 +670,22 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
         const SizedBox(height: VivSpace.md),
         Align(
           alignment: Alignment.centerLeft,
-          child: Text(
-            // TODO(product): link to the data policy.
-            'Read the full data policy',
-            style: VivType.caption.copyWith(color: c.primary, fontWeight: FontWeight.w600),
+          child: Semantics(
+            link: true,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => openLegalPage(context, LegalPage.privacy),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: VivSize.minTap),
+                child: Center(
+                  widthFactor: 1,
+                  child: Text(
+                    'Read the full data policy',
+                    style: VivType.caption.copyWith(color: c.accent, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ],
@@ -644,7 +704,12 @@ class BuildingWeekScreen extends ConsumerStatefulWidget {
   ConsumerState<BuildingWeekScreen> createState() => _BuildingWeekScreenState();
 }
 
+const _numberWords = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven'];
+
 class _BuildingWeekScreenState extends ConsumerState<BuildingWeekScreen> {
+  WeeklyPlan? _week;
+  bool _ready = false;
+
   @override
   void initState() {
     super.initState();
@@ -653,42 +718,125 @@ class _BuildingWeekScreenState extends ConsumerState<BuildingWeekScreen> {
 
   Future<void> _wait() async {
     final jobId = GoRouterState.of(context).extra as String?;
+    final started = DateTime.now();
+    var failed = jobId == null;
     if (jobId != null) {
       try {
-        await ref.read(vivApiProvider).waitForWeeklyPlan(jobId);
+        final status = await ref.read(vivApiProvider).waitForWeeklyPlan(jobId);
+        failed = status.state != JobState.done;
       } catch (_) {
         // Onboarding itself succeeded; Today offers to generate the week
         // if the job failed or timed out.
+        failed = true;
       }
     }
+    ref
+        .read(analyticsProvider)
+        .firstWeekReady(waitSeconds: DateTime.now().difference(started).inSeconds, failed: failed);
+    WeeklyPlan? week;
+    if (!failed) {
+      ref.invalidate(currentWeekProvider);
+      week = await ref.read(currentWeekProvider.future).catchError((Object _) => null);
+    }
+    if (!mounted) return;
+    if (week == null) return _seeToday();
+    setState(() {
+      _week = week;
+      _ready = true;
+    });
+  }
+
+  /// Refreshing `/me` flips the session to ready; the router moves to Today.
+  void _seeToday() {
     ref.invalidate(meProvider);
-    ref.invalidate(currentWeekProvider);
     ref.invalidate(homeTodayProvider);
   }
 
   @override
   Widget build(BuildContext context) {
+    return VivPage(
+      bottom: _ready ? VivButton(label: 'See today', onPressed: _seeToday) : null,
+      children: [
+        const SizedBox(height: 24),
+        if (_ready) _FirstWeek(week: _week!) else const _FirstWeekSkeleton(),
+      ],
+    );
+  }
+}
+
+/// "Your first week": instant, and it explains itself.
+class _FirstWeek extends ConsumerWidget {
+  const _FirstWeek({required this.week});
+
+  final WeeklyPlan week;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     final c = context.viv;
-    return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(VivSpace.gutter),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Spacer(),
-              const Eyebrow('Building your week', accent: true),
-              const SizedBox(height: VivSpace.sm),
-              Text(
-                'Fitting training around the week you actually have.',
-                style: VivType.title.copyWith(color: c.textPrimary),
-              ),
-              const SizedBox(height: VivSpace.xl),
-              const LinearProgressIndicator(minHeight: 3),
-              const Spacer(flex: 2),
-            ],
+    final sessions = week.days.where((d) => !d.isRestDay).toList();
+    final count = sessions.length < _numberWords.length
+        ? _numberWords[sessions.length]
+        : '${sessions.length}';
+
+    final first = sessions.firstOrNull;
+    final rest = sessions.skip(1).take(3).toList();
+    String line(WeekDay d) =>
+        [d.title, if (d.durationMinutes != null) '${d.durationMinutes} min'].join(' · ');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Enter(
+          child: PageHeader(
+            eyebrow: Text('YOUR FIRST WEEK', style: VivType.eyebrow.copyWith(color: c.tintInk)),
+            title: '$count sessions this week.',
+            subtitle: 'Everything moves if your week does.',
           ),
         ),
+        if (first != null)
+          WineField(
+            eyebrow: 'First up · ${Dates.capitalize(first.weekday)}',
+            pulse: false,
+            title: line(first),
+            body: rest.isEmpty
+                ? null
+                : 'Then ${rest.map((d) => '${Dates.capitalize(d.weekday).substring(0, 3)} ${d.title.toLowerCase()}').join(', ')}.',
+          ),
+        const SizedBox(height: 18),
+        Enter(
+          delay: const Duration(milliseconds: 300),
+          child: Text(
+            'Tomorrow morning: a 4-tap check-in. That\'s how VIV learns what your week '
+            'actually looks like.',
+            style: VivType.body.copyWith(color: c.muted),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _FirstWeekSkeleton extends StatelessWidget {
+  const _FirstWeekSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Skeleton(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SkeletonBox.line(width: 120, height: 12),
+          SizedBox(height: 14),
+          SkeletonBox(height: 34, radius: VivRadius.md),
+          SizedBox(height: 8),
+          SkeletonBox(width: 220, height: 34, radius: VivRadius.md),
+          SizedBox(height: 16),
+          SkeletonBox.line(),
+          SizedBox(height: 8),
+          SkeletonBox.line(width: 260),
+          SizedBox(height: 26),
+          SkeletonBox.field(height: 190),
+        ],
       ),
     );
   }

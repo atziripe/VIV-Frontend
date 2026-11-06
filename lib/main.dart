@@ -16,11 +16,14 @@ Future<void> main() async {
 
   // App Check is in monitor mode on the backend today; activating it now
   // means nothing breaks when enforcement is switched on.
+  const debugToken = Env.appCheckDebugToken == '' ? null : Env.appCheckDebugToken;
   await FirebaseAppCheck.instance.activate(
     providerAndroid: Env.appCheckDebug
-        ? const AndroidDebugProvider()
+        ? const AndroidDebugProvider(debugToken: debugToken)
         : const AndroidPlayIntegrityProvider(),
-    providerApple: Env.appCheckDebug ? const AppleDebugProvider() : const AppleAppAttestProvider(),
+    providerApple: Env.appCheckDebug
+        ? const AppleDebugProvider(debugToken: debugToken)
+        : const AppleAppAttestProvider(),
   );
 
   final prefs = await SharedPreferences.getInstance();

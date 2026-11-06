@@ -1,5 +1,5 @@
 name: viv
-description: "VIV — training, nutrition and recovery that adapt to your week and your cycle."
+description: "VIV: training, nutrition and recovery that adapt to your week and your cycle."
 publish_to: 'none'
 version: 0.1.0+1
 
@@ -7,6 +7,7 @@ environment:
   sdk: ^3.13.4
 
 dependencies:
+  amplitude_flutter: ^4.7.3
   crypto: ^3.0.7
   dio: ^5.11.1
   firebase_app_check: ^0.4.8
@@ -18,24 +19,38 @@ dependencies:
   go_router: ^18.0.1
   google_sign_in: ^7.2.0
   intl: ^0.20.3
+  path_provider: ^2.1.6
+  share_plus: ^13.3.1
   shared_preferences: ^2.5.5
   sign_in_with_apple: ^8.2.0
+  url_launcher: ^6.3.3
+  video_player: ^2.14.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
   mocktail: ^1.0.5
+  url_launcher_platform_interface: ^2.3.2
+  plugin_platform_interface: ^2.1.8
 
 flutter:
   uses-material-design: true
 
+  assets:
+    # Welcome hero video: assets/video/welcome.mp4 (see docs/welcome-video.md).
+    - assets/video/
+
   fonts:
-    # Eyebrow / label font from the Figma file ("font family/Font 1").
-    - family: JetBrainsMono
+    # Pulse typeface (OFL, assets/fonts/OFL-SchibstedGrotesk.txt).
+    - family: SchibstedGrotesk
       fonts:
-        - asset: assets/fonts/JetBrainsMono-Regular.ttf
-        - asset: assets/fonts/JetBrainsMono-Medium.ttf
+        - asset: assets/fonts/SchibstedGrotesk-Regular.ttf
+        - asset: assets/fonts/SchibstedGrotesk-Medium.ttf
           weight: 500
-        - asset: assets/fonts/JetBrainsMono-SemiBold.ttf
+        - asset: assets/fonts/SchibstedGrotesk-SemiBold.ttf
           weight: 600
+        - asset: assets/fonts/SchibstedGrotesk-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/SchibstedGrotesk-ExtraBold.ttf
+          weight: 800

@@ -1,7 +1,11 @@
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/network/api_client.dart';
 import '../../core/network/job_poller.dart';
+import '../models/account.dart';
 import '../models/checkin.dart';
 import '../models/cycle.dart';
 import '../models/home.dart';
@@ -30,11 +34,43 @@ class VivApi {
   Future<Me> updateMe(ProfileUpdate update) async =>
       Me.fromJson((await _http.patch('/me', body: update.toJson()))!);
 
-  /// Deletes the account and all its data (App Store 5.1.1v). If the server
-  /// fails, nothing is deleted and the user stays signed in, so retrying is safe.
-  Future<void> deleteAccount() async {
-    await _http.delete('/me');
+  // ── Account deletion, consent, export ───────────────────────────────────
+
+  /// Schedules deletion 30 days out. The account keeps working until then and
+  /// can be restored with [cancelAccountDeletion]. Calling it again restarts
+  /// the clock.
+  Future<DeletionSchedule> scheduleAccountDeletion() async =>
+      DeletionSchedule.fromJson((await _http.delete('/me')) ?? const {});
+
+  /// Idempotent: a no-op when nothing is pending.
+  Future<void> cancelAccountDeletion() async {
+    await _http.post('/me/cancel-deletion');
   }
+
+  /// Current state per purpose; purposes never granted or revoked are absent.
+  Future<List<ConsentItem>> consents() async => [
+    for (final e in await _http.getList('/me/consents'))
+      if (e is Map<String, dynamic>) ?ConsentItem.fromJson(e),
+  ];
+
+  /// Returns true when the account was deleted — revoking
+  /// [ConsentPurpose.healthDataProcessing] deletes it immediately, with no
+  /// grace period.
+  Future<bool> setConsent(ConsentPurpose purpose, {required bool granted}) async {
+    final j = await _http.post('/me/consents', body: {'purpose': purpose.id, 'granted': granted});
+    return j?['account_deleted'] == true;
+  }
+
+  /// Hands the backend the one-time Sign in with Apple authorization code. The
+  /// backend exchanges it with Apple for a refresh token (that needs VIV's
+  /// private key, so it can't happen on the device) and uses it to revoke
+  /// Apple access when the account is finally deleted.
+  Future<void> saveAppleAuthorizationCode(String code) async {
+    await _http.post('/me/apple-credentials', body: {'authorization_code': code});
+  }
+
+  /// GDPR data export: a raw JSON dump of the user's current data.
+  Future<Map<String, dynamic>> exportData() async => (await _http.get('/me/export')) ?? const {};
 
   // ── Home ─────────────────────────────────────────────────────────────────
 
@@ -48,6 +84,12 @@ class VivApi {
 
   Future<OnboardingResponse> completeOnboarding(OnboardingRequest req) async =>
       OnboardingResponse.fromJson((await _http.post('/onboarding', body: req.toJson()))!);
+
+  /// For a "not a fit yet" answer: records the anonymous reason and deletes
+  /// the account immediately.
+  Future<void> reportIneligibility(IneligibilityReason reason) async {
+    await _http.post('/onboarding/ineligibility', body: {'reason': reason.id});
+  }
 
   // ── Weekly plan ──────────────────────────────────────────────────────────
 
@@ -96,6 +138,8 @@ class VivApi {
     required int setNumber,
     double? weightKg,
     int? reps,
+    // Omitted, never 0, when the day has no RIR target.
+    int? rir,
   }) async => SessionLog.fromJson(
     (await _http.post(
       '/training/weekly-plan/day/log-set',
@@ -105,6 +149,7 @@ class VivApi {
         'set_number': setNumber,
         'weight_kg': ?weightKg,
         'reps': ?reps,
+        'rir': ?rir,
       },
     ))!,
   );
@@ -137,6 +182,7 @@ class VivApi {
 
   Future<NutritionPlan?> nutritionPlan() async {
     final j = await _http.get('/nutrition/plan');
+    if (kDebugMode) _logNutritionPlan(j);
     return j == null ? null : NutritionPlan.fromJson(j);
   }
 
@@ -178,3 +224,33 @@ class VivApi {
 }
 
 final vivApiProvider = Provider<VivApi>((ref) => VivApi(ref.watch(apiClientProvider)));
+
+/// Debug only: the raw `/nutrition/plan` body, then every image URL in it,
+/// so a missing or wrong `image_url` is easy to spot in the console.
+void _logNutritionPlan(Object? j) {
+  if (j == null) {
+    debugPrint('*** /nutrition/plan *** 204, no plan');
+    return;
+  }
+  debugPrint('*** /nutrition/plan ***\n${const JsonEncoder.withIndent('  ').convert(j)}');
+  final urls = <String>[];
+  void walk(Object? v, String path) {
+    if (v is Map) {
+      for (final e in v.entries) {
+        if (e.key == 'image_url') urls.add('$path → ${e.value}');
+        walk(e.value, '$path.${e.key}');
+      }
+    } else if (v is List) {
+      for (final (i, x) in v.indexed) {
+        walk(x, '$path[$i]');
+      }
+    }
+  }
+
+  walk(j, '');
+  debugPrint(
+    urls.isEmpty
+        ? '*** /nutrition/plan *** no image_url fields in the response'
+        : '*** /nutrition/plan images (${urls.length}) ***\n${urls.join('\n')}',
+  );
+}

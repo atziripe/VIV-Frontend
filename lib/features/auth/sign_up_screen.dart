@@ -7,7 +7,6 @@ import '../../core/widgets/widgets.dart';
 import '../../router/app_router.dart';
 import 'auth_form.dart';
 import 'auth_repository.dart';
-import 'legal_footer.dart';
 
 /// 02 · Sign up
 class SignUpScreen extends ConsumerStatefulWidget {
@@ -18,6 +17,9 @@ class SignUpScreen extends ConsumerStatefulWidget {
 }
 
 class _SignUpScreenState extends ConsumerState<SignUpScreen> with AuthActionRunner {
+  @override
+  String get authScreen => 'sign_up';
+
   final _form = GlobalKey<FormState>();
   final _email = TextEditingController();
   final _password = TextEditingController();
@@ -41,7 +43,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> with AuthActionRunn
   Widget build(BuildContext context) {
     return VivPage(
       showBack: true,
-      topCenter: const VivWordmark(),
       bottom: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -50,11 +51,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> with AuthActionRunn
             loading: busy == AuthMethod.email,
             onPressed: busy == null ? _submit : null,
           ),
-          const SizedBox(height: VivSpace.sm),
-          const LegalFooter(prefix: 'By creating an account you agree to the'),
-          const SizedBox(height: VivSpace.xs),
+          const SizedBox(height: 4),
           SwitchLink(
-            text: 'Already have an account?',
+            text: 'Already have one?',
             action: 'Log in',
             onTap: () => context.pushReplacement(Routes.logIn),
           ),
@@ -63,7 +62,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> with AuthActionRunn
       children: [
         const PageHeader(
           title: 'Create your account',
-          subtitle: 'Takes about a minute. We\'ll shape your first week right after.',
+          subtitle: 'About a minute. Your first week is ready right after.',
         ),
         SocialSignIn(busy: busy, run: runAuth),
         AutofillGroup(
@@ -85,7 +84,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> with AuthActionRunn
                   label: 'Password',
                   controller: _password,
                   obscurable: true,
-                  helper: 'At least 8 characters',
+                  helper: '8+ characters',
                   textInputAction: TextInputAction.done,
                   autofillHints: const [AutofillHints.newPassword],
                   onSubmitted: (_) => _submit(),

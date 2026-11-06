@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/analytics/analytics.dart';
 import '../../core/theme/viv_theme.dart';
 import '../../core/utils/dates.dart';
 import '../../core/widgets/widgets.dart';
@@ -42,6 +43,8 @@ class _NutritionSetupScreenState extends ConsumerState<NutritionSetupScreen> {
             ),
             date: Dates.todayYmd(),
           );
+      ref.read(analyticsProvider).nutritionSetupCompleted();
+      ref.read(nutritionCopyPollsProvider.notifier).reset();
       ref.invalidate(nutritionPlanProvider);
       ref.invalidate(meProvider);
       if (mounted) context.pop();

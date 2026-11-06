@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:viv/core/utils/dates.dart';
+import 'package:viv/data/models/account.dart';
 import 'package:viv/data/models/catalog.dart';
 import 'package:viv/features/onboarding/onboarding_draft.dart';
 
@@ -35,6 +36,19 @@ void main() {
     expect(json.containsKey('weight_kg'), isFalse);
   });
 
+  test('sends the consents inside the onboarding body', () {
+    // Without health_data_processing: true the backend 400s with
+    // "consent required: health_data_processing".
+    expect(complete.copyWith(consent: true).toRequest().toJson()['consents'], {
+      'health_data_processing': true,
+      'ai_processing': false,
+    });
+    expect(complete.copyWith(consent: true).toRequest(aiProcessing: true).toJson()['consents'], {
+      'health_data_processing': true,
+      'ai_processing': true,
+    });
+  });
+
   test('"Varies" cycle length lets the backend default', () {
     final json = complete.copyWith(cycleLength: CycleLength.varies).toRequest().toJson();
     expect(json.containsKey('cycle_duration'), isFalse);
@@ -43,14 +57,6 @@ void main() {
   test('exact date overrides the rough bucket', () {
     final d = complete.copyWith(lastPeriodExact: DateTime(2026, 9, 2));
     expect(d.toRequest().lastCycleStart, '2026-09-02');
-  });
-
-  test('only natural / not sure pass the fit check', () {
-    expect(CycleSituation.values.where((s) => s.isFit), [
-      CycleSituation.natural,
-      CycleSituation.notSure,
-    ]);
-    expect(CycleSituation.notSure.apiValue, 'not_sure');
   });
 
   test('step completeness gates Continue', () {
@@ -77,5 +83,16 @@ void main() {
     };
     final ids = {for (final c in ActivityChoice.values) ...c.activities.map((a) => a.id)};
     expect(ids, accepted);
+  });
+
+  test('only a natural cycle is a fit; every other answer has an ineligibility reason', () {
+    for (final s in CycleSituation.values) {
+      expect(s.isFit, s == CycleSituation.natural, reason: s.name);
+      expect(s.ineligibilityReason == null, s.isFit, reason: s.name);
+    }
+    expect(CycleSituation.notSure.ineligibilityReason, IneligibilityReason.notSure);
+    expect(CycleSituation.hormonal.ineligibilityReason?.id, 'hormonal_contraception');
+    expect(CycleSituation.pregnant.ineligibilityReason?.id, 'pregnant_or_postpartum');
+    expect(CycleSituation.menopause.ineligibilityReason?.id, 'perimenopause_or_menopause');
   });
 }

@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/theme/viv_theme.dart';
+import '../../core/utils/legal_links.dart';
 
 /// "By continuing you agree to VIV's Terms and Privacy Policy."
 class LegalFooter extends StatefulWidget {
@@ -14,9 +15,9 @@ class LegalFooter extends StatefulWidget {
 }
 
 class _LegalFooterState extends State<LegalFooter> {
-  // TODO(product): point these at the real Terms / Privacy URLs.
-  late final _terms = TapGestureRecognizer()..onTap = () {};
-  late final _privacy = TapGestureRecognizer()..onTap = () {};
+  late final _terms = TapGestureRecognizer()..onTap = () => openLegalPage(context, LegalPage.terms);
+  late final _privacy = TapGestureRecognizer()
+    ..onTap = () => openLegalPage(context, LegalPage.privacy);
 
   @override
   void dispose() {
@@ -28,11 +29,11 @@ class _LegalFooterState extends State<LegalFooter> {
   @override
   Widget build(BuildContext context) {
     final c = context.viv;
-    final base = VivType.caption.copyWith(color: c.textTertiary);
+    final base = VivType.legal.copyWith(color: c.subtle);
     final link = base.copyWith(
-      color: c.textSecondary,
+      color: c.muted,
       decoration: TextDecoration.underline,
-      decorationColor: c.textSecondary,
+      decorationColor: c.muted,
     );
     return Text.rich(
       TextSpan(
@@ -45,7 +46,6 @@ class _LegalFooterState extends State<LegalFooter> {
           const TextSpan(text: '.'),
         ],
       ),
-      textAlign: TextAlign.center,
     );
   }
 }

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../profile/account_actions.dart';
 import '../../core/theme/viv_theme.dart';
 import '../../core/widgets/widgets.dart';
 import '../../data/providers.dart';
 import '../../router/session.dart';
-import '../auth/auth_repository.dart';
 
 /// Shown while the session resolves, and as the retry screen if `/me` fails.
 class SplashScreen extends ConsumerWidget {
@@ -30,10 +30,7 @@ class SplashScreen extends ConsumerWidget {
                         error: ref.read(meProvider).error ?? 'unknown',
                         onRetry: () => ref.invalidate(meProvider),
                       ),
-                      VivButton.text(
-                        label: 'Sign out',
-                        onPressed: () => ref.read(authRepositoryProvider).signOut(),
-                      ),
+                      VivButton.text(label: 'Sign out', onPressed: () => signOutLocally(ref)),
                     ],
                   ),
                 )
@@ -44,7 +41,7 @@ class SplashScreen extends ConsumerWidget {
                     const SizedBox(height: VivSpace.lg),
                     SizedBox.square(
                       dimension: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: c.textTertiary),
+                      child: CircularProgressIndicator(strokeWidth: 2, color: c.subtle),
                     ),
                   ],
                 ),

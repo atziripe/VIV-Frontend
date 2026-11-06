@@ -46,7 +46,7 @@ class LoadingView extends StatelessWidget {
               Text(
                 message!,
                 textAlign: TextAlign.center,
-                style: VivType.bodySmall.copyWith(color: c.textSecondary),
+                style: VivType.bodySmall.copyWith(color: c.muted),
               ),
             ],
           ],
@@ -71,15 +71,12 @@ class ErrorView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              'Something went sideways',
-              style: VivType.cardTitle.copyWith(color: c.textPrimary),
-            ),
+            Text('Something went sideways', style: VivType.cardTitle.copyWith(color: c.ink)),
             const SizedBox(height: VivSpace.xs),
             Text(
               userMessageFor(error),
               textAlign: TextAlign.center,
-              style: VivType.bodySmall.copyWith(color: c.textSecondary),
+              style: VivType.bodySmall.copyWith(color: c.muted),
             ),
             if (onRetry != null) ...[
               const SizedBox(height: VivSpace.lg),

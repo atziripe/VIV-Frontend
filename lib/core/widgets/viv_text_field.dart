@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../theme/viv_theme.dart';
-import 'viv_page.dart';
 
 /// Labelled text field. Pass [obscurable] for passwords to get the
 /// "Show / Hide" trailing toggle from the sign-up design.
@@ -50,7 +49,20 @@ class _VivTextFieldState extends State<VivTextField> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        FieldLabel(widget.label, trailing: widget.labelTrailing),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 7),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  widget.label,
+                  style: VivType.label.copyWith(fontSize: 13.5, color: c.ink2),
+                ),
+              ),
+              ?widget.labelTrailing,
+            ],
+          ),
+        ),
         TextFormField(
           controller: widget.controller,
           obscureText: _obscured,
@@ -63,20 +75,17 @@ class _VivTextFieldState extends State<VivTextField> {
           textCapitalization: widget.textCapitalization,
           autocorrect: !widget.obscurable,
           enableSuggestions: !widget.obscurable,
-          style: VivType.body.copyWith(color: c.textPrimary),
+          style: VivType.body.copyWith(color: c.ink),
           decoration: InputDecoration(
             hintText: widget.hint,
             helperText: widget.helper,
-            helperStyle: VivType.caption.copyWith(color: c.textTertiary),
+            helperStyle: VivType.caption.copyWith(color: c.subtle),
             suffixIcon: widget.obscurable
                 ? TextButton(
                     onPressed: () => setState(() => _obscured = !_obscured),
                     child: Text(
                       _obscured ? 'Show' : 'Hide',
-                      style: VivType.caption.copyWith(
-                        color: c.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: VivType.caption.copyWith(color: c.accent, fontWeight: FontWeight.w600),
                     ),
                   )
                 : null,

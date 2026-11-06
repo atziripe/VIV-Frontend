@@ -5,21 +5,57 @@ library;
 
 /// VIV-101 activity taxonomy — the 11 ids `POST /onboarding` accepts.
 enum Activity {
-  strength('strength', 'Strength'),
-  pilates('pilates', 'Pilates'),
-  barre('barre', 'Barre'),
-  running('running', 'Running'),
-  cycling('cycling', 'Cycling'),
-  hiit('hiit', 'HIIT'),
-  functional('functional', 'Functional'),
-  yoga('yoga', 'Yoga'),
-  mobility('mobility', 'Mobility'),
-  swimming('swimming', 'Swimming'),
-  teamRacketSports('team_racket_sports', 'Team or racket sport');
+  // Ranges mirror the backend taxonomy (internal/core/activity/taxonomy.go).
+  // `PATCH /training/weekly-plan/day` 400s on anything outside them, and on
+  // any muscle group but the activity's default.
+  strength('strength', 'Strength', ['L', 'M', 'H'], ['L', 'M'], 'full_body'),
+  pilates('pilates', 'Pilates', ['L', 'M'], ['L'], 'full_body'),
+  barre('barre', 'Barre', ['L', 'M'], ['L', 'M'], 'lower'),
+  running('running', 'Running', ['L', 'M', 'H'], ['H'], 'lower'),
+  cycling('cycling', 'Cycling', ['L', 'M', 'H'], ['L'], 'lower'),
+  hiit('hiit', 'HIIT', ['H'], ['M', 'H'], 'full_body'),
+  functional('functional', 'Functional', ['L', 'M', 'H'], ['L', 'M', 'H'], 'full_body'),
+  yoga('yoga', 'Yoga', ['AR', 'L', 'M'], ['L'], 'full_body'),
+  mobility('mobility', 'Mobility', ['AR', 'L'], ['L'], 'full_body'),
+  swimming('swimming', 'Swimming', ['L', 'M', 'H'], ['L'], 'full_body'),
+  teamRacketSports(
+    'team_racket_sports',
+    'Team or racket sport',
+    ['L', 'M', 'H'],
+    ['M', 'H'],
+    'full_body',
+  );
 
-  const Activity(this.id, this.label);
+  const Activity(this.id, this.label, this.intensities, this.impacts, this.defaultMuscleGroup);
   final String id;
   final String label;
+
+  /// Intensity codes this activity takes, lowest first.
+  final List<String> intensities;
+
+  /// Impact codes this activity takes, lowest first.
+  final List<String> impacts;
+
+  /// The only muscle group the backend accepts for it today.
+  final String defaultMuscleGroup;
+
+  /// [code] if this activity takes it, else the closest one it does.
+  String intensityFor(String? code) => _closest(intensities, code, _intensityOrder);
+
+  /// [code] if this activity takes it, else the closest; lowest by default.
+  String impactFor(String? code) => _closest(impacts, code, _impactOrder);
+
+  static const _intensityOrder = ['AR', 'L', 'M', 'H'];
+  static const _impactOrder = ['L', 'M', 'H'];
+
+  static String _closest(List<String> allowed, String? code, List<String> order) {
+    if (code != null && allowed.contains(code)) return code;
+    if (code == null) return allowed.first;
+    final want = order.indexOf(code);
+    return allowed.reduce(
+      (best, c) => (order.indexOf(c) - want).abs() < (order.indexOf(best) - want).abs() ? c : best,
+    );
+  }
 
   static Activity? fromId(String? id) {
     for (final a in values) {
@@ -38,9 +74,9 @@ enum Activity {
 
 /// VIV-102 goal — a single value.
 enum Goal {
-  consistencyWellbeing('consistency_wellbeing', 'Consistency & wellbeing'),
-  strengthMuscle('strength_muscle', 'Strength & muscle'),
-  endurancePerformance('endurance_performance', 'Endurance & performance'),
+  consistencyWellbeing('consistency_wellbeing', 'Showing up consistently'),
+  strengthMuscle('strength_muscle', 'Getting stronger'),
+  endurancePerformance('endurance_performance', 'Endurance'),
   bodyComposition('body_composition', 'Body composition');
 
   const Goal(this.id, this.label);
@@ -102,21 +138,14 @@ enum CyclePhase {
     return null;
   }
 
-  /// Home status line, first half: "Energy climbing".
-  String get energyTrend => switch (this) {
-    menstrual => 'Energy low',
-    follicular => 'Energy climbing',
-    ovulatory => 'Energy peaking',
-    earlyLuteal => 'Energy steady',
-    lateLuteal => 'Energy winding down',
-  };
-
-  /// Home status line, second half on a training day: "good week for load".
-  String get trainingHint => switch (this) {
-    menstrual => 'keep it gentle',
-    follicular || ovulatory => 'good week for load',
-    earlyLuteal => 'hold steady',
-    lateLuteal => 'lighter is smarter',
+  /// Display name (McNulty et al. 2020). There is no "menstrual" phase:
+  /// menstruation sits inside early follicular.
+  String get displayName => switch (this) {
+    menstrual => 'Early follicular',
+    follicular => 'Late follicular',
+    ovulatory => 'Ovulatory',
+    earlyLuteal => 'Early luteal',
+    lateLuteal => 'Late luteal',
   };
 }
 

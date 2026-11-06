@@ -119,6 +119,23 @@ class ExerciseBlock {
   );
 }
 
+/// Exercise priority on the real Strength path.
+enum ExercisePriority {
+  main('Main'),
+  accessory('Accessory'),
+  optional('Optional');
+
+  const ExercisePriority(this.value);
+  final String value;
+
+  static ExercisePriority? fromValue(String? v) {
+    for (final p in values) {
+      if (p.value.toLowerCase() == v?.toLowerCase()) return p;
+    }
+    return null;
+  }
+}
+
 class Exercise {
   const Exercise({
     required this.id,
@@ -128,30 +145,69 @@ class Exercise {
     this.restSeconds,
     this.loadGuidance,
     this.formCue,
+    this.slot,
+    this.priority,
+    this.equipment = const [],
+    this.prescriptionText,
   });
 
   final String id;
   final String name;
   final int sets;
 
-  /// e.g. "8-10" or "8-10 / leg"
+  /// e.g. "8-10" or "8-10 / leg". Empty on the real Strength path.
   final String? reps;
+
+  /// Rest after each set. The real Strength path sends it from the
+  /// training config (always positive); 0 or absent reads as "not given".
   final int? restSeconds;
   final String? loadGuidance;
   final String? formCue;
 
-  /// "3 × 8–10"
-  String get prescription => reps == null ? '$sets sets' : '$sets × ${reps!.replaceAll('-', '–')}';
+  // Real Strength path only (VIV-112); absent on every other path.
+  final String? slot;
+  final ExercisePriority? priority;
+  final List<String> equipment;
 
-  factory Exercise.fromJson(Json j) => Exercise(
-    id: j.strOr('id'),
-    name: j.strOr('name'),
-    sets: j.integer('sets') ?? 0,
-    reps: j.str('reps'),
-    restSeconds: j.integer('rest_seconds'),
-    loadGuidance: j.str('load_guidance'),
-    formCue: j.str('form_cue'),
-  );
+  /// "3 × 8–10 @ RIR 3". Free text: shown verbatim, never parsed.
+  final String? prescriptionText;
+
+  /// The real Strength path prescribes an RIR target, so sets can carry one.
+  bool get takesRir => prescriptionText != null;
+
+  /// "3 × 8–10 @ RIR 3" when the plan sends it, else "3 × 8–10".
+  String get prescription =>
+      prescriptionText ?? (reps == null ? '$sets sets' : '$sets × ${reps!.replaceAll('-', '–')}');
+
+  factory Exercise.fromJson(Json j) {
+    final rest = j.integer('rest_seconds');
+    return Exercise(
+      id: j.strOr('id'),
+      name: j.strOr('name'),
+      sets: j.integer('sets') ?? 0,
+      reps: j.str('reps'),
+      restSeconds: rest == null || rest <= 0 ? null : rest,
+      loadGuidance: j.str('load_guidance'),
+      formCue: j.str('form_cue'),
+      slot: j.str('slot'),
+      priority: ExercisePriority.fromValue(j.str('priority')),
+      equipment: j.strings('equipment'),
+      prescriptionText: j.str('prescription_text'),
+    );
+  }
+}
+
+/// A cascade adjustment applied to a Strength session ("load_reduced").
+class TierChange {
+  const TierChange({required this.lever, this.detail});
+
+  final String lever;
+
+  /// Human-readable reason, shown as is.
+  final String? detail;
+
+  factory TierChange.fromJson(Json j) =>
+      TierChange(lever: j.strOr('lever'), detail: j.str('detail'));
 }
 
 /// `GET /training/weekly-plan/day` — full session content for one day.
@@ -176,6 +232,13 @@ class DayDetail {
     this.mainExercises = const [],
     this.cooldown,
     this.session,
+    this.strengthBlockNumber,
+    this.strengthWeek,
+    this.strengthConfigStatus,
+    this.strengthTierChanges = const [],
+    this.strengthRampUpNote,
+    this.strengthWarmupCooldownStatus,
+    this.strengthRestSecondsStatus,
   });
 
   final String date;
@@ -201,6 +264,29 @@ class DayDetail {
 
   /// In-progress or completed log, used to resume mid-workout.
   final SessionLog? session;
+
+  // Real Strength assembly only (VIV-112). Rolled out server-side per user,
+  // so every one of these may be absent.
+
+  /// Which 4-week block, and the week (1-4) within it.
+  final int? strengthBlockNumber;
+  final int? strengthWeek;
+
+  /// Traceability flag ("draft_not_reviewed_by_sport_scientist"). Must be
+  /// surfaced whenever the session is shown.
+  final String? strengthConfigStatus;
+
+  /// Adjustments applied to this session; empty when none.
+  final List<TierChange> strengthTierChanges;
+
+  /// Shown once, before the first exercise.
+  final String? strengthRampUpNote;
+
+  /// Traceability flag for the warm-up and cool-down content.
+  final String? strengthWarmupCooldownStatus;
+
+  /// Traceability flag for each exercise's `rest_seconds`.
+  final String? strengthRestSecondsStatus;
 
   String get displayTitle => sessionTitle(
     activityType: activityType,
@@ -233,12 +319,59 @@ class DayDetail {
       mainExercises: j.list('main_exercises', Exercise.fromJson),
       cooldown: c == null ? null : ExerciseBlock.fromJson(c),
       session: s == null ? null : SessionLog.fromJson(s),
+      strengthBlockNumber: j.integer('strength_block_number'),
+      strengthWeek: j.integer('strength_week'),
+      strengthConfigStatus: j.str('strength_config_status'),
+      strengthTierChanges: j.list('strength_tier_changes', TierChange.fromJson),
+      strengthRampUpNote: j.str('strength_ramp_up_note'),
+      strengthWarmupCooldownStatus: j.str('strength_warmup_cooldown_status'),
+      strengthRestSecondsStatus: j.str('strength_rest_seconds_status'),
     );
   }
 }
 
 /// `PATCH /training/weekly-plan/day` body. Null [activityType] = rest day.
 class DaySlotEdit {
+  /// A slot the backend will accept for [activity]: intensity and impact
+  /// moved to the nearest value it takes, muscle group its default.
+  factory DaySlotEdit.forActivity({
+    required String date,
+    required Activity activity,
+    String? intensity,
+    String? impact,
+  }) => DaySlotEdit(
+    date: date,
+    activityType: activity.id,
+    intensity: activity.intensityFor(intensity),
+    impact: activity.impactFor(impact),
+    muscleGroup: activity.defaultMuscleGroup,
+  );
+
+  /// Applies a check-in suggestion. An activity id the app doesn't know is
+  /// sent as is, for the backend to judge.
+  factory DaySlotEdit.fromSuggestion(
+    String date, {
+    String? activityType,
+    String? intensity,
+    String? impact,
+  }) {
+    final activity = Activity.fromId(activityType);
+    if (activity == null) {
+      return DaySlotEdit(
+        date: date,
+        activityType: activityType,
+        intensity: intensity,
+        impact: impact,
+      );
+    }
+    return DaySlotEdit.forActivity(
+      date: date,
+      activity: activity,
+      intensity: intensity,
+      impact: impact,
+    );
+  }
+
   const DaySlotEdit({
     required this.date,
     this.activityType,

@@ -1,13 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/utils/dates.dart';
+import '../../data/models/account.dart';
 import '../../data/models/catalog.dart';
 import '../../data/models/onboarding.dart';
 import '../auth/auth_repository.dart';
 
 /// 00 · Fit check — "Which describes you right now?"
 enum CycleSituation {
-  natural('Natural menstrual cycle'),
+  natural('Natural cycle'),
   hormonal('Hormonal contraception', 'pill, IUD, implant, ring'),
   pregnant('Pregnant or postpartum'),
   menopause('Perimenopause or menopause'),
@@ -17,8 +18,36 @@ enum CycleSituation {
   final String label;
   final String? hint;
 
-  /// VIV's guidance is calibrated to a natural cycle; others see "not a fit yet".
-  bool get isFit => this == natural || this == notSure;
+  /// VIV's guidance is calibrated to a natural cycle; every other answer,
+  /// "I'm not sure" included, sees "not a fit yet".
+  bool get isFit => this == natural;
+
+  /// `POST /onboarding/ineligibility` reason; null for [natural].
+  IneligibilityReason? get ineligibilityReason => switch (this) {
+    natural => null,
+    hormonal => IneligibilityReason.hormonalContraception,
+    pregnant => IneligibilityReason.pregnantOrPostpartum,
+    menopause => IneligibilityReason.perimenopauseOrMenopause,
+    notSure => IneligibilityReason.notSure,
+  };
+
+  /// Why VIV doesn't fit yet, for the "not a fit" screen.
+  String get notAFitReason => switch (this) {
+    hormonal =>
+      'Our guidance is tuned to a natural cycle. On hormonal contraception that timing '
+          'doesn\'t apply, and a plan built on physiology that isn\'t yours is worse than '
+          'no plan.\n\nContraception support is the version we\'re building next.',
+    pregnant =>
+      'Pregnancy and postpartum change your body in ways VIV\'s plan doesn\'t account for '
+          'yet, and a plan built on physiology that isn\'t yours is worse than no plan.',
+    menopause =>
+      'In perimenopause and menopause cycle timing shifts in ways VIV\'s guidance isn\'t '
+          'built for yet, and a plan built on physiology that isn\'t yours is worse than '
+          'no plan.',
+    natural || notSure =>
+      'Our guidance is tuned to a natural menstrual cycle. If you\'re not sure yours is '
+          'one, a plan built on timing that may not apply is worse than no plan.',
+  };
 
   /// `cycle_type` value. Anything but the three documented phrases is
   /// stored as `not_sure`.
@@ -42,7 +71,7 @@ enum ActivityChoice {
   yoga('Yoga', [Activity.yoga]),
   mobility('Mobility', [Activity.mobility]),
   swimming('Swimming', [Activity.swimming]),
-  team('Team or racket sport', [Activity.teamRacketSports]);
+  team('Team or racket', [Activity.teamRacketSports]);
 
   const ActivityChoice(this.label, this.activities);
   final String label;
@@ -61,12 +90,17 @@ enum DaysPerWeek {
 }
 
 enum ActivityLevel {
-  deskBound('Desk-bound'),
-  someMovement('Some movement'),
-  onMyFeet('On my feet'),
-  physicalWork('Physical work');
+  deskBound('Desk-bound', 'Desk'),
+  someMovement('Some movement', 'Mixed'),
+  onMyFeet('On my feet', 'On feet'),
+  physicalWork('Physical work', 'Physical');
 
-  const ActivityLevel(this.label);
+  const ActivityLevel(this.apiValue, this.label);
+
+  /// `daily_activity_level` value (unchanged for the backend).
+  final String apiValue;
+
+  /// Chip label.
   final String label;
 }
 
@@ -105,7 +139,6 @@ class OnboardingDraft {
     this.activities = const [],
     this.goal,
     this.daysPerWeek,
-    this.hardDays = const {},
     this.activityLevel,
     this.lastPeriod,
     this.lastPeriodExact,
@@ -125,10 +158,6 @@ class OnboardingDraft {
   final Goal? goal;
   final DaysPerWeek? daysPerWeek;
 
-  /// Days that usually fall apart (1 = Monday … 7 = Sunday); VIV puts the
-  /// lightest sessions there.
-  // TODO(api): no backend field for this yet, so it is not sent.
-  final Set<int> hardDays;
   final ActivityLevel? activityLevel;
   final LastPeriod? lastPeriod;
   final DateTime? lastPeriodExact;
@@ -148,7 +177,8 @@ class OnboardingDraft {
       lastPeriodExact ??
       (lastPeriod == null ? null : Dates.today().subtract(Duration(days: lastPeriod!.daysAgo)));
 
-  OnboardingRequest toRequest() {
+  /// [aiProcessing] is the optional AI consent from the consent screen.
+  OnboardingRequest toRequest({bool aiProcessing = false}) {
     final ids = <String>[];
     for (final choice in activities) {
       for (final a in choice.activities) {
@@ -165,9 +195,11 @@ class OnboardingDraft {
       cycleDuration: cycleLength?.days?.toString(),
       periodDuration: periodLength?.toString(),
       trainingOften: daysPerWeek?.apiValue,
-      dailyActivityLevel: activityLevel?.label,
+      dailyActivityLevel: activityLevel?.apiValue,
       activities: ids,
       goalId: goal!.id,
+      healthDataConsent: consent,
+      aiProcessingConsent: aiProcessing,
     );
   }
 
@@ -180,7 +212,6 @@ class OnboardingDraft {
     List<ActivityChoice>? activities,
     Goal? goal,
     DaysPerWeek? daysPerWeek,
-    Set<int>? hardDays,
     ActivityLevel? activityLevel,
     LastPeriod? lastPeriod,
     DateTime? lastPeriodExact,
@@ -199,7 +230,6 @@ class OnboardingDraft {
       activities: activities ?? this.activities,
       goal: goal ?? this.goal,
       daysPerWeek: daysPerWeek ?? this.daysPerWeek,
-      hardDays: hardDays ?? this.hardDays,
       activityLevel: activityLevel ?? this.activityLevel,
       lastPeriod: clearLastPeriod ? null : (lastPeriod ?? this.lastPeriod),
       lastPeriodExact: clearLastPeriodExact ? null : (lastPeriodExact ?? this.lastPeriodExact),
@@ -224,12 +254,6 @@ class OnboardingDraftNotifier extends Notifier<OnboardingDraft> {
     final list = [...state.activities];
     list.contains(choice) ? list.remove(choice) : list.add(choice);
     state = state.copyWith(activities: list);
-  }
-
-  void toggleHardDay(int weekday) {
-    final days = {...state.hardDays};
-    days.contains(weekday) ? days.remove(weekday) : days.add(weekday);
-    state = state.copyWith(hardDays: days);
   }
 }
 

@@ -4,10 +4,12 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/analytics/analytics.dart';
 import '../core/network/api_exception.dart';
 import '../core/utils/dates.dart';
 import '../features/auth/auth_repository.dart';
 import 'api/viv_api.dart';
+import 'models/account.dart';
 import 'models/checkin.dart';
 import 'models/home.dart';
 import 'models/me.dart';
@@ -28,6 +30,14 @@ final meProvider = FutureProvider<Me?>((ref) async {
   return ref.watch(vivApiProvider).getMe();
 });
 
+/// `GET /me/consents`, keyed by purpose. Empty while signed out.
+final consentsProvider = FutureProvider<Map<ConsentPurpose, ConsentItem>>((ref) async {
+  final user = await ref.watch(authStateProvider.future);
+  if (user == null) return {};
+  final items = await ref.watch(vivApiProvider).consents();
+  return {for (final i in items) i.purpose: i};
+});
+
 /// The week covering today (null if nothing has been generated yet).
 final currentWeekProvider = FutureProvider<WeeklyPlan?>((ref) {
   return ref.watch(vivApiProvider).currentWeek(Dates.todayYmd());
@@ -46,15 +56,54 @@ final weeklyNoteProvider = FutureProvider<String?>((ref) {
   return ref.watch(vivApiProvider).weeklyNote(Dates.todayYmd());
 });
 
+/// Whether the meal-copy polish will ever run: the backend skips it without
+/// the `ai_processing` consent, and `copy_enriched` then stays false.
+final aiCopyEnabledProvider = FutureProvider<bool>((ref) async {
+  try {
+    final consents = await ref.watch(consentsProvider.future);
+    return consents[ConsentPurpose.aiProcessing]?.granted ?? false;
+  } catch (_) {
+    return false;
+  }
+});
+
+/// Re-fetches of the plan made while waiting for `copy_enriched`.
+class NutritionCopyPolls extends Notifier<int> {
+  /// 3, 6, 12, 24, 48 s apart: about a minute and a half, then stop.
+  static const maxPolls = 5;
+
+  @override
+  int build() => 0;
+
+  void count() => state++;
+  void reset() => state = 0;
+}
+
+final nutritionCopyPollsProvider = NotifierProvider<NutritionCopyPolls, int>(
+  NutritionCopyPolls.new,
+);
+
 /// Null when the user hasn't opted into the nutrition module yet.
+///
 /// While `copy_enriched` is false the meal names are placeholders, so the
-/// plan re-fetches itself until the async copy pass has finished.
+/// plan re-fetches itself until the async copy pass has finished, backing
+/// off and giving up after [NutritionCopyPolls.maxPolls]. It doesn't poll at
+/// all without the AI consent: that pass never runs.
 final nutritionPlanProvider = FutureProvider<NutritionPlan?>((ref) async {
   try {
     final plan = await ref.watch(vivApiProvider).nutritionPlan();
-    if (plan != null && !plan.copyEnriched) {
-      final timer = Timer(const Duration(seconds: 6), ref.invalidateSelf);
-      ref.onDispose(timer.cancel);
+    final polls = ref.read(nutritionCopyPollsProvider.notifier);
+    if (plan == null || plan.copyEnriched) {
+      polls.reset();
+    } else if (await ref.read(aiCopyEnabledProvider.future)) {
+      final done = ref.read(nutritionCopyPollsProvider);
+      if (done < NutritionCopyPolls.maxPolls) {
+        final timer = Timer(Duration(seconds: 3 << done), () {
+          polls.count();
+          ref.invalidateSelf();
+        });
+        ref.onDispose(timer.cancel);
+      }
     }
     return plan;
   } on ApiException catch (e) {
@@ -93,6 +142,9 @@ class TodayCheckinNotifier extends Notifier<DailyCheckinResult?> {
     final result = await ref.read(vivApiProvider).submitCheckin(request);
     await ref.read(sharedPreferencesProvider).setString(_key, jsonEncode(result.toJson()));
     state = result;
+    ref
+        .read(analyticsProvider)
+        .checkinCompleted(need: request.need.value, suggestionShown: result.suggestion != null);
     // A check-in can generate the week or adapt today.
     ref.invalidate(currentWeekProvider);
     ref.invalidate(homeTodayProvider);
@@ -118,6 +170,7 @@ class TodayCheckinNotifier extends Notifier<DailyCheckinResult?> {
     );
     await ref.read(sharedPreferencesProvider).setString(_key, jsonEncode(updated.toJson()));
     state = updated;
+    ref.read(analyticsProvider).checkinSuggestionAccepted();
   }
 
   Future<void> clear() async {
@@ -129,3 +182,87 @@ class TodayCheckinNotifier extends Notifier<DailyCheckinResult?> {
 final todayCheckinProvider = NotifierProvider<TodayCheckinNotifier, DailyCheckinResult?>(
   TodayCheckinNotifier.new,
 );
+
+/// What she chose after today's check-in. Drives the Home field's tag
+/// ("Adjusted · your call", "Kept · your call").
+enum TodayDecision {
+  /// Took the proposed session.
+  adjusted,
+
+  /// Kept the original when VIV proposed a change.
+  kept,
+
+  /// Nothing to change; she confirmed the plan.
+  asPlanned,
+
+  /// Skipped the check-in: usual plan.
+  skipped,
+}
+
+/// Today's decision plus her answers in short ("Restless · Heavier ·
+/// Packed · Meet me") for the "Checked in" row. Device-only: the API has
+/// neither a skip nor a "kept" state.
+class TodayLoop {
+  const TodayLoop({required this.date, required this.decision, this.summary, this.answers});
+
+  final String date;
+  final TodayDecision decision;
+  final String? summary;
+
+  /// Today's four answers, to rebuild "Why today" on Home.
+  final DailyCheckinRequest? answers;
+
+  Map<String, dynamic> toJson() => {
+    'date': date,
+    'decision': decision.name,
+    'summary': ?summary,
+    'answers': ?answers?.toJson(),
+  };
+
+  static TodayLoop? fromJson(Map<String, dynamic> j) {
+    final decision = TodayDecision.values.asNameMap()[j['decision']];
+    final date = j['date'];
+    if (decision == null || date is! String) return null;
+    final a = j['answers'];
+    return TodayLoop(
+      date: date,
+      decision: decision,
+      summary: j['summary'] as String?,
+      answers: a is Map<String, dynamic> ? DailyCheckinRequest.tryFromJson(a) : null,
+    );
+  }
+}
+
+class TodayLoopNotifier extends Notifier<TodayLoop?> {
+  static const _key = 'viv.checkin.decision';
+
+  @override
+  TodayLoop? build() {
+    ref.watch(authStateProvider);
+    final raw = ref.read(sharedPreferencesProvider).getString(_key);
+    if (raw == null) return null;
+    try {
+      final loop = TodayLoop.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+      return loop?.date == Dates.todayYmd() ? loop : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> decide(
+    TodayDecision decision, {
+    String? summary,
+    DailyCheckinRequest? answers,
+  }) async {
+    final loop = TodayLoop(
+      date: Dates.todayYmd(),
+      decision: decision,
+      summary: summary ?? state?.summary,
+      answers: answers ?? state?.answers,
+    );
+    state = loop;
+    await ref.read(sharedPreferencesProvider).setString(_key, jsonEncode(loop.toJson()));
+  }
+}
+
+final todayLoopProvider = NotifierProvider<TodayLoopNotifier, TodayLoop?>(TodayLoopNotifier.new);

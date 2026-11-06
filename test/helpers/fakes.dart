@@ -125,8 +125,15 @@ final fakeNutrition = NutritionPlan.fromJson({
             'options': [
               {
                 'name': 'Greek yogurt, apple & peanut butter bowl',
+                'image_url': 'https://img.example/breakfast_bowl.jpg',
                 'ingredients': [
-                  {'name': 'Greek yogurt', 'amount_g': 200, 'approx': '1 cup'},
+                  {
+                    'name': 'Greek yogurt',
+                    'amount_g': 200,
+                    'approx': '1 cup',
+                    'image_url': 'https://img.example/yogurt.jpg',
+                  },
+                  {'name': 'Apple', 'amount_g': 150},
                 ],
               },
               {'name': 'Eggs on toast, twice over'},
@@ -184,6 +191,8 @@ final homeMoments = <String, HomeToday>{
     'weekday': 'thursday',
     'week_number': 6,
     'current_phase': 'follicular',
+    'next_phase': 'ovulatory',
+    'days_until_next_phase': 3,
     'now_card': {
       'kind': 'checkin',
       'status': 'pending',
@@ -228,6 +237,8 @@ final homeMoments = <String, HomeToday>{
     'weekday': 'thursday',
     'week_number': 6,
     'current_phase': 'follicular',
+    'next_phase': 'ovulatory',
+    'days_until_next_phase': 3,
     'now_card': {
       'kind': 'session',
       'status': 'pending',
@@ -263,6 +274,8 @@ final homeMoments = <String, HomeToday>{
     'weekday': 'thursday',
     'week_number': 6,
     'current_phase': 'follicular',
+    'next_phase': 'ovulatory',
+    'days_until_next_phase': 3,
     'now_card': {
       'kind': 'lights_out',
       'status': 'pending',
@@ -291,6 +304,8 @@ final homeMoments = <String, HomeToday>{
     'weekday': 'friday',
     'week_number': 6,
     'current_phase': 'follicular',
+    'next_phase': 'ovulatory',
+    'days_until_next_phase': 3,
     'now_card': {
       'kind': 'recovery_action',
       'status': 'pending',
@@ -310,22 +325,34 @@ final homeMoments = <String, HomeToday>{
 };
 
 /// Signed-in, fully onboarded user with a built week and nutrition plan.
-Future<List<Override>> appOverrides({HomeToday? home}) async {
+Future<List<Override>> appOverrides({
+  HomeToday? home,
+  AuthRepository? auth,
+  Me? me,
+  NutritionPlan? nutrition,
+  bool noWeek = false,
+}) async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
-  final auth = MockAuthRepository();
-  when(() => auth.authStateChanges()).thenAnswer((_) => Stream.value(null));
+  if (auth == null) {
+    final mock = MockAuthRepository();
+    when(() => mock.authStateChanges()).thenAnswer((_) => Stream.value(null));
+    auth = mock;
+  }
   return [
     sharedPreferencesProvider.overrideWithValue(prefs),
     authRepositoryProvider.overrideWithValue(auth),
     authStateProvider.overrideWith((_) => Stream<User?>.value(MockUser())),
-    meProvider.overrideWith((_) async => fakeMe),
+    meProvider.overrideWith((_) async => me ?? fakeMe),
+    consentsProvider.overrideWith((_) async => {}),
     currentWeekProvider.overrideWith((_) async => fakeWeek()),
     weeklyNoteProvider.overrideWith((_) async => null),
     dayDetailProvider.overrideWith((_, _) async => fakeDay),
-    nutritionPlanProvider.overrideWith((_) async => fakeNutrition),
+    nutritionPlanProvider.overrideWith((_) async => nutrition ?? fakeNutrition),
     recoveryCardProvider.overrideWith((_, _) async => fakeRecovery),
-    homeTodayProvider.overrideWith((_) async => home ?? homeMoments['before check-in']),
+    homeTodayProvider.overrideWith(
+      (_) async => noWeek ? null : home ?? homeMoments['before check-in'],
+    ),
   ];
 }
 
@@ -336,22 +363,40 @@ Future<void> pumpScreen(
   Size size = const Size(390, 844),
   Brightness brightness = Brightness.light,
   HomeToday? home,
+  AuthRepository? auth,
+  Me? me,
+  NutritionPlan? nutrition,
+  bool noWeek = false,
+  List<Override> extra = const [],
+  List<RouteBase> extraRoutes = const [],
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
 
   final router = GoRouter(
-    routes: [GoRoute(path: '/', builder: (_, _) => screen)],
+    routes: [
+      GoRoute(path: '/', builder: (_, _) => screen),
+      ...extraRoutes,
+    ],
   );
   await tester.pumpWidget(
     ProviderScope(
-      overrides: await appOverrides(home: home),
+      overrides: [
+        ...await appOverrides(home: home, auth: auth, me: me, nutrition: nutrition, noWeek: noWeek),
+        ...extra,
+      ],
       child: MaterialApp.router(
         theme: VivTheme.light(),
         darkTheme: VivTheme.dark(),
         themeMode: brightness == Brightness.light ? ThemeMode.light : ThemeMode.dark,
         routerConfig: router,
+        // Reduce Motion: ambient loops (field glow, now dot) stay still, so
+        // pumpAndSettle can settle. Entrance fades still run.
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(disableAnimations: true),
+          child: child!,
+        ),
       ),
     ),
   );

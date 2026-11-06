@@ -1,13 +1,18 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io' show Platform;
 import 'dart:math';
 
 import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../core/config/env.dart';
+import '../../data/api/viv_api.dart';
+import '../../firebase_options.dart';
 
 /// Thrown when the user backs out of a native sign-in sheet — not an error
 /// worth showing.
@@ -18,30 +23,41 @@ class SignInCancelled implements Exception {
 /// Firebase Auth is the identity provider: the backend only verifies the
 /// Firebase ID token and auto-provisions the profile on the first call.
 class AuthRepository {
-  AuthRepository(this._auth);
+  AuthRepository(this._auth, {this.onAppleAuthorized});
 
   final FirebaseAuth _auth;
+
+  /// Receives Apple's authorization code once the Firebase session exists, so
+  /// the backend can store it for revoking Apple access on account deletion.
+  final Future<void> Function(String authorizationCode)? onAppleAuthorized;
   bool _googleInitialized = false;
 
   Stream<User?> authStateChanges() => _auth.authStateChanges();
 
   User? get currentUser => _auth.currentUser;
 
-  Future<void> signUpWithEmail(String email, String password) async {
+  // Every sign-in method returns whether it created a new account, so the
+  // caller can tell a sign-up from a log-in (Apple and Google do both).
+
+  Future<bool> signUpWithEmail(String email, String password) async {
     await _auth.createUserWithEmailAndPassword(email: email.trim(), password: password);
+    return true;
   }
 
-  Future<void> signInWithEmail(String email, String password) async {
+  Future<bool> signInWithEmail(String email, String password) async {
     await _auth.signInWithEmailAndPassword(email: email.trim(), password: password);
+    return false;
   }
 
   Future<void> sendPasswordReset(String email) => _auth.sendPasswordResetEmail(email: email.trim());
 
-  Future<void> signInWithGoogle() async {
+  Future<bool> signInWithGoogle() async {
     final google = GoogleSignIn.instance;
     if (!_googleInitialized) {
       await google.initialize(
-        serverClientId: Env.googleServerClientId.isEmpty ? null : Env.googleServerClientId,
+        // iOS client from GoogleService-Info.plist (also GIDClientID in Info.plist).
+        clientId: Platform.isIOS ? DefaultFirebaseOptions.ios.iosClientId : null,
+        serverClientId: Env.googleServerClientId,
       );
       _googleInitialized = true;
     }
@@ -53,10 +69,13 @@ class AuthRepository {
       rethrow;
     }
     final idToken = account.authentication.idToken;
-    await _auth.signInWithCredential(GoogleAuthProvider.credential(idToken: idToken));
+    final result = await _auth.signInWithCredential(
+      GoogleAuthProvider.credential(idToken: idToken),
+    );
+    return result.additionalUserInfo?.isNewUser ?? false;
   }
 
-  Future<void> signInWithApple() async {
+  Future<bool> signInWithApple() async {
     // Nonce protects against replay; Firebase checks the hashed value.
     final rawNonce = _randomNonce();
     final hashed = sha256.convert(utf8.encode(rawNonce)).toString();
@@ -70,17 +89,24 @@ class AuthRepository {
       if (e.code == AuthorizationErrorCode.canceled) throw const SignInCancelled();
       rethrow;
     }
-    final credential = OAuthProvider('apple.com').credential(
-      idToken: apple.identityToken,
-      rawNonce: rawNonce,
-      accessToken: apple.authorizationCode,
-    );
+    // The authorization code is single-use and goes to our backend, so it is
+    // deliberately not passed to Firebase here.
+    final credential = OAuthProvider('apple.com')
+        .credential(idToken: apple.identityToken, rawNonce: rawNonce);
     final result = await _auth.signInWithCredential(credential);
+    // Sent on every Apple sign-in: each one carries a fresh code, so accounts
+    // created before this existed get covered too. Never blocks signing in.
+    unawaited(
+      onAppleAuthorized?.call(apple.authorizationCode).catchError((Object e) {
+        debugPrint('Saving Apple credentials failed: $e');
+      }),
+    );
     // Apple only shares the name on the very first sign-in.
     final name = [apple.givenName, apple.familyName].whereType<String>().join(' ').trim();
     if (name.isNotEmpty && (result.user?.displayName ?? '').isEmpty) {
       await result.user?.updateDisplayName(name);
     }
+    return result.additionalUserInfo?.isNewUser ?? false;
   }
 
   Future<void> signOut() async {
@@ -98,7 +124,10 @@ class AuthRepository {
 }
 
 final authRepositoryProvider = Provider<AuthRepository>(
-  (_) => AuthRepository(FirebaseAuth.instance),
+  (ref) => AuthRepository(
+    FirebaseAuth.instance,
+    onAppleAuthorized: (code) => ref.read(vivApiProvider).saveAppleAuthorizationCode(code),
+  ),
 );
 
 final authStateProvider = StreamProvider<User?>(

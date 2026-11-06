@@ -1,10 +1,10 @@
-# VIV — Flutter app
+# VIV Flutter app
 
 iOS + Android client for the VIV backend: a training, nutrition and recovery
 plan that adapts to your week and your menstrual cycle.
 
 - **Design:** [VIVFEM in Figma](https://www.figma.com/design/1nCBTZEMrBmax4WnOjmv6j/VIVFEM)
-- **API:** `viv-backend` OpenAPI 3.0.3 (39 routes). This app uses the **current pipeline** only. The legacy routes (`/checkins`, `/training/generate`, `/plans/*`) and `/rpc` are intentionally not wrapped.
+- **API:** `viv-backend` OpenAPI 3.0.3 (44 routes). This app uses the **current pipeline** only. The legacy routes (`/checkins`, `/training/generate`, `/plans/*`) and `/rpc` are intentionally not wrapped.
 
 ## Stack
 
@@ -16,6 +16,7 @@ plan that adapts to your week and your menstrual cycle.
 | Auth | Firebase Auth (email, Google, Apple) → ID token as `Authorization: Bearer` |
 | App Check | `firebase_app_check`, sent as `X-Firebase-AppCheck` (backend is in monitor mode) |
 | Local cache | `shared_preferences` (today's check-in result, meal choices) |
+| Analytics | `amplitude_flutter` (EU), consent-gated. Plan in [`docs/analytics.md`](docs/analytics.md) |
 
 ## Getting started
 
@@ -36,18 +37,18 @@ flutter run --dart-define=API_BASE_URL=https://your-api-host
 ### Firebase / sign-in setup
 
 - **Firebase console → Authentication:** enable Email/Password, Google, and Apple.
-- **Google on Android:** pass the Firebase project's *Web client ID* so Google returns an ID token:
-  `--dart-define=GOOGLE_SERVER_CLIENT_ID=xxxx.apps.googleusercontent.com`.
-  Add your debug SHA-1 in the Firebase Android app settings.
-- **Google on iOS:** add the `REVERSED_CLIENT_ID` from `GoogleService-Info.plist` as a URL scheme in `ios/Runner/Info.plist`.
+- **Google on Android:** `Env.googleServerClientId` defaults to the project's *Web client ID* (`client_type: 3` in `google-services.json`) so Google returns an ID token. Add each machine's debug SHA-1 (`cd android && ./gradlew signingReport`) in the Firebase Android app settings, then re-download `google-services.json`.
+- **Google on iOS:** `ios/Runner/Info.plist` carries `GIDClientID` and the `REVERSED_CLIENT_ID` URL scheme from `GoogleService-Info.plist`. Update both if you regenerate that file for another Firebase app.
 - **Apple (iOS only for now):** enable the *Sign in with Apple* capability in Xcode. The button is hidden on Android, which would need a web Service ID.
-- **App Check:** debug builds use the debug providers. Register the debug token printed in the device log in Firebase → App Check. Release builds use Play Integrity / App Attest.
+- **App Check:** debug builds use the debug providers. Generate a debug token in Firebase → App Check → *your app* → ⋮ → Manage debug tokens, put it in `dart_defines.local.json` (copy `dart_defines.example.json`; the file is gitignored) and run `flutter run --dart-define-from-file=dart_defines.local.json`. Release builds use Play Integrity / App Attest.
 
 | `--dart-define` | Default | Purpose |
 | --- | --- | --- |
 | `API_BASE_URL` | `http://localhost:8080` | Backend root (routes mounted at `/`) |
-| `GOOGLE_SERVER_CLIENT_ID` | — | Google Sign-In ID token on Android |
+| `GOOGLE_SERVER_CLIENT_ID` | project web client | Google Sign-In ID token on Android |
 | `APP_CHECK_DEBUG` | `true` outside release | Use App Check debug providers |
+| `APP_CHECK_DEBUG_TOKEN` | — | Fixed debug token registered in Firebase (keep it out of git) |
+| `AMPLITUDE_API_KEY` | — | Amplitude project key; empty disables analytics |
 
 ## Project layout
 
@@ -86,8 +87,11 @@ Colors come from the Figma variables, e.g. `Cannon Pink #8A4A57` is the light-mo
 | Area | Endpoints | Where |
 | --- | --- | --- |
 | Home | `GET /home/today` | Today (timeline, now card, week dots) |
-| Profile | `GET/PATCH/DELETE /me` | session gate, Profile, Privacy & data (delete account) |
-| Onboarding | `POST /onboarding` + job poll | Consent → Building |
+| Profile | `GET/PATCH /me` | session gate, Profile, Your info |
+| Account deletion | `DELETE /me` (30-day grace), `POST /me/cancel-deletion`, `pending_deletion_at` | Privacy & data, banner above the tabs |
+| Consent | `GET/POST /me/consents` | Onboarding consent (`health_data_processing`), Privacy & data toggles, Withdraw consent (immediate deletion) |
+| Data export | `GET /me/export` | Privacy & data → Download everything (share sheet) |
+| Onboarding | `POST /onboarding` + job poll, `POST /onboarding/ineligibility` | Consent → Building; Not a fit yet → Close my account |
 | Check-in | `POST /checkin` | Check-in |
 | Cycle | `POST /cycle/period-start` | Today late-period card, Your info |
 | Weekly plan | `current`, `day` (GET/PATCH), `note`, `generate` + status | Today, Train |
@@ -103,10 +107,11 @@ Colors come from the Figma variables, e.g. `Cannon Pink #8A4A57` is the light-mo
 3. **No "today's check-in" read endpoint:** the last `POST /checkin` response is cached on the device, so a reinstall shows the check-in prompt again (resubmitting is idempotent).
 4. **Meal selections aren't echoed** in `GET /nutrition/plan`, so the choice is mirrored on the device.
 5. **Status of `GET /nutrition/plan` before nutrition onboarding** is undocumented. The app treats 404/5xx as "not set up yet" (`TODO(api)` in `providers.dart`).
-6. **No endpoint** for the "not a fit yet" email waitlist, or for completing a non-Strength (non-loggable) day.
+6. **No endpoint** for completing a non-Strength (non-loggable) day. "Not a fit yet" deliberately collects no email: the account is deleted and only an anonymous reason is kept.
 7. **Lights-out "Remind me"** has an empty `cta_action` (nothing schedules it yet), so it only shows a "coming soon" note. **"Skip"** on the check-in card is local to the device, because the API has no skip.
-8. **Privacy & data:** the "What VIV uses" toggles and "Download everything" from Figma have no endpoints, so only account deletion is built.
-9. Not built yet: Notifications and Help screens, push notifications (FCM), the hero photo on Welcome (placeholder gradient), and Terms/Privacy links.
+8. **Privacy & data:** the Figma toggles (cycle dates, Apple Health, session history) don't match the backend's consent purposes, so the screen shows the real ones (`ai_processing`, `research_product_improvement`). A purpose with no record shows as off; confirm the defaults with the backend.
+9. **`/lifestyle-changes`** (illness, travel, injury) and `training_paused` / `has_active_injury` aren't surfaced yet.
+10. Not built yet: Notifications and Help screens, push notifications (FCM), the hero photo on Welcome (placeholder gradient), and Terms/Privacy links.
 
 ## Development
 

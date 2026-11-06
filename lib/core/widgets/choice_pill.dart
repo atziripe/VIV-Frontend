@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../theme/viv_theme.dart';
 
-/// Compact toggle pill used for multi/single-choice groups in onboarding
-/// ("Strength", "2–3", "About 2 weeks ago", weekday letters).
+/// Fully rounded chip for single/multi-choice groups ("Strength", "2–3",
+/// "About a week ago", weekday letters): 44 px, raised with a hairline;
+/// selected = accent fill. Fills in 180 ms.
 class ChoicePill extends StatelessWidget {
   const ChoicePill({
     super.key,
@@ -18,53 +19,51 @@ class ChoicePill extends StatelessWidget {
   final bool selected;
   final VoidCallback? onTap;
 
-  /// Multi-select groups show a ✓ on selected pills.
+  /// Multi-select groups show a ✓ on selected chips.
   final bool showCheck;
   final double? minWidth;
 
   @override
   Widget build(BuildContext context) {
     final c = context.viv;
+    final fg = selected ? c.ctaText : c.ink;
     return Semantics(
       selected: selected,
       button: true,
-      child: Material(
-        color: selected ? c.primary : c.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(VivRadius.sm),
-          side: BorderSide(color: selected ? c.primary : c.border),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: 40, minWidth: minWidth ?? 0),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: VivSpace.xs + 2),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (showCheck && selected) ...[
-                    Icon(Icons.check_rounded, size: 16, color: c.onPrimary),
-                    const SizedBox(width: 4),
-                  ],
-                  Flexible(
-                    child: Text(
-                      label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: VivType.bodySmall.copyWith(
-                        fontSize: 14,
-                        color: selected ? c.onPrimary : c.textPrimary,
-                        fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                      ),
-                    ),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: VivMotion.fill,
+          curve: VivMotion.curve,
+          height: 44,
+          constraints: BoxConstraints(minWidth: minWidth ?? 0),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: ShapeDecoration(
+            color: selected ? c.accent : c.raised,
+            shape: StadiumBorder(side: selected ? BorderSide.none : BorderSide(color: c.line)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (showCheck && selected) ...[
+                Icon(Icons.check_rounded, size: 14, color: fg),
+                const SizedBox(width: 7),
+              ],
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: VivType.body.copyWith(
+                    color: fg,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                   ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),

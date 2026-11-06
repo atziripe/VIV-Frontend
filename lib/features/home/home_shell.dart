@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/layout/responsive.dart';
 import '../../core/theme/viv_theme.dart';
+import '../profile/pending_deletion_banner.dart';
+import 'refresh_on_resume.dart';
 
 /// Tabs: Today · Train · Eat · Recover. A text-only bottom bar with a dot
 /// over the active tab on phones; a navigation rail on wide screens.
@@ -29,37 +31,45 @@ class HomeShell extends StatelessWidget {
         body: Row(
           children: [
             NavigationRail(
-              backgroundColor: c.background,
+              backgroundColor: c.page,
               selectedIndex: shell.currentIndex,
               onDestinationSelected: _go,
               labelType: NavigationRailLabelType.all,
-              indicatorColor: c.primarySoft,
-              selectedIconTheme: IconThemeData(color: c.primary),
-              unselectedIconTheme: IconThemeData(color: c.textTertiary),
-              selectedLabelTextStyle: VivType.caption.copyWith(color: c.primary),
-              unselectedLabelTextStyle: VivType.caption.copyWith(color: c.textTertiary),
+              indicatorColor: c.tint,
+              selectedIconTheme: IconThemeData(color: c.accent),
+              unselectedIconTheme: IconThemeData(color: c.subtle),
+              selectedLabelTextStyle: VivType.caption.copyWith(color: c.accent),
+              unselectedLabelTextStyle: VivType.caption.copyWith(color: c.subtle),
               destinations: [
                 for (var i = 0; i < _tabs.length; i++)
                   NavigationRailDestination(icon: Icon(_icons[i]), label: Text(_tabs[i])),
               ],
             ),
-            VerticalDivider(width: 1, color: c.border),
-            Expanded(child: shell),
+            VerticalDivider(width: 1, color: c.line),
+            Expanded(
+              child: RefreshOnResume(child: PendingDeletionBanner(child: shell)),
+            ),
           ],
         ),
       );
     }
     return Scaffold(
-      body: shell,
+      body: RefreshOnResume(child: PendingDeletionBanner(child: shell)),
       bottomNavigationBar: DecoratedBox(
         decoration: BoxDecoration(
-          color: c.background,
-          border: Border(top: BorderSide(color: c.border)),
+          color: c.page,
+          border: Border(top: BorderSide(color: c.line)),
         ),
-        child: SafeArea(
-          top: false,
+        child: Padding(
+          // 10 top, 30 bottom inset (the home indicator, or a floor of 14).
+          padding: EdgeInsets.fromLTRB(
+            4,
+            10,
+            4,
+            MediaQuery.paddingOf(context).bottom > 0 ? MediaQuery.paddingOf(context).bottom : 14,
+          ),
           child: SizedBox(
-            height: 56,
+            height: 34,
             child: Row(
               children: [
                 for (var i = 0; i < _tabs.length; i++)
@@ -89,34 +99,32 @@ class _TabButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.viv;
-    final color = selected ? c.primary : c.textTertiary;
     return Semantics(
       selected: selected,
       button: true,
       label: '$label tab',
       excludeSemantics: true,
-      child: InkResponse(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: onTap,
-        radius: 36,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            AnimatedOpacity(
-              opacity: selected ? 1 : 0,
-              duration: const Duration(milliseconds: 150),
-              child: Container(
-                width: 4,
-                height: 4,
-                decoration: BoxDecoration(color: c.primary, shape: BoxShape.circle),
+            Container(
+              width: 5,
+              height: 5,
+              decoration: BoxDecoration(
+                color: selected ? c.accent : Colors.transparent,
+                shape: BoxShape.circle,
               ),
             ),
             const SizedBox(height: 6),
             Text(
               label,
-              style: VivType.caption.copyWith(
-                color: color,
+              style: VivType.meta.copyWith(
                 fontSize: 12,
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                color: selected ? c.ink : c.muted,
               ),
             ),
           ],

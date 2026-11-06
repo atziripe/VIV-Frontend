@@ -1,162 +1,257 @@
 import 'package:flutter/material.dart';
 
-/// Raw palette, named after the Figma variables in the VIVFEM file
-/// (e.g. `color/red/42` = "Cannon Pink"). Screens should not use these
-/// directly — read semantic colors from [VivColors] via `context.viv`.
-abstract final class VivPalette {
-  static const zeus = Color(0xFF16110F); // color/orange/7
-  static const gondola = Color(0xFF1A1210); // color/red/8
-  static const orange8 = Color(0xFF1A1310); // color/orange/8
-  static const orange11 = Color(0xFF211A17); // color/orange/11
-  static const taupe = Color(0xFF352C28); // color/orange/18
-  static const orange25 = Color(0xFF4A3B36); // color/orange/25
-  static const masala = Color(0xFF4A403D); // color/grey/26
-  static const dorado = Color(0xFF6E6260); // color/grey/40
-  static const sandstone = Color(0xFF7A6B66); // color/grey/44
-  static const americano = Color(0xFF8A7B76); // color/grey/50
-  static const zorba = Color(0xFFA2938E); // color/grey/60
-  static const martini = Color(0xFFB4A8A4); // color/grey/67
-  static const swirl = Color(0xFFD8CCC7); // color/orange/81
-  static const wafer = Color(0xFFE4DAD6); // color/orange/87
-  static const dawnPink = Color(0xFFF5EFEC); // color/grey/94
-  static const vistaWhite = Color(0xFFFBF7F5); // color/grey/97
-  static const white = Color(0xFFFFFFFF);
+import '../../data/models/catalog.dart';
 
-  static const cannonPink = Color(0xFF8A4A57); // color/red/42 — primary (light)
-  static const puce = Color(0xFFC97F8D); // color/red/64 — primary (dark)
-}
-
-/// Semantic color roles used across VIV screens. Available as a
-/// [ThemeExtension] so light/dark switch automatically.
+/// Semantic colour tokens from the Pulse design handoff
+/// (`design_handoff_viv_pulse/README.md` → Design tokens). Available as a
+/// [ThemeExtension] so light/dark switch automatically: read them with
+/// `context.viv`, never raw hex in screens.
 @immutable
 class VivColors extends ThemeExtension<VivColors> {
   const VivColors({
-    required this.background,
-    required this.surface,
-    required this.surfaceMuted,
-    required this.border,
-    required this.borderStrong,
-    required this.textPrimary,
-    required this.textSecondary,
-    required this.textTertiary,
-    required this.primary,
-    required this.onPrimary,
-    required this.primarySoft,
-    required this.primaryBorder,
-    required this.inverse,
-    required this.onInverse,
+    required this.page,
+    required this.raised,
+    required this.sunken,
+    required this.line,
+    required this.ring,
+    required this.ink,
+    required this.ink2,
+    required this.muted,
+    required this.subtle,
+    required this.faint,
+    required this.accent,
+    required this.ctaText,
+    required this.tint,
+    required this.tintInk,
+    required this.field,
+    required this.photo,
+    required this.stage,
+    required this.stageMuted,
     required this.scrim,
-    required this.signal,
+    required this.toast,
+    required this.onToast,
+    required this.hasShadow,
   });
 
   /// Screen background.
-  final Color background;
+  final Color page;
 
-  /// Cards, inputs, secondary buttons.
-  final Color surface;
+  /// Cards, sheets, grouped lists.
+  final Color raised;
 
-  /// Rest-day rows, disabled buttons, inline notes.
-  final Color surfaceMuted;
+  /// Rest-day pills, quiet strips, done-check fill, segmented track.
+  final Color sunken;
 
-  final Color border;
-  final Color borderStrong;
+  /// 1px hairlines.
+  final Color line;
 
-  final Color textPrimary;
-  final Color textSecondary;
-  final Color textTertiary;
+  /// Unselected radio/circle outlines, toggle off.
+  final Color ring;
 
-  /// Brand accent: main CTAs, selected pills, links.
-  final Color primary;
-  final Color onPrimary;
+  /// Titles, values.
+  final Color ink;
 
-  /// Tinted background for highlighted cards ("Before you start", selected options).
-  final Color primarySoft;
-  final Color primaryBorder;
+  /// Body inside cards.
+  final Color ink2;
 
-  /// High-contrast button (e.g. "Continue with Apple").
-  final Color inverse;
-  final Color onInverse;
+  /// Body on the page.
+  final Color muted;
 
-  /// Dimmed backdrop behind bottom sheets.
+  /// Eyebrows, meta.
+  final Color subtle;
+
+  /// Chevrons only.
+  final Color faint;
+
+  /// Primary buttons, links, selection, active tab dot.
+  final Color accent;
+
+  /// Text on [accent].
+  final Color ctaText;
+
+  /// Soft info cards ("What changes").
+  final Color tint;
+
+  /// Text and eyebrows on [tint].
+  final Color tintInk;
+
+  /// The wine "now" block. Use [WineField] rather than painting it by hand.
+  final Color field;
+
+  /// Image slots (welcome hero, meal thumbnails).
+  final Color photo;
+
+  /// Session-done background.
+  final Color stage;
+
+  /// Body text on [stage].
+  final Color stageMuted;
+
+  /// Behind bottom sheets.
   final Color scrim;
 
-  /// Olive status dot next to the energy line on Home.
-  final Color signal;
+  /// Toast pill.
+  final Color toast;
+  final Color onToast;
+
+  /// Cards cast the soft shadow in light mode only.
+  final bool hasShadow;
+
+  // ── On the wine field (both themes) ──────────────────────────────────────
+
+  /// Titles on the field, primary pill background.
+  static const onField = Color(0xFFFFF8F6);
+
+  /// Body on the field.
+  static const onFieldSoft = Color(0xE0FFF8F6); // 0.88
+
+  /// Eyebrows and the pillar label on the field.
+  static const onFieldMuted = Color(0xCCFFF8F6); // 0.80
+
+  /// Secondary pill background, unselected options, progress track.
+  static const onFieldFaint = Color(0x29FFF8F6); // 0.16
+
+  /// Progress track on the field (rest timer).
+  static const onFieldTrack = Color(0x33FFF8F6); // 0.20
+
+  /// Unselected check-in options.
+  static const onFieldOption = Color(0x21FFF8F6); // 0.13
+
+  /// Text on the [onField] pill.
+  static const onFieldInv = Color(0xFF5E2C38);
+
+  /// The blurred blob drifting behind the field's content.
+  static const fieldGlow = Color(0xFFC97F8D);
+  static const fieldGlow2 = Color(0xFFE7B3BC);
+
+  // ── Session-done stage (both themes) ─────────────────────────────────────
+
+  static const stageInk = Color(0xFFF5EFEC);
+  static const doneRing = Color(0xFFC97F8D);
+  static const onDoneRing = Color(0xFF1A1210);
+
+  /// Track under the done ring.
+  static const doneTrack = Color(0x1FF5EFEC); // 0.12
+
+  /// Unselected pills on the stage.
+  static const stageFaint = Color(0x14FFFFFF); // 0.08
+
+  /// One dot per screen, fill only, never text. Identical in both themes.
+  static Color phaseDot(CyclePhase phase) => switch (phase) {
+    // McNulty et al. 2020: menstruation sits inside early follicular.
+    CyclePhase.menstrual => const Color(0xFFB66F75), // early follicular
+    CyclePhase.follicular => const Color(0xFF978642), // late follicular
+    CyclePhase.ovulatory => const Color(0xFF57966E),
+    CyclePhase.earlyLuteal => const Color(0xFF4590B2), // early/mid luteal
+    CyclePhase.lateLuteal => const Color(0xFF9777AF),
+  };
+
+  /// `0 1px 2px rgba(26,19,16,.04), 0 10px 28px rgba(26,19,16,.06)`; none in dark.
+  List<BoxShadow> get cardShadow => hasShadow
+      ? const [
+          BoxShadow(color: Color(0x0A1A1310), offset: Offset(0, 1), blurRadius: 2),
+          BoxShadow(color: Color(0x0F1A1310), offset: Offset(0, 10), blurRadius: 28),
+        ]
+      : const [];
 
   static const light = VivColors(
-    background: VivPalette.vistaWhite,
-    surface: VivPalette.white,
-    surfaceMuted: VivPalette.dawnPink,
-    border: VivPalette.wafer,
-    borderStrong: VivPalette.swirl,
-    textPrimary: VivPalette.zeus,
-    textSecondary: VivPalette.sandstone,
-    textTertiary: VivPalette.zorba,
-    primary: VivPalette.cannonPink,
-    onPrimary: VivPalette.white,
-    primarySoft: Color(0xFFF6E9EA),
-    primaryBorder: Color(0xFFD9AFB7),
-    inverse: VivPalette.zeus,
-    onInverse: VivPalette.vistaWhite,
-    scrim: Color(0x8C140E0C), // color/orange/6 55%
-    signal: Color(0xFF9A8A4F),
+    page: Color(0xFFFBF7F5),
+    raised: Color(0xFFFFFFFF),
+    sunken: Color(0xFFF3EDEA),
+    line: Color(0xFFE4DAD6),
+    ring: Color(0xFFD3C6C2),
+    ink: Color(0xFF1A1310),
+    ink2: Color(0xFF4A403D),
+    muted: Color(0xFF6E6260),
+    subtle: Color(0xFF7A6D69),
+    faint: Color(0xFFC4B6B1),
+    accent: Color(0xFF8A4A57),
+    ctaText: Color(0xFFFFFFFF),
+    tint: Color(0xFFF6EEEF),
+    tintInk: Color(0xFF8A4A57),
+    field: Color(0xFF8A4A57),
+    photo: Color(0xFFE9DFDB),
+    stage: Color(0xFF1A1310),
+    stageMuted: Color(0xFFB9ABA6),
+    scrim: Color(0x731A1310), // rgba(26,19,16,.45)
+    toast: Color(0xFF1A1310),
+    onToast: Color(0xFFF5EFEC),
+    hasShadow: true,
   );
 
   static const dark = VivColors(
-    background: VivPalette.zeus,
-    surface: VivPalette.orange11,
-    surfaceMuted: VivPalette.orange8,
-    border: VivPalette.taupe,
-    borderStrong: VivPalette.orange25,
-    textPrimary: VivPalette.vistaWhite,
-    textSecondary: VivPalette.zorba,
-    textTertiary: VivPalette.sandstone,
-    primary: VivPalette.puce,
-    onPrimary: VivPalette.gondola,
-    primarySoft: Color(0xFF2B1F1E),
-    primaryBorder: Color(0xFF6B4049),
-    inverse: VivPalette.dawnPink,
-    onInverse: VivPalette.zeus,
-    scrim: Color(0xD1140E0C), // color/orange/6 82%
-    signal: Color(0xFFB5A468),
+    page: Color(0xFF16110F),
+    raised: Color(0xFF211A17),
+    sunken: Color(0xFF2A221F),
+    line: Color(0xFF352C28),
+    ring: Color(0xFF4A3E39),
+    ink: Color(0xFFF5EFEC),
+    ink2: Color(0xFFD8CCC7),
+    muted: Color(0xFFA2938E),
+    subtle: Color(0xFF968782),
+    faint: Color(0xFF6E5F5A),
+    accent: Color(0xFFC97F8D),
+    ctaText: Color(0xFF1A1210),
+    tint: Color(0xFF2E2125),
+    tintInk: Color(0xFFD998A4),
+    field: Color(0xFF8E4D5B),
+    photo: Color(0xFF2A221F),
+    stage: Color(0xFF211A17),
+    stageMuted: Color(0xFFA2938E),
+    scrim: Color(0x99000000), // rgba(0,0,0,.6)
+    toast: Color(0xFFF5EFEC),
+    onToast: Color(0xFF1A1310),
+    hasShadow: false,
   );
 
   @override
   VivColors copyWith({
-    Color? background,
-    Color? surface,
-    Color? surfaceMuted,
-    Color? border,
-    Color? borderStrong,
-    Color? textPrimary,
-    Color? textSecondary,
-    Color? textTertiary,
-    Color? primary,
-    Color? onPrimary,
-    Color? primarySoft,
-    Color? primaryBorder,
-    Color? inverse,
-    Color? onInverse,
+    Color? page,
+    Color? raised,
+    Color? sunken,
+    Color? line,
+    Color? ring,
+    Color? ink,
+    Color? ink2,
+    Color? muted,
+    Color? subtle,
+    Color? faint,
+    Color? accent,
+    Color? ctaText,
+    Color? tint,
+    Color? tintInk,
+    Color? field,
+    Color? photo,
+    Color? stage,
+    Color? stageMuted,
     Color? scrim,
-    Color? signal,
+    Color? toast,
+    Color? onToast,
+    bool? hasShadow,
   }) {
     return VivColors(
-      background: background ?? this.background,
-      surface: surface ?? this.surface,
-      surfaceMuted: surfaceMuted ?? this.surfaceMuted,
-      border: border ?? this.border,
-      borderStrong: borderStrong ?? this.borderStrong,
-      textPrimary: textPrimary ?? this.textPrimary,
-      textSecondary: textSecondary ?? this.textSecondary,
-      textTertiary: textTertiary ?? this.textTertiary,
-      primary: primary ?? this.primary,
-      onPrimary: onPrimary ?? this.onPrimary,
-      primarySoft: primarySoft ?? this.primarySoft,
-      primaryBorder: primaryBorder ?? this.primaryBorder,
-      inverse: inverse ?? this.inverse,
-      onInverse: onInverse ?? this.onInverse,
+      page: page ?? this.page,
+      raised: raised ?? this.raised,
+      sunken: sunken ?? this.sunken,
+      line: line ?? this.line,
+      ring: ring ?? this.ring,
+      ink: ink ?? this.ink,
+      ink2: ink2 ?? this.ink2,
+      muted: muted ?? this.muted,
+      subtle: subtle ?? this.subtle,
+      faint: faint ?? this.faint,
+      accent: accent ?? this.accent,
+      ctaText: ctaText ?? this.ctaText,
+      tint: tint ?? this.tint,
+      tintInk: tintInk ?? this.tintInk,
+      field: field ?? this.field,
+      photo: photo ?? this.photo,
+      stage: stage ?? this.stage,
+      stageMuted: stageMuted ?? this.stageMuted,
       scrim: scrim ?? this.scrim,
-      signal: signal ?? this.signal,
+      toast: toast ?? this.toast,
+      onToast: onToast ?? this.onToast,
+      hasShadow: hasShadow ?? this.hasShadow,
     );
   }
 
@@ -165,22 +260,28 @@ class VivColors extends ThemeExtension<VivColors> {
     if (other is! VivColors) return this;
     Color l(Color a, Color b) => Color.lerp(a, b, t)!;
     return VivColors(
-      background: l(background, other.background),
-      surface: l(surface, other.surface),
-      surfaceMuted: l(surfaceMuted, other.surfaceMuted),
-      border: l(border, other.border),
-      borderStrong: l(borderStrong, other.borderStrong),
-      textPrimary: l(textPrimary, other.textPrimary),
-      textSecondary: l(textSecondary, other.textSecondary),
-      textTertiary: l(textTertiary, other.textTertiary),
-      primary: l(primary, other.primary),
-      onPrimary: l(onPrimary, other.onPrimary),
-      primarySoft: l(primarySoft, other.primarySoft),
-      primaryBorder: l(primaryBorder, other.primaryBorder),
-      inverse: l(inverse, other.inverse),
-      onInverse: l(onInverse, other.onInverse),
+      page: l(page, other.page),
+      raised: l(raised, other.raised),
+      sunken: l(sunken, other.sunken),
+      line: l(line, other.line),
+      ring: l(ring, other.ring),
+      ink: l(ink, other.ink),
+      ink2: l(ink2, other.ink2),
+      muted: l(muted, other.muted),
+      subtle: l(subtle, other.subtle),
+      faint: l(faint, other.faint),
+      accent: l(accent, other.accent),
+      ctaText: l(ctaText, other.ctaText),
+      tint: l(tint, other.tint),
+      tintInk: l(tintInk, other.tintInk),
+      field: l(field, other.field),
+      photo: l(photo, other.photo),
+      stage: l(stage, other.stage),
+      stageMuted: l(stageMuted, other.stageMuted),
       scrim: l(scrim, other.scrim),
-      signal: l(signal, other.signal),
+      toast: l(toast, other.toast),
+      onToast: l(onToast, other.onToast),
+      hasShadow: t < 0.5 ? hasShadow : other.hasShadow,
     );
   }
 }

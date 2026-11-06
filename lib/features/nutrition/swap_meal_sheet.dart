@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/theme/viv_theme.dart';
 import '../../core/widgets/widgets.dart';
 import '../../data/models/nutrition.dart';
+import 'eat_screen.dart' show proteinOf;
+import 'meal_image.dart';
+import 'nutrition_format.dart';
 import 'nutrition_providers.dart';
 
-/// 06 · Swap a meal
+/// 05 · Swap a meal
 Future<void> showSwapMealSheet(
   BuildContext context, {
   required String weekday,
   required MealSlot slot,
 }) {
-  return showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    useSafeArea: true,
+  return showVivSheet<void>(
+    context,
     builder: (_) => _SwapSheet(weekday: weekday, slot: slot),
   );
 }
@@ -52,36 +52,36 @@ class _SwapSheetState extends ConsumerState<_SwapSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.viv;
     final options = widget.slot.options;
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(VivSpace.gutter, 0, VivSpace.gutter, VivSpace.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Swap ${widget.slot.mealName.toLowerCase()}',
-            style: VivType.headline.copyWith(color: c.textPrimary),
-          ),
-          const SizedBox(height: VivSpace.xxs),
-          Text(
-            'Same targets, different food. Pick one and the day still adds up.',
-            style: VivType.bodySmall.copyWith(color: c.textSecondary),
-          ),
-          const SizedBox(height: VivSpace.lg),
-          for (var i = 0; i < options.length; i++) ...[
-            OptionTile(
-              title: options[i].name,
-              subtitle: options[i].flagReason ?? options[i].summary,
-              selected: _choice == i,
-              onTap: () => setState(() => _choice = i),
-            ),
-            const SizedBox(height: VivSpace.xs),
+    return VivBottomSheet(
+      title: 'Swap ${widget.slot.mealName.toLowerCase()}',
+      body: 'Same targets, different food. Pick one and the day still adds up.',
+      actions: [PillButton(label: 'Swap it in', busy: _saving, onPressed: _save)],
+      children: [
+        Column(
+          children: [
+            for (var i = 0; i < options.length; i++) ...[
+              if (i > 0) const SizedBox(height: 8),
+              OptionRow(
+                label: options[i].name,
+                hint: switch (proteinOf(widget.slot, options[i])) {
+                  final p? => grams(p),
+                  null => null,
+                },
+                leading: MealImage(
+                  url: options[i].imageUrl,
+                  width: 44,
+                  height: 44,
+                  borderRadius: const BorderRadius.all(Radius.circular(14)),
+                  iconSize: 18,
+                ),
+                selected: _choice == i,
+                onTap: () => setState(() => _choice = i),
+              ),
+            ],
           ],
-          const SizedBox(height: VivSpace.md),
-          VivButton(label: 'Swap it in', loading: _saving, onPressed: _save),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

@@ -19,12 +19,7 @@ class VivPage extends StatelessWidget {
     this.topTrailing,
     this.bottom,
     this.crossAxisAlignment = CrossAxisAlignment.stretch,
-    this.padding = const EdgeInsets.fromLTRB(
-      VivSpace.gutter,
-      VivSpace.xs,
-      VivSpace.gutter,
-      VivSpace.xl,
-    ),
+    this.padding = const EdgeInsets.fromLTRB(VivSpace.gutter, 0, VivSpace.gutter, VivSpace.xl),
   });
 
   final List<Widget> children;
@@ -40,6 +35,7 @@ class VivPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasTopBar = showBack || topCenter != null || topTrailing != null;
     return Scaffold(
+      backgroundColor: context.viv.page,
       body: SafeArea(
         bottom: bottom == null,
         child: ResponsiveCenter(
@@ -47,14 +43,9 @@ class VivPage extends StatelessWidget {
             children: [
               if (hasTopBar)
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    VivSpace.gutter - 4,
-                    VivSpace.xs,
-                    VivSpace.gutter - 4,
-                    0,
-                  ),
+                  padding: const EdgeInsets.fromLTRB(VivSpace.gutter, 4, VivSpace.gutter, 14),
                   child: SizedBox(
-                    height: 40,
+                    height: 44,
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
@@ -78,15 +69,12 @@ class VivPage extends StatelessWidget {
                 ),
               ),
               if (bottom != null)
+                // Pinned footer: 12 top, 30 bottom inset — never inside the scroll.
                 SafeArea(
                   top: false,
+                  minimum: const EdgeInsets.only(bottom: 18),
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      VivSpace.gutter,
-                      VivSpace.xs,
-                      VivSpace.gutter,
-                      VivSpace.sm,
-                    ),
+                    padding: const EdgeInsets.fromLTRB(VivSpace.gutter, 12, VivSpace.gutter, 12),
                     child: bottom!,
                   ),
                 ),
@@ -98,7 +86,7 @@ class VivPage extends StatelessWidget {
   }
 }
 
-/// Square outlined back button from the Figma nav bar.
+/// 40 px round back button: raised, 1 px hairline, ‹.
 class VivBackButton extends StatelessWidget {
   const VivBackButton({super.key, this.onPressed});
 
@@ -110,18 +98,22 @@ class VivBackButton extends StatelessWidget {
     return Semantics(
       button: true,
       label: 'Back',
-      child: Material(
-        color: c.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(VivRadius.sm),
-          side: BorderSide(color: c.border),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onPressed ?? () => context.canPop() ? context.pop() : null,
-          child: SizedBox.square(
-            dimension: 32,
-            child: Icon(Icons.chevron_left_rounded, size: 20, color: c.textPrimary),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onPressed ?? () => context.canPop() ? context.pop() : null,
+        child: SizedBox.square(
+          dimension: VivSize.minTap,
+          child: Center(
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: c.raised,
+                shape: BoxShape.circle,
+                border: Border.all(color: c.line),
+              ),
+              child: Icon(Icons.chevron_left_rounded, size: 22, color: c.ink),
+            ),
           ),
         ),
       ),
@@ -148,21 +140,22 @@ class PageHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.viv;
     return Padding(
-      padding: const EdgeInsets.only(top: VivSpace.md, bottom: VivSpace.lg),
+      padding: const EdgeInsets.only(bottom: 22),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (eyebrow != null) ...[eyebrow!, const SizedBox(height: VivSpace.xs)],
+          if (eyebrow != null) ...[eyebrow!, const SizedBox(height: 10)],
           Semantics(
             header: true,
             child: Text(
               title,
-              style: (large ? VivType.display : VivType.title).copyWith(color: c.textPrimary),
+              style: (large ? VivType.h1.copyWith(fontSize: 36) : VivType.h1.copyWith(fontSize: 32))
+                  .copyWith(color: c.ink),
             ),
           ),
           if (subtitle != null) ...[
-            const SizedBox(height: VivSpace.xs),
-            Text(subtitle!, style: VivType.bodySmall.copyWith(color: c.textSecondary)),
+            const SizedBox(height: 10),
+            Text(subtitle!, style: VivType.lead.copyWith(fontSize: 15.5, color: c.muted)),
           ],
         ],
       ),
@@ -181,11 +174,18 @@ class FieldLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.viv;
     return Padding(
-      padding: const EdgeInsets.only(bottom: VivSpace.xs),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         children: [
           Expanded(
-            child: Text(text, style: VivType.label.copyWith(color: c.textPrimary)),
+            child: Text(
+              text,
+              style: VivType.rowTitle.copyWith(
+                fontSize: 15.5,
+                fontWeight: FontWeight.w700,
+                color: c.ink,
+              ),
+            ),
           ),
           ?trailing,
         ],
@@ -209,7 +209,7 @@ class VivWordmark extends StatelessWidget {
         fontSize: 14,
         fontWeight: FontWeight.w800,
         letterSpacing: 4.2,
-        color: color ?? context.viv.textPrimary,
+        color: color ?? context.viv.ink,
       ),
     );
   }
