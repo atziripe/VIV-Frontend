@@ -89,3 +89,18 @@ These come from `/me` and never include health data:
 - `signup_method`
 
 Amplitude adds platform, OS, app version and country on its own.
+
+## What Amplitude records about the device
+
+Set in `privacyTrackingOptions()` (`lib/core/analytics/amplitude_sink.dart`)
+and locked by `test/core/amplitude_privacy_test.dart`, to match the privacy
+policy:
+
+- **On:** device model and manufacturer, OS name and version, app version,
+  language.
+- **Off:** IP address, city, region, DMA, country, latitude/longitude,
+  carrier, advertising ID, App Set ID and IDFV. Amplitude uses its own random
+  device ID. Location listening is off.
+
+Turning any of these back on needs a privacy policy change first.
+

@@ -3,6 +3,7 @@ import 'package:amplitude_flutter/configuration.dart';
 import 'package:amplitude_flutter/constants.dart';
 import 'package:amplitude_flutter/events/base_event.dart';
 import 'package:amplitude_flutter/events/identify.dart';
+import 'package:amplitude_flutter/tracking_options.dart';
 
 import 'analytics.dart';
 
@@ -15,7 +16,14 @@ class AmplitudeSink implements AnalyticsSink {
 
   @override
   Future<void> start() async {
-    final amplitude = Amplitude(Configuration(apiKey: _apiKey, serverZone: ServerZone.eu));
+    final amplitude = Amplitude(
+      Configuration(
+        apiKey: _apiKey,
+        serverZone: ServerZone.eu,
+        trackingOptions: privacyTrackingOptions(),
+        locationListening: false,
+      ),
+    );
     await amplitude.isBuilt;
     _amplitude = amplitude;
   }
@@ -40,3 +48,20 @@ class AmplitudeSink implements AnalyticsSink {
   @override
   void reset() => _amplitude?.reset();
 }
+
+/// What Amplitude may record about the device, matching the privacy policy:
+/// basic device information only (model, OS, app version, language). No IP
+/// address, no location of any kind, no carrier, and no device or
+/// advertising identifiers (Amplitude makes its own random device id).
+TrackingOptions privacyTrackingOptions() => TrackingOptions(
+  ipAddress: false,
+  city: false,
+  region: false,
+  dma: false,
+  country: false,
+  latLag: false,
+  carrier: false,
+  adid: false,
+  appSetId: false,
+  idfv: false,
+);
