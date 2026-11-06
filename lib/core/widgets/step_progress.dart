@@ -20,25 +20,27 @@ class StepProgress extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 150),
-            child: Row(
-              children: [
-                for (var i = 1; i <= total; i++) ...[
-                  if (i > 1) const SizedBox(width: 5),
-                  Expanded(
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 420),
-                      curve: VivMotion.curve,
-                      height: 5,
-                      decoration: ShapeDecoration(
-                        color: i <= current ? c.accent : c.line,
-                        shape: const StadiumBorder(),
+          Flexible(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 150),
+              child: Row(
+                children: [
+                  for (var i = 1; i <= total; i++) ...[
+                    if (i > 1) const SizedBox(width: 5),
+                    Expanded(
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 420),
+                        curve: VivMotion.curve,
+                        height: 5,
+                        decoration: ShapeDecoration(
+                          color: i <= current ? c.accent : c.line,
+                          shape: const StadiumBorder(),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
           if (label) ...[

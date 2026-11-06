@@ -133,28 +133,41 @@ class WineField extends StatelessWidget {
         ],
         if (primaryLabel != null || secondaryLabel != null) ...[
           const SizedBox(height: 18),
-          Row(
-            children: [
-              if (primaryLabel != null)
-                Expanded(
-                  child: PillButton(
-                    label: primaryLabel!,
-                    onPressed: onPrimary,
-                    variant: PillVariant.onField,
-                    size: PillSize.control,
-                    arrow: true,
-                  ),
-                ),
-              if (primaryLabel != null && secondaryLabel != null) const SizedBox(width: 9),
-              if (secondaryLabel != null)
-                PillButton(
-                  label: secondaryLabel!,
-                  onPressed: onSecondary,
-                  variant: PillVariant.onFieldFaint,
-                  size: PillSize.control,
-                  expand: primaryLabel == null,
-                ),
-            ],
+          LayoutBuilder(
+            builder: (context, box) {
+              final primary = primaryLabel == null
+                  ? null
+                  : PillButton(
+                      label: primaryLabel!,
+                      onPressed: onPrimary,
+                      variant: PillVariant.onField,
+                      size: PillSize.control,
+                      arrow: true,
+                    );
+              final secondary = secondaryLabel == null
+                  ? null
+                  : PillButton(
+                      label: secondaryLabel!,
+                      onPressed: onSecondary,
+                      variant: PillVariant.onFieldFaint,
+                      size: PillSize.control,
+                      expand: primaryLabel == null || box.maxWidth < 300,
+                    );
+              // Narrow phones (iPhone SE) or large text: stack them.
+              if (primary != null && secondary != null && box.maxWidth < 300) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [primary, const SizedBox(height: 9), secondary],
+                );
+              }
+              return Row(
+                children: [
+                  if (primary != null) Expanded(child: primary),
+                  if (primary != null && secondary != null) const SizedBox(width: 9),
+                  ?secondary,
+                ],
+              );
+            },
           ),
         ],
         if (onWhy != null) ...[

@@ -20,8 +20,8 @@ import 'package:viv/features/training/week_screen.dart';
 
 import '../helpers/fakes.dart';
 
-/// Every screen must lay out without overflow on a small phone and a
-/// tablet, in light and dark mode.
+/// Every screen must lay out without overflow on the smallest iPhone, a
+/// small Android phone and a tablet, in light and dark mode.
 void main() {
   final screens = <String, Widget Function()>{
     'Welcome': () => const WelcomeScreen(),
@@ -49,7 +49,12 @@ void main() {
     'Privacy': () => const PrivacyScreen(),
   };
 
-  const sizes = {'phone': Size(360, 740), 'tablet': Size(1024, 1366)};
+  const sizes = {
+    // The smallest iPhone iOS 15 runs on (SE 1st gen); 360 is a small Android.
+    'iPhone SE': Size(320, 568),
+    'phone': Size(360, 740),
+    'tablet': Size(1024, 1366),
+  };
 
   for (final MapEntry(key: name, value: build) in screens.entries) {
     for (final MapEntry(key: sizeName, value: size) in sizes.entries) {

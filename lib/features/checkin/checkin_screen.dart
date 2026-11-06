@@ -256,7 +256,7 @@ class _Progress extends StatelessWidget {
       child: Row(
         children: [
           for (var i = 0; i < 4; i++) ...[
-            if (i > 0) const SizedBox(width: 6),
+            if (i > 0) const Flexible(child: SizedBox(width: 6)),
             Expanded(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(VivRadius.pill),

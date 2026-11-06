@@ -56,7 +56,10 @@ class VivPage extends StatelessWidget {
                           ),
                         ?topCenter,
                         if (topTrailing != null)
-                          Align(alignment: Alignment.centerRight, child: topTrailing!),
+                          Padding(
+                            padding: EdgeInsets.only(left: showBack ? VivSize.minTap + 12 : 0),
+                            child: Align(alignment: Alignment.centerRight, child: topTrailing!),
+                          ),
                       ],
                     ),
                   ),

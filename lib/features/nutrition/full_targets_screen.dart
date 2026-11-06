@@ -105,13 +105,16 @@ class _Row extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 14),
-          Text(
-            value,
-            style: VivType.body.copyWith(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: c.ink,
-              fontFeatures: const [FontFeature.tabularFigures()],
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: VivType.body.copyWith(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: c.ink,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
             ),
           ),
         ],

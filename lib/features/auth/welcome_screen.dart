@@ -34,9 +34,10 @@ class WelcomeScreen extends StatelessWidget {
                   ),
                 ),
               );
-              // Large text (Dynamic Type) can make the intro taller than
-              // the screen: the hero keeps a fixed height and it scrolls.
-              if (MediaQuery.textScalerOf(context).scale(1) > 1.15) {
+              // Large text (Dynamic Type) or a short phone (iPhone SE) can
+              // make the intro taller than the screen: the hero keeps a
+              // fixed height and it scrolls.
+              if (MediaQuery.textScalerOf(context).scale(1) > 1.15 || box.maxHeight < 640) {
                 return SingleChildScrollView(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
